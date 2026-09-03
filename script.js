@@ -1,0 +1,14 @@
+const listings=[
+ {type:'2BHK',loc:'Lokanthali, Bhaktapur',price:'Rs. 22,000 / month',detail:'2 bedroom • living • kitchen • parking • 24-hour water',icon:'🏠'},
+ {type:'1BHK',loc:'Imadol, Lalitpur',price:'Rs. 16,000 / month',detail:'1 bedroom • kitchen • living • attached bathroom',icon:'🏡'},
+ {type:'3BK',loc:'Tinkune, Subidhanagar',price:'Rs. 25,000 / month',detail:'3 bedroom • dining • attached bathroom • bike parking',icon:'🏢'},
+ {type:'3BK',loc:'Koteshwor, Kathmandu',price:'Rs. 30,000 / month',detail:'Family preferred • ground floor • 24-hour water',icon:'🏠'},
+ {type:'2BK',loc:'Chysal, Lalitpur',price:'Rs. 22,000 / month',detail:'Family preferred • sunlight • bike parking',icon:'🏡'},
+ {type:'3BHK',loc:'Old Baneshwor, Kathmandu',price:'Contact for current price',detail:'3 bedroom • living • car parking • 24-hour water',icon:'🏢'}
+];
+function renderListings(data=listings){const g=document.getElementById('listingGrid');if(!g)return;g.innerHTML=data.map((x,i)=>`<article class="listing"><div class="listing-photo">${x.icon}</div><div class="listing-body"><span class="eyebrow">${x.type}</span><h3>${x.loc}</h3><p>${x.detail}</p><div class="listing-price">${x.price}</div><a class="btn btn-dark full" style="margin-top:14px" href="https://wa.me/9779818067008?text=${encodeURIComponent('Hello Sasto Room Finder, I am interested in the '+x.type+' property at '+x.loc+'. Please send current details.')}" target="_blank">Enquire on WhatsApp</a></div></article>`).join('')}
+function filterProperties(){const q=(document.getElementById('filterSearch')?.value||'').toLowerCase();const t=(document.getElementById('filterType')?.value||'').toLowerCase();renderListings(listings.filter(x=>(!q||(x.loc+x.type+x.detail).toLowerCase().includes(q))&&(!t||x.type.toLowerCase().includes(t))))}
+function searchFromHome(){const l=document.getElementById('homeLocation')?.value||'';const b=document.getElementById('homeBudget')?.value||'';const msg=`Hello Sasto Room Finder. I need a property in ${l||'Kathmandu Valley'} with budget ${b||'to be discussed'}. Please send available options.`;window.open('https://wa.me/9779818067008?text='+encodeURIComponent(msg),'_blank')}
+function sendInquiry(e){e.preventDefault();const msg=`Hello Sasto Room Finder Pvt. Ltd.\nName: ${name.value}\nPhone: ${phone.value}\nNeed: ${need.value}\nLocation: ${location.value}\nDetails/Budget: ${message.value}`;window.open('https://wa.me/9779818067008?text='+encodeURIComponent(msg),'_blank')}
+if(document.getElementById('listingGrid'))renderListings();
+document.querySelector('.menu')?.addEventListener('click',()=>{const n=document.querySelector('nav');n.style.display=n.style.display==='flex'?'none':'flex';n.style.flexDirection='column';n.style.position='absolute';n.style.top='68px';n.style.right='4%';n.style.background='#fff';n.style.padding='18px';n.style.border='1px solid #dfe4df';n.style.borderRadius='12px'});
