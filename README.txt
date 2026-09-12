@@ -6,8 +6,8 @@ Official details added:
 - Business: Sasto Room Finder Real Estate / Sasto Room Finder Pvt. Ltd.
 - Manager / Phone: 9818067008
 - Email: sastoroomfinder@gmail.com
-- Address: Katyanchowk, Baneshwor, Kathmandu
-- Website: www.sastoroomfinder.com
+- Address: Santinagar, Baneshwor, Kathmandu
+- Website: www.sastoroomfinder.com.np
 
 Website pages:
 - Home
@@ -19,7 +19,7 @@ Website pages:
 Features:
 - Direct call button
 - WhatsApp enquiry integration
-- Facebook, Instagram and Telegram links
+- Facebook, Instagram and YouTube links
 - Email and website links
 - Responsive mobile design
 - Property search demo
