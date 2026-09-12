@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sasto Room Finder - Admin</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f1e8;
+    color: #173f2b;
+}
+
+.container {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.logo {
+    text-align: center;
+    font-family: Georgia, serif;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 25px;
+}
+
+h1, h2 {
+    font-family: Georgia, serif;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    font-size: 16px;
+}
+
+textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+button {
+    border: none;
+    border-radius: 9px;
+    padding: 13px 18px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.green-btn {
+    background: #174d35;
+    color: white;
+}
+
+.green-btn:hover {
+    background: #0f3926;
+}
+
+.red-btn {
+    background: #b42318;
+    color: white;
+}
+
+.gray-btn {
+    background: #777;
+    color: white;
+}
+
+.full {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.topbar h1 {
+    margin: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #edf7ef;
+}
+
+.room {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.room h3 {
+    margin-top: 0;
+}
+
+.room img {
+    width: 100px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.small {
+    color: #666;
+    font-size: 14px;
+}
+
+#loginSection {
+    max-width: 450px;
+    margin: 50px auto;
+}
+
+@media (max-width: 600px) {
+
+    .container {
+        padding: 12px;
+    }
+
+    .card {
+        padding: 17px;
+    }
+
+    .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .topbar button {
+        width: 100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- LOGIN -->
+    <section id="loginSection" class="card">
+
+        <div class="logo">
+            Sasto Room Finder
+        </div>
+
+        <div class="subtitle">
+            Real Estate • Pvt. Ltd.
+        </div>
+
+        <h2>Admin Login</h2>
+
+        <label>Email</label>
+        <input
+            type="email"
+            id="loginEmail"
+            placeholder="Admin email"
+        >
+
+        <label>Password</label>
+        <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+        >
+
+        <button
+            class="green-btn full"
+            onclick="login()"
+        >
+            Login
+        </button>
+
+        <div id="loginMessage"></div>
+
+    </section>
+
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="hidden">
+
+        <div class="topbar">
+
+            <h1>
+                Admin Dashboard
+            </h1>
+
+            <button
+                class="red-btn"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+
+        <!-- ADD ROOM -->
+        <div class="card">
+
+            <h2 id="formTitle">
+                Add New Room
+            </h2>
+
+            <input
+                type="hidden"
+                id="editId"
+            >
+
+            <label>Property Title *</label>
+
+            <input
+                type="text"
+                id="title"
+                placeholder="Example: Single Room Near Kalanki"
+            >
+
+
+            <label>Location *</label>
+
+            <input
+                type="text"
+                id="location"
+                placeholder="Example: Kalanki, Kathmandu"
+            >
+
+
+            <label>Price *</label>
+
+            <input
+                type="number"
+                id="price"
+                placeholder="Example: 8000"
+            >
+
+
+            <label>Room / Property Type</label>
+
+            <select id="room_type">
+
+                <option value="Single Room">
+                    Single Room
+                </option>
+
+                <option value="Flat">
+                    Flat
+                </option>
+
+                <option value="House">
+                    House
+                </option>
+
+                <option value="Apartment">
+                    Apartment
+                </option>
+
+                <option value="Office">
+                    Office
+                </option>
+
+                <option value="Land">
+                    Land
+                </option>
+
+                <option value="Shop">
+                    Shop
+                </option>
+
+            </select>
+
+
+            <label>Phone / WhatsApp</label>
+
+            <input
+                type="text"
+                id="phone"
+                placeholder="98XXXXXXXX"
+            >
+
+
+            <label>Description</label>
+
+            <textarea
+                id="description"
+                placeholder="Describe the property..."
+            ></textarea>
+
+
+            <label>Property Photos</label>
+
+            <input
+                type="file"
+                id="photos"
+                accept="image/*"
+                multiple
+            >
+
+
+            <label>Status</label>
+
+            <select id="status">
+
+                <option value="available">
+                    Available
+                </option>
+
+                <option value="rented">
+                    Rented
+                </option>
+
+                <option value="sold">
+                    Sold
+                </option>
+
+                <option value="hidden">
+                    Hidden
+                </option>
+
+            </select>
+
+
+            <button
+                class="green-btn full"
+                onclick="saveRoom()"
+            >
+                Save Property
+            </button>
+
+
+            <button
+                id="cancelEdit"
+                class="gray-btn full hidden"
+                onclick="cancelEdit()"
+            >
+                Cancel Edit
+            </button>
+
+
+            <div id="saveMessage"></div>
+
+        </div>
+
+
+        <!-- ROOM LIST -->
+        <div class="card">
+
+            <h2>
+                Manage Properties
+            </h2>
+
+            <button
+                class="green-btn"
+                onclick="loadRooms()"
+            >
+                Refresh
+            </button>
+
+            <div id="roomsList">
+                Loading...
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   SUPABASE SETTINGS
+   ========================================================= */
+
+const SUPABASE_URL =
+    "https://amhrnahjshsgelacqzyl.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+
+
+const db =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+async function login() {
+
+    const email =
+        document.getElementById("loginEmail").value.trim();
+
+    const password =
+        document.getElementById("loginPassword").value;
+
+
+    if (!email || !password) {
+
+        showLoginMessage(
+            "Please enter email and password."
+        );
+
+        return;
+    }
+
+
+    showLoginMessage(
+        "Logging in..."
+    );
+
+
+    const { data, error } =
+        await db.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+
+    if (error) {
+
+        showLoginMessage(
+            "Login failed: " + error.message
+        );
+
+        return;
+    }
+
+
+    document
+        .getElementById("loginSection")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("dashboard")
+        .classList.remove("hidden");
+
+
+    loadRooms();
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+async function logout() {
+
+    await db.auth.signOut();
+
+    document
+        .getElementById("dashboard")
+        .classList.add("hidden");
+
+    document
+        .getElementById("loginSection")
+        .classList.remove("hidden");
+
+}
+
+
+/* =========================================================
+   CHECK EXISTING LOGIN
+   ========================================================= */
+
+async function checkLogin() {
+
+    const { data } =
+        await db.auth.getSession();
+
+
+    if (data.session) {
+
+        document
+            .getElementById("loginSection")
+            .classList.add("hidden");
+
+        document
+            .getElementById("dashboard")
+            .classList.remove("hidden");
+
+        loadRooms();
+    }
+}
+
+
+checkLogin();
+
+
+/* =========================================================
+   SAVE ROOM
+   ========================================================= */
+
+async function saveRoom() {
+
+    const title =
+        document.getElementById("title").value.trim();
+
+    const location =
+        document.getElementById("location").value.trim();
+
+    const price =
+        document.getElementById("price").value;
+
+    const room_type =
+        document.getElementById("room_type").value;
+
+    const phone =
+        document.getElementById("phone").value.trim();
+
+    const description =
+        document.getElementById("description").value.trim();
+
+    const status =
+        document.getElementById("status").value;
+
+    const editId =
+        document.getElementById("editId").value;
+
+    const files =
+        document.getElementById("photos").files;
+
+
+    if (!title || !location || !price) {
+
+        showSaveMessage(
+            "Please fill Title, Location and Price."
+        );
+
+        return;
+    }
+
+
+    showSaveMessage(
+        "Saving property..."
+    );
+
+
+    let photoUrls = [];
+
+
+    /* -----------------------------------------------------
+       UPLOAD PHOTOS
+       ----------------------------------------------------- */
+
+    if (files.length > 0) {
+
+        for (let i = 0; i < files.length; i++) {
+
+            const file = files[i];
+
+
+            const extension =
+                file.name.split(".").pop();
+
+
+            const filename =
+                Date.now() +
+                "-" +
+                Math.random()
+                    .toString(36)
+                    .substring(2) +
+                "." +
+                extension;
+
+
+            const { error: uploadError } =
+                await db.storage
+                    .from("room-images")
+                    .upload(
+                        filename,
+                        file
+                    );
+
+
+            if (uploadError) {
+
+                showSaveMessage(
+                    "Photo upload failed: " +
+                    uploadError.message
+                );
+
+                return;
+            }
+
+
+            const { data } =
+                db.storage
+                    .from("room-images")
+                    .getPublicUrl(
+                        filename
+                    );
+
+
+            photoUrls.push(
+                data.publicUrl
+            );
+        }
+    }
+
+
+    /* -----------------------------------------------------
+       EDIT EXISTING ROOM
+       ----------------------------------------------------- */
+
+    if (editId) {
+
+        const updateData = {
+
+            title: title,
+
+            location: location,
+
+            price: Number(price),
+
+            room_type: room_type,
+
+            phone: phone,
+
+            description: description,
+
+            status: status
+        };
+
+
+        if (photoUrls.length > 0) {
+
+            updateData.photos =
+                photoUrls;
+        }
+
+
+        const { error } =
+            await db
+                .from("room")
+                .update(updateData)
+                .eq("id", editId);
+
+
+        if (error) {
+
+            showSaveMessage(
+                "Update failed: " +
+                error.message
+            );
+
+            return;
+        }
+
+
+        showSaveMessage(
+            "Property updated successfully!"
+        );
+
+
+    }
+
+    /* -----------------------------------------------------
+       ADD NEW ROOM
+       ----------------------------------------------------- */
+
+    else {
+
+        const { error } =
+            await db
+                .from("room")
+                .insert({
+
+                    title: title,
+
+                    location: location,
+
+                    price: Number(price),
+
+                    room_type: room_type,
+
+                    phone: phone,
+
+                    description: description,
+
+                    status: status,
+
+                    photos: photoUrls
+                });
+
+
+        if (error) {
+
+            showSaveMessage(
+                "Save failed: " +
+                error.message
+            );
+
+            return;
+        }
+
+
+        showSaveMessage(
+            "Property published successfully!"
+        );
+    }
+
+
+    clearForm();
+
+    loadRooms();
+}
+
+
+/* =========================================================
+   LOAD ROOMS
+   ========================================================= */
+
+async function loadRooms() {
+
+    const list =
+        document.getElementById("roomsList");
+
+
+    list.innerHTML =
+        "Loading properties...";
+
+
+    const { data, error } =
+        await db
+            .from("room")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        list.innerHTML =
+            "Error loading properties: " +
+            error.message;
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        list.innerHTML =
+            "<p>No properties added yet.</p>";
+
+        return;
+    }
+
+
+    list.innerHTML = "";
+
+
+    data.forEach(room => {
+
+        const div =
+            document.createElement("div");
+
+
+        div.className =
+            "room";
+
+
+        let images = "";
+
+
+        if (
+            room.photos &&
+            room.photos.length > 0
+        ) {
+
+            room.photos.forEach(photo => {
+
+                images +=
+                    `<img src="${photo}" alt="Property photo">`;
+
+            });
+        }
+
+
+        div.innerHTML = `
+
+            <h3>
+                ${escapeHtml(room.title || "")}
+            </h3>
+
+            <p>
+                📍 ${escapeHtml(room.location || "")}
+            </p>
+
+            <p>
+                💰 Rs. ${room.price || ""}
+            </p>
+
+            <p>
+                🏠 ${escapeHtml(room.room_type || "")}
+            </p>
+
+            <p>
+                📞 ${escapeHtml(room.phone || "")}
+            </p>
+
+            <p>
+                Status:
+                <strong>
+                    ${escapeHtml(room.status || "")}
+                </strong>
+            </p>
+
+            <p class="small">
+                ${escapeHtml(room.description || "")}
+            </p>
+
+            <div>
+                ${images}
+            </div>
+
+            <div class="actions">
+
+                <button
+                    class="green-btn"
+                    onclick='editRoom(${JSON.stringify(room)})'
+                >
+                    Edit
+                </button>
+
+                <button
+                    class="red-btn"
+                    onclick="deleteRoom(${room.id})"
+                >
+                    Delete
+                </button>
+
+            </div>
+        `;
+
+
+        list.appendChild(div);
+
+    });
+}
+
+
+/* =========================================================
+   EDIT ROOM
+   ========================================================= */
+
+function editRoom(room) {
+
+    document.getElementById("editId").value =
+        room.id;
+
+    document.getElementById("title").value =
+        room.title || "";
+
+    document.getElementById("location").value =
+        room.location || "";
+
+    document.getElementById("price").value =
+        room.price || "";
+
+    document.getElementById("room_type").value =
+        room.room_type || "Single Room";
+
+    document.getElementById("phone").value =
+        room.phone || "";
+
+    document.getElementById("description").value =
+        room.description || "";
+
+    document.getElementById("status").value =
+        room.status || "available";
+
+
+    document.getElementById("formTitle")
+        .innerText =
+        "Edit Property";
+
+
+    document.getElementById("cancelEdit")
+        .classList.remove("hidden");
+
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+
+/* =========================================================
+   DELETE ROOM
+   ========================================================= */
+
+async function deleteRoom(id) {
+
+    const confirmDelete =
+        confirm(
+            "Are you sure you want to delete this property?"
+        );
+
+
+    if (!confirmDelete) {
+        return;
+    }
+
+
+    const { error } =
+        await db
+            .from("room")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(
+            "Delete failed: " +
+            error.message
+        );
+
+        return;
+    }
+
+
+    alert(
+        "Property deleted."
+    );
+
+
+    loadRooms();
+}
+
+
+/* =========================================================
+   CANCEL EDIT
+   ========================================================= */
+
+function cancelEdit() {
+
+    clearForm();
+}
+
+
+/* =========================================================
+   CLEAR FORM
+   ========================================================= */
+
+function clearForm() {
+
+    document.getElementById("editId").value =
+        "";
+
+    document.getElementById("title").value =
+        "";
+
+    document.getElementById("location").value =
+        "";
+
+    document.getElementById("price").value =
+        "";
+
+    document.getElementById("room_type").value =
+        "Single Room";
+
+    document.getElementById("phone").value =
+        "";
+
+    document.getElementById("description").value =
+        "";
+
+    document.getElementById("status").value =
+        "available";
+
+    document.getElementById("photos").value =
+        "";
+
+
+    document.getElementById("formTitle")
+        .innerText =
+        "Add New Room";
+
+
+    document.getElementById("cancelEdit")
+        .classList.add("hidden");
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+function showLoginMessage(message) {
+
+    document.getElementById("loginMessage")
+        .innerHTML =
+        `<div class="message">${escapeHtml(message)}</div>`;
+}
+
+
+function showSaveMessage(message) {
+
+    document.getElementById("saveMessage")
+        .innerHTML =
+        `<div class="message">${escapeHtml(message)}</div>`;
+}
+
+
+/* =========================================================
+   SECURITY HELPER
+   ========================================================= */
+
+function escapeHtml(text) {
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+</script>
+
+</body>
+</html>
