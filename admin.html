@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- SastoRoomFinder Admin: all-tools fixed build -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SastoRoomFinder — Admin & House Owner</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--b:#0879e8;--n:#07347c;--o:#f5a623;--g:#20b879;--r:#ef4444;--bg:#f4f9ff;--line:#dce8f7;--muted:#71839b}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--n)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -19,7 +20,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 .filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 17px;border-bottom:1px solid var(--line)}.filters input,.filters select{padding:8px;border:1px solid #cbdcf0;border-radius:8px}.empty{text-align:center;padding:30px;color:var(--muted)}
 @media(max-width:950px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}main{padding:12px}.brand{font-size:19px}.tag{display:none}.stats{gap:8px}.stat{padding:11px}.form{grid-template-columns:1fr}.field.full,.fa{grid-column:auto}.head{padding:0 12px}}
-</style>
+.errorBox{color:#b42318;background:#fff1f1;border:1px solid #ffcaca;border-radius:8px;padding:18px;font-weight:700}.msg{font-size:13px;margin:8px 0}</style>
 </head>
 <body>
 
@@ -31,7 +32,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
     <div id="loginFields">
       <label>Email</label><input id="email" type="email" placeholder="Your email">
       <label>Password</label><input id="pass" type="password" placeholder="Your password">
-      <button class="primary" style="width:100%;margin-top:17px" onclick="login()">Login</button>
+      <button class="primary" style="width:100%;margin-top:17px" onclick="doLogin()">Login</button>
     </div>
     <div id="signupFields" class="hidden">
       <label>Full Name</label><input id="signupName" placeholder="Your name">
@@ -54,7 +55,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <aside>
   <button class="nav active" data-nav="dashboard" onclick="go('dashboard')">⌂ &nbsp; Dashboard</button>
   <button class="nav" data-nav="rooms" onclick="go('rooms')">▣ &nbsp; My / All Properties</button>
-  <button class="nav ownerOnly" data-nav="add" onclick="openAdd()">＋ &nbsp; Add Property</button>
+  <button class="nav" data-nav="add" onclick="openAdd()">＋ &nbsp; Add Property</button>
   <button class="nav adminOnly" data-nav="pending" onclick="go('pending')">⏳ &nbsp; Owner Approvals</button>
   <button class="nav adminOnly" data-nav="owners" onclick="go('owners')">👥 &nbsp; House Owners</button>
   <button class="nav" data-nav="inquiries" onclick="go('inquiries')">✉ &nbsp; Inquiries</button>
@@ -74,13 +75,13 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 
 <div class="grid">
 <section id="rooms" class="panel">
-  <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary ownerOnly" onclick="openAdd()">＋ Add Property</button></div></div>
+  <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary" onclick="openAdd()">＋ Add Property</button></div></div>
   <div class="filters"><input id="search" placeholder="Search title or location" oninput="renderRooms()"><select id="statusFilter" onchange="renderRooms()"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option><option value="rejected">Rejected</option></select></div>
   <div class="table"><table><thead><tr><th>Photo</th><th>Title</th><th>Location</th><th>Type</th><th>Price</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
   <div id="summary" class="muted" style="padding:12px 17px"></div>
 </section>
 <aside style="display:block;border:0;padding:0">
-  <div class="panel q"><h2>⚡ Quick Actions</h2><button class="ownerOnly" onclick="openAdd()">🟢 &nbsp; <b>List Property</b><br><small>Add a new room/house</small></button><button onclick="go('rooms')">🏠 &nbsp; <b>View Properties</b><br><small>Manage listings</small></button><button class="adminOnly" onclick="go('pending')">⏳ &nbsp; <b>Review Submissions</b><br><small>Approve owner listings</small></button></div>
+  <div class="panel q"><h2>⚡ Quick Actions</h2><button onclick="openAdd()">🟢 &nbsp; <b>Add Property</b><br><small>Add a new room/house</small></button><button onclick="go('rooms')">🏠 &nbsp; <b>View Properties</b><br><small>Manage listings</small></button><button class="adminOnly" onclick="go('pending')">⏳ &nbsp; <b>Review Submissions</b><br><small>Approve owner listings</small></button></div>
   <div class="panel activity"><h2>🕒 Recent Activity</h2><div id="activity"><div class="act">Portal connected</div></div></div>
   <div class="help"><h2>💡 Best practice</h2><p class="muted">Use real photos, exact locations and a working phone/WhatsApp number. Mark a property rented as soon as it is no longer available.</p></div>
 </aside>
@@ -99,7 +100,21 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
   <div class="muted" style="padding:12px 17px">Active advertisements are intended to be displayed by the public website.</div>
 </section>
 
-<section id="settings" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>⚙ Settings</h2></div><div style="padding:18px"><p><b>Security:</b> Supabase Auth + Row Level Security should protect owner data.</p><p><b>Publishing rule:</b> Owner submissions should remain pending until an admin approves them.</p><p><b>Public website:</b> Query only approved + available properties when showing live listings.</p></div></section>
+<section id="settings" class="panel hidden" style="margin-top:16px">
+  <div class="ph"><h2>⚙ Site Settings</h2><button class="secondary" onclick="loadSettings()">↻ Refresh</button></div>
+  <div style="padding:18px">
+    <div id="settingsMsg" class="msg"></div>
+    <div class="form">
+      <div class="field"><label>Site Name</label><input id="setSiteName" placeholder="SastoRoomFinder"></div>
+      <div class="field"><label>Location</label><input id="setLocation" placeholder="Kathmandu, Nepal"></div>
+      <div class="field full"><label>About / Description</label><textarea id="setAbout" placeholder="About SastoRoomFinder..."></textarea></div>
+      <div class="field"><label>YouTube URL</label><input id="setYoutube" type="url" placeholder="https://youtube.com/..."></div>
+      <div class="field"><label>Contact Phone</label><input id="setPhone" placeholder="98XXXXXXXX"></div>
+      <div class="field full"><label>Footer Text</label><input id="setFooter" placeholder="Better Rooms • Happier People • Nepal"></div>
+      <div class="fa"><button class="primary" onclick="saveSettings()">Save Settings</button></div>
+    </div>
+  </div>
+</section>
 
 <p class="muted" style="margin-top:20px">© 2026 SastoRoomFinder • Better Rooms • Happier People • Nepal</p>
 </main></div></div>
@@ -142,26 +157,9 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 </div></div></div>
 
 <script>
-const SUPABASE_URL="https://amhrnahjshsgelacqzyl.supabase.co";
-const SUPABASE_KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
-let db=null;
-try{
-  if(!window.supabase) throw new Error("Supabase library did not load. Please refresh the page.");
-  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-}catch(e){
-  window.addEventListener("DOMContentLoaded",()=>{$("lm").textContent="Connection error: "+e.message});
-} let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
+const URL="https://amhrnahjshsgelacqzyl.supabase.co",KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+const db=supabase.createClient(URL,KEY); let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
 
 const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const $=id=>document.getElementById(id);
-const isAdmin=()=>profile?.role==="admin";
-
-function setAuthMode(m){mode=m;$("loginFields").classList.toggle("hidden",m!=="login");$("signupFields").classList.toggle("hidden",m!=="signup");$("loginTab").classList.toggle("active",m==="login");$("signupTab").classList.toggle("active",m==="signup");$("lm").textContent=""}
-
-async function login(){
-  const email=$("email").value.trim(),password=$("pass").value;
-  $("lm").style.color="#52708f";
-  $("lm").textContent="Logging in...";
-  try{
-    if(!db) throw new Error("Supabase connection is not ready. Refresh the page and try again.");
-    if(!email||!password) th
+const isAdmin=()=>profile?.role==="admi
