@@ -1,987 +1,496 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>SastoRoomFinder - Admin Login</title>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f4f7fb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .login-card {
-      width: 100%;
-      max-width: 420px;
-      background: white;
-      padding: 32px;
-      border-radius: 18px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-    }
-
-    .logo {
-      text-align: center;
-      font-size: 28px;
-      font-weight: 800;
-      color: #1769e0;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #667085;
-      margin-bottom: 25px;
-    }
-
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 22px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 700;
-      color: #777;
-    }
-
-    .tab.active {
-      color: #1769e0;
-      border-bottom: 3px solid #1769e0;
-    }
-
-    label {
-      display: block;
-      font-weight: 700;
-      margin: 15px 0 7px;
-      color: #222;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #ccd3df;
-      border-radius: 9px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #1769e0;
-      box-shadow: 0 0 0 3px rgba(23,105,224,0.1);
-    }
-
-    .login-button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 14px;
-      border: none;
-      border-radius: 9px;
-      background: #1769e0;
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .login-button:hover {
-      background: #1258bd;
-    }
-
-    .login-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    #message {
-      display: none;
-      margin-top: 16px;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .error {
-      display: block !important;
-      background: #fff0f0;
-      color: #b42318;
-    }
-
-    .success {
-      display: block !important;
-      background: #eaf8ef;
-      color: #137333;
-    }
-
-    .info {
-      display: block !important;
-      background: #eef5ff;
-      color: #175cd3;
-    }
-
-    .signup-form {
-      display: none;
-    }
-
-    .dashboard {
-      display: none;
-      width: 100%;
-      max-width: 900px;
-    }
-
-    .dashboard-card {
-      background: white;
-      border-radius: 18px;
-      padding: 30px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-    }
-
-    .dashboard-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .dashboard-title {
-      font-size: 26px;
-      font-weight: 800;
-      color: #1769e0;
-    }
-
-    .logout {
-      border: none;
-      background: #222;
-      color: white;
-      padding: 10px 17px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-top: 25px;
-    }
-
-    .stat {
-      background: #f7f9fc;
-      border: 1px solid #e2e7ef;
-      padding: 22px;
-      border-radius: 12px;
-    }
-
-    .stat-title {
-      color: #667085;
-    }
-
-    .stat-number {
-      font-size: 30px;
-      font-weight: 800;
-      margin-top: 8px;
-    }
-
-    .success-box {
-      margin-top: 22px;
-      padding: 18px;
-      background: #eaf8ef;
-      border: 1px solid #b7e4c7;
-      border-radius: 12px;
-      color: #137333;
-    }
-
-    @media (max-width: 600px) {
-      .login-card {
-        padding: 22px;
-      }
-
-      .stats {
-        grid-template-columns: 1fr;
-      }
-
-      .dashboard-header {
-        align-items: flex-start;
-      }
-    }
-  </style>
+<!-- SastoRoomFinder Admin: all-tools fixed build -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SastoRoomFinder — Admin & House Owner</title>
+<script>
+window.__srfLoadSupabase=function(){return new Promise(function(resolve,reject){
+  if(window.supabase){resolve();return;}
+  var urls=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2","https://unpkg.com/@supabase/supabase-js@2"];
+  var i=0;
+  function next(){
+    if(window.supabase){resolve();return;}
+    if(i>=urls.length){reject(new Error("Supabase library could not be loaded. Check your internet connection or Cloudflare security settings."));return;}
+    var sc=document.createElement("script"); sc.src=urls[i++]; sc.async=true;
+    sc.onload=function(){window.supabase?resolve():next()}; sc.onerror=next; document.head.appendChild(sc);
+  }
+  next();
+});};
+</script>
+<style>
+:root{--b:#0879e8;--n:#07347c;--o:#f5a623;--g:#20b879;--r:#ef4444;--bg:#f4f9ff;--line:#dce8f7;--muted:#71839b}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--n)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.head{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding:0 22px;position:sticky;top:0;z-index:5}.brand{font-weight:800;font-size:23px}.brand span{color:var(--b)}.tag{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}.user{display:flex;gap:12px;align-items:center}.logout{border:0;background:none;color:var(--b);font-weight:700}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 70px)}aside{background:#fff;border-right:1px solid var(--line);padding:15px 12px}.nav{width:100%;border:0;background:none;text-align:left;padding:12px;border-radius:9px;color:#174786;font-weight:700;margin:3px 0}.nav.active,.nav:hover{background:var(--b);color:#fff}.side{margin-top:25px;background:#edf7ff;border:1px solid #cfe5ff;border-radius:12px;padding:13px;font-size:12px;color:#52708f}
+main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:linear-gradient(110deg,#eaf5ff,#dff1ff);border:1px solid #cde5ff;border-radius:15px;padding:20px;display:flex;justify-content:space-between;margin-bottom:16px}.welcome h1{margin:0 0 6px}.welcome p{margin:0;color:#58779e}.house{font-size:45px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 15px #1450960d}.stat{padding:15px}.circle{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;margin-bottom:7px}.c1{background:#e6f2ff}.c2{background:#e5f8ef}.c3{background:#fff4dc}.c4{background:#ffe9e9}.stat h3{margin:0;font-size:13px}.num{font-size:26px;font-weight:800;margin:4px 0}.muted{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:16px}.panel{overflow:hidden}.ph{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.ph h2{margin:0;font-size:18px}.primary,.secondary,.danger{border:0;border-radius:8px;padding:9px 13px;font-weight:800}.primary{background:var(--b);color:#fff}.secondary{background:#edf6ff;color:var(--b);margin-right:5px}.danger{background:#ffe7e7;color:#b42318}.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th{background:#f1f8ff;text-align:left;padding:10px;font-size:12px}td{padding:9px;border-top:1px solid #edf2f8;font-size:13px}.thumb{width:58px;height:45px;object-fit:cover;border-radius:7px;background:#eef4fa}.badge{padding:5px 8px;border-radius:7px;font-size:11px;font-weight:800}.available,.approved{background:#def7e9;color:#16834f}.pending{background:#fff4d6;color:#9b6900}.rejected,.hiddenst{background:#ffe4e4;color:#b42318}.rented,.sold{background:#fff0c8;color:#9b6900}.actions{display:flex;gap:5px}.ib{width:32px;height:32px;border:1px solid #d7e6f8;border-radius:7px;background:#fff;color:var(--b)}.ib.del{color:#e11d48}
+.q,.activity,.help{padding:15px}.q h2,.activity h2,.help h2{margin:0 0 11px;font-size:16px}.q button{display:block;width:100%;background:#fff;border:1px solid #dceafb;border-radius:9px;padding:11px;text-align:left;margin:7px 0;color:var(--n)}.act{padding:10px 0;border-top:1px solid #edf2f8;font-size:13px}.help{background:#edf8ff;border:1px solid #cfe7ff;border-radius:14px;margin-top:15px}
+.modal{position:fixed;inset:0;background:#031e4670;display:grid;place-items:center;padding:15px;z-index:20}.box{background:#fff;width:min(760px,100%);max-height:94vh;overflow:auto;border-radius:15px}.mh{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.mh h2{margin:0}.close{border:0;background:#eef2f6;border-radius:7px;width:34px}.form{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}.field.full,.fa{grid-column:1/-1}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:10px;border:1px solid #cbdcf0;border-radius:8px}.field textarea{min-height:95px}.fa{text-align:right}
+.login{min-height:100vh;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#edf7ff,#fff)}.loginbox{width:min(440px,100%);background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:0 15px 45px #0a468c1f}.loginbox h1{text-align:center;margin:0}.loginbox p{text-align:center;color:var(--muted)}.loginbox label{display:block;font-weight:700;font-size:13px;margin:12px 0 5px}.loginbox input{width:100%;padding:11px;border:1px solid #cbdcf0;border-radius:8px}.msg{color:#b42318;font-size:13px;margin-top:9px}.tabs{display:flex;gap:7px;margin:12px 0}.tab{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px;font-weight:800;color:var(--n)}.tab.active{background:var(--b);color:#fff}.hint{background:#f5f9ff;border:1px solid var(--line);padding:10px;border-radius:8px;font-size:12px;color:#58779e;margin-top:10px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 17px;border-bottom:1px solid var(--line)}.filters input,.filters select{padding:8px;border:1px solid #cbdcf0;border-radius:8px}.empty{text-align:center;padding:30px;color:var(--muted)}
+@media(max-width:950px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}main{padding:12px}.brand{font-size:19px}.tag{display:none}.stats{gap:8px}.stat{padding:11px}.form{grid-template-columns:1fr}.field.full,.fa{grid-column:auto}.head{padding:0 12px}}
+.errorBox{color:#b42318;background:#fff1f1;border:1px solid #ffcaca;border-radius:8px;padding:18px;font-weight:700}.msg{font-size:13px;margin:8px 0}</style>
 </head>
-
 <body>
 
-  <!-- =========================
-       LOGIN PANEL
-  ========================== -->
-
-  <div class="login-card" id="loginPanel">
-
-    <div class="logo">
-      🏠 SastoRoomFinder
+<div id="login" class="login">
+  <div class="loginbox">
+    <h1>Sasto<span style="color:#0879e8">Room</span>Finder</h1>
+    <p id="loginSub">Admin & House Owner Portal</p>
+    <div class="tabs"><button id="loginTab" class="tab active" onclick="setAuthMode('login')">Login</button><button id="signupTab" class="tab" onclick="setAuthMode('signup')">Owner Sign Up</button></div>
+    <div id="loginFields">
+      <label>Email</label><input id="email" type="email" placeholder="Your email">
+      <label>Password</label><input id="pass" type="password" placeholder="Your password">
+      <button class="primary" style="width:100%;margin-top:17px" onclick="login()">Login</button>
     </div>
-
-    <div class="subtitle">
-      Admin & House Owner Portal
+    <div id="signupFields" class="hidden">
+      <label>Full Name</label><input id="signupName" placeholder="Your name">
+      <label>Phone</label><input id="signupPhone" placeholder="98XXXXXXXX">
+      <label>Email</label><input id="signupEmail" type="email" placeholder="you@example.com">
+      <label>Password</label><input id="signupPass" type="password" placeholder="At least 6 characters">
+      <button class="primary" style="width:100%;margin-top:17px" onclick="signupOwner()">Create Owner Account</button>
+      <div class="hint">Owner listings go to <b>Pending</b> review. Only approved listings are intended to appear publicly.</div>
     </div>
-
-    <!-- Tabs -->
-    <div class="tabs">
-
-      <button
-        type="button"
-        class="tab active"
-        id="loginTab"
-        onclick="showLogin()">
-        LOGIN
-      </button>
-
-      <button
-        type="button"
-        class="tab"
-        id="signupTab"
-        onclick="showSignup()">
-        OWNER SIGN UP
-      </button>
-
-    </div>
-
-
-    <!-- =========================
-         LOGIN FORM
-    ========================== -->
-
-    <div id="loginForm">
-
-      <label for="email">
-        Email
-      </label>
-
-      <input
-        id="email"
-        type="email"
-        value="admin.sastoroomfinder@gmail.com"
-        placeholder="Enter email"
-        autocomplete="username"
-      >
-
-
-      <label for="password">
-        Password
-      </label>
-
-      <input
-        id="password"
-        type="password"
-        placeholder="Enter password"
-        autocomplete="current-password"
-      >
-
-
-      <button
-        type="button"
-        class="login-button"
-        id="loginButton"
-        onclick="doLogin()">
-
-        LOGIN
-
-      </button>
-
-    </div>
-
-
-    <!-- =========================
-         OWNER SIGN UP
-    ========================== -->
-
-    <div
-      class="signup-form"
-      id="signupForm">
-
-      <label for="ownerName">
-        Full Name
-      </label>
-
-      <input
-        id="ownerName"
-        type="text"
-        placeholder="Your full name"
-      >
-
-
-      <label for="ownerEmail">
-        Email
-      </label>
-
-      <input
-        id="ownerEmail"
-        type="email"
-        placeholder="Email address"
-      >
-
-
-      <label for="ownerPassword">
-        Password
-      </label>
-
-      <input
-        id="ownerPassword"
-        type="password"
-        placeholder="Create password"
-      >
-
-
-      <label for="ownerPhone">
-        Phone
-      </label>
-
-      <input
-        id="ownerPhone"
-        type="tel"
-        placeholder="Phone number"
-      >
-
-
-      <button
-        type="button"
-        class="login-button"
-        onclick="doSignup()">
-
-        CREATE OWNER ACCOUNT
-
-      </button>
-
-    </div>
-
-
-    <!-- MESSAGE -->
-    <div id="message"></div>
-
+    <div id="lm" class="msg"></div>
   </div>
+</div>
 
+<div id="app" class="hidden">
+<header class="head">
+  <div class="brand">🏠 Sasto<span>RoomFinder</span><span class="tag">Find Your Perfect Room</span></div>
+  <div class="user">👤 <b id="who">User</b><button class="logout" onclick="logout()">Logout ↗</button></div>
+</header>
+<div class="layout">
+<aside>
+  <button class="nav active" data-nav="dashboard" onclick="go('dashboard')">⌂ &nbsp; Dashboard</button>
+  <button class="nav" data-nav="rooms" onclick="go('rooms')">▣ &nbsp; My / All Properties</button>
+  <button class="nav" data-nav="add" onclick="openAdd()">＋ &nbsp; Add Property</button>
+  <button class="nav adminOnly" data-nav="pending" onclick="go('pending')">⏳ &nbsp; Owner Approvals</button>
+  <button class="nav adminOnly" data-nav="owners" onclick="go('owners')">👥 &nbsp; House Owners</button>
+  <button class="nav" data-nav="inquiries" onclick="go('inquiries')">✉ &nbsp; Inquiries</button>
+  <button class="nav adminOnly" data-nav="sponsors" onclick="go('sponsors')">📢 &nbsp; Sponsors / Ads</button>
+  <button class="nav adminOnly" data-nav="settings" onclick="go('settings')">⚙ &nbsp; Settings</button>
+  <div class="side"><b id="sideTitle">SastoRoomFinder Portal</b><br><br>Keep property information accurate, photos clear and contact details up to date.</div>
+</aside>
 
-  <!-- =========================
-       DASHBOARD
-  ========================== -->
+<main id="dashboard">
+<section class="welcome"><div><h1 id="welcomeTitle">👋 Welcome!</h1><p id="welcomeText">Manage your properties from one place.</p></div><div class="house">🏠</div></section>
+<section class="stats">
+  <div class="stat"><div class="circle c1">⌂</div><h3 id="s1label">Total Properties</h3><div id="total" class="num">0</div><span class="muted">Your listings</span></div>
+  <div class="stat"><div class="circle c2">✓</div><h3 id="s2label">Available</h3><div id="avail" class="num">0</div><span class="muted">Can receive inquiries</span></div>
+  <div class="stat"><div class="circle c3">⏳</div><h3 id="s3label">Pending Review</h3><div id="pendingCount" class="num">0</div><span class="muted">Needs attention</span></div>
+  <div class="stat"><div class="circle c4">✕</div><h3 id="s4label">Rented / Sold</h3><div id="rent" class="num">0</div><span class="muted">Not available</span></div>
+</section>
 
-  <div
-    class="dashboard"
-    id="dashboard">
+<div class="grid">
+<section id="rooms" class="panel">
+  <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary" onclick="openAdd()">＋ Add Property</button></div></div>
+  <div class="filters"><input id="search" placeholder="Search title or location" oninput="renderRooms()"><select id="statusFilter" onchange="renderRooms()"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option><option value="rejected">Rejected</option></select></div>
+  <div class="table"><table><thead><tr><th>Photo</th><th>Title</th><th>Location</th><th>Type</th><th>Price</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
+  <div id="summary" class="muted" style="padding:12px 17px"></div>
+</section>
+<aside style="display:block;border:0;padding:0">
+  <div class="panel q"><h2>⚡ Quick Actions</h2><button onclick="openAdd()">🟢 &nbsp; <b>Add Property</b><br><small>Add a new room/house</small></button><button onclick="go('rooms')">🏠 &nbsp; <b>View Properties</b><br><small>Manage listings</small></button><button class="adminOnly" onclick="go('pending')">⏳ &nbsp; <b>Review Submissions</b><br><small>Approve owner listings</small></button></div>
+  <div class="panel activity"><h2>🕒 Recent Activity</h2><div id="activity"><div class="act">Portal connected</div></div></div>
+  <div class="help"><h2>💡 Best practice</h2><p class="muted">Use real photos, exact locations and a working phone/WhatsApp number. Mark a property rented as soon as it is no longer available.</p></div>
+</aside>
+</div>
 
-    <div class="dashboard-card">
+<section id="pending" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>⏳ Owner Submissions</h2><button class="secondary" onclick="loadRooms()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Property</th><th>Owner</th><th>Location</th><th>Price</th><th>Submitted</th><th>Action</th></tr></thead><tbody id="pendingBody"></tbody></table></div></section>
 
-      <div class="dashboard-header">
+<section id="owners" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>👥 House Owners</h2><button class="secondary" onclick="loadOwners()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Listings</th></tr></thead><tbody id="ownersBody"></tbody></table></div></section>
 
-        <div>
+<section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><button class="secondary" onclick="loadInquiries()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
 
-          <div class="dashboard-title">
-            🏠 SastoRoomFinder
-          </div>
+<section id="sponsors" class="panel hidden" style="margin-top:16px">
+  <div class="ph"><h2>📢 Sponsors / Advertisements</h2><div><button class="secondary" onclick="loadSponsors()">↻ Refresh</button><button class="primary" onclick="openSponsorAdd()">＋ Add Advertisement</button></div></div>
+  <div class="filters"><input id="sponsorSearch" placeholder="Search sponsor or title" oninput="renderSponsors()"><select id="sponsorStatusFilter" onchange="renderSponsors()"><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+  <div class="table"><table style="min-width:1050px"><thead><tr><th>Image</th><th>Sponsor</th><th>Ad Title</th><th>Position</th><th>Link</th><th>Status</th><th>Dates</th><th>Actions</th></tr></thead><tbody id="sponsorBody"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
+  <div class="muted" style="padding:12px 17px">Active advertisements are intended to be displayed by the public website.</div>
+</section>
 
-          <div>
-            Admin Dashboard
-          </div>
-
-        </div>
-
-        <button
-          type="button"
-          class="logout"
-          onclick="doLogout()">
-
-          Logout
-
-        </button>
-
-      </div>
-
-
-      <!-- STATS -->
-
-      <div class="stats">
-
-        <div class="stat">
-
-          <div class="stat-title">
-            Total Properties
-          </div>
-
-          <div
-            class="stat-number"
-            id="totalProperties">
-
-            0
-
-          </div>
-
-        </div>
-
-
-        <div class="stat">
-
-          <div class="stat-title">
-            Available
-          </div>
-
-          <div
-            class="stat-number"
-            id="availableProperties">
-
-            0
-
-          </div>
-
-        </div>
-
-
-        <div class="stat">
-
-          <div class="stat-title">
-            Pending
-          </div>
-
-          <div
-            class="stat-number"
-            id="pendingProperties">
-
-            0
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="success-box">
-
-        <strong>
-          ✅ Login successful
-        </strong>
-
-        <p id="userInfo">
-          You are authenticated.
-        </p>
-
-      </div>
-
+<section id="settings" class="panel hidden" style="margin-top:16px">
+  <div class="ph"><h2>⚙ Site Settings</h2><button class="secondary" onclick="loadSettings()">↻ Refresh</button></div>
+  <div style="padding:18px">
+    <div id="settingsMsg" class="msg"></div>
+    <div class="form">
+      <div class="field"><label>Site Name</label><input id="setSiteName" placeholder="SastoRoomFinder"></div>
+      <div class="field"><label>Location</label><input id="setLocation" placeholder="Kathmandu, Nepal"></div>
+      <div class="field full"><label>About / Description</label><textarea id="setAbout" placeholder="About SastoRoomFinder..."></textarea></div>
+      <div class="field"><label>YouTube URL</label><input id="setYoutube" type="url" placeholder="https://youtube.com/..."></div>
+      <div class="field"><label>Contact Phone</label><input id="setPhone" placeholder="98XXXXXXXX"></div>
+      <div class="field full"><label>Footer Text</label><input id="setFooter" placeholder="Better Rooms • Happier People • Nepal"></div>
+      <div class="fa"><button class="primary" onclick="saveSettings()">Save Settings</button></div>
     </div>
-
   </div>
-
-
-  <!-- =========================
-       JAVASCRIPT
-  ========================== -->
-
-  <script>
-
-    /*
-      YOUR SUPABASE CONNECTION
-    */
-
-    const SUPABASE_URL =
-      "https://amhrnahjshsgelacqzyl.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
-
-
-    /*
-      CREATE SUPABASE CLIENT
-    */
-
-    const db =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
-
-
-    /*
-      SHOW MESSAGE
-    */
-
-    function showMessage(text, type) {
-
-      const box =
-        document.getElementById("message");
-
-      box.textContent = text;
-
-      box.className = type;
-
-    }
-
-
-    /*
-      LOGIN TAB
-    */
-
-    function showLogin() {
-
-      document.getElementById("loginForm")
-        .style.display = "block";
-
-      document.getElementById("signupForm")
-        .style.display = "none";
-
-      document.getElementById("loginTab")
-        .classList.add("active");
-
-      document.getElementById("signupTab")
-        .classList.remove("active");
-
-      document.getElementById("message")
-        .className = "";
-
-    }
-
-
-    /*
-      SIGNUP TAB
-    */
-
-    function showSignup() {
-
-      document.getElementById("loginForm")
-        .style.display = "none";
-
-      document.getElementById("signupForm")
-        .style.display = "block";
-
-      document.getElementById("loginTab")
-        .classList.remove("active");
-
-      document.getElementById("signupTab")
-        .classList.add("active");
-
-      document.getElementById("message")
-        .className = "";
-
-    }
-
-
-    /*
-      LOGIN
-    */
-
-    async function doLogin() {
-
-      const email =
-        document.getElementById("email")
-          .value
-          .trim();
-
-      const password =
-        document.getElementById("password")
-          .value;
-
-      const button =
-        document.getElementById("loginButton");
-
-
-      /*
-        CHECK INPUT
-      */
-
-      if (!email) {
-
-        showMessage(
-          "Please enter your email.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      if (!password) {
-
-        showMessage(
-          "Please enter your password.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /*
-        CHANGE BUTTON
-      */
-
-      button.disabled = true;
-
-      button.textContent =
-        "LOGGING IN...";
-
-
-      showMessage(
-        "Connecting to Supabase...",
-        "info"
-      );
-
-
-      try {
-
-        /*
-          SUPABASE LOGIN
-        */
-
-        const result =
-          await db.auth.signInWithPassword({
-
-            email: email,
-
-            password: password
-
-          });
-
-
-        const data =
-          result.data;
-
-        const error =
-          result.error;
-
-
-        /*
-          LOGIN ERROR
-        */
-
-        if (error) {
-
-          showMessage(
-            "Login failed: " +
-            error.message,
-            "error"
-          );
-
-          button.disabled = false;
-
-          button.textContent =
-            "LOGIN";
-
-          return;
-
-        }
-
-
-        /*
-          LOGIN SUCCESS
-        */
-
-        document.getElementById("loginPanel")
-          .style.display = "none";
-
-        document.getElementById("dashboard")
-          .style.display = "block";
-
-
-        const user =
-          data.user;
-
-
-        document.getElementById("userInfo")
-          .innerHTML =
-          "<strong>Email:</strong> " +
-          escapeHTML(user.email || "") +
-          "<br><br>" +
-          "<strong>User ID:</strong> " +
-          escapeHTML(user.id || "");
-
-
-        /*
-          LOAD PROPERTY COUNTS
-        */
-
-        loadPropertyCounts();
-
-      }
-
-      catch (error) {
-
-        showMessage(
-          "Connection error: " +
-          error.message,
-          "error"
-        );
-
-        button.disabled = false;
-
-        button.textContent =
-          "LOGIN";
-
-      }
-
-    }
-
-
-    /*
-      LOAD PROPERTY COUNTS
-    */
-
-    async function loadPropertyCounts() {
-
-      try {
-
-        const total =
-          await db
-            .from("room")
-            .select("*", {
-              count: "exact",
-              head: true
-            });
-
-
-        const available =
-          await db
-            .from("room")
-            .select("*", {
-              count: "exact",
-              head: true
-            })
-            .eq("status", "available");
-
-
-        const pending =
-          await db
-            .from("room")
-            .select("*", {
-              count: "exact",
-              head: true
-            })
-            .eq("approval_status", "pending");
-
-
-        document.getElementById(
-          "totalProperties"
-        ).textContent =
-          total.count ?? 0;
-
-
-        document.getElementById(
-          "availableProperties"
-        ).textContent =
-          available.count ?? 0;
-
-
-        document.getElementById(
-          "pendingProperties"
-        ).textContent =
-          pending.count ?? 0;
-
-      }
-
-      catch (error) {
-
-        console.log(
-          "Property count error:",
-          error.message
-        );
-
-      }
-
-    }
-
-
-    /*
-      OWNER SIGNUP
-    */
-
-    async function doSignup() {
-
-      const name =
-        document.getElementById("ownerName")
-          .value
-          .trim();
-
-      const email =
-        document.getElementById("ownerEmail")
-          .value
-          .trim();
-
-      const password =
-        document.getElementById("ownerPassword")
-          .value;
-
-      const phone =
-        document.getElementById("ownerPhone")
-          .value
-          .trim();
-
-
-      if (!name || !email || !password) {
-
-        showMessage(
-          "Please enter name, email and password.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      showMessage(
-        "Creating owner account...",
-        "info"
-      );
-
-
-      try {
-
-        const result =
-          await db.auth.signUp({
-
-            email: email,
-
-            password: password,
-
-            options: {
-
-              data: {
-
-                full_name: name,
-
-                phone: phone,
-
-                role: "owner"
-
-              }
-
-            }
-
-          });
-
-
-        if (result.error) {
-
-          showMessage(
-            "Sign up failed: " +
-            result.error.message,
-            "error"
-          );
-
-          return;
-
-        }
-
-
-        showMessage(
-          "Owner account created. Check email confirmation if required.",
-          "success"
-        );
-
-      }
-
-      catch (error) {
-
-        showMessage(
-          "Connection error: " +
-          error.message,
-          "error"
-        );
-
-      }
-
-    }
-
-
-    /*
-      LOGOUT
-    */
-
-    async function doLogout() {
-
-      await db.auth.signOut();
-
-
-      document.getElementById("dashboard")
-        .style.display = "none";
-
-
-      document.getElementById("loginPanel")
-        .style.display = "block";
-
-
-      document.getElementById("password")
-        .value = "";
-
-
-      document.getElementById("loginButton")
-        .disabled = false;
-
-
-      document.getElementById("loginButton")
-        .textContent = "LOGIN";
-
-
-      showMessage(
-        "You have been logged out.",
-        "info"
-      );
-
-    }
-
-
-    /*
-      SAFE HTML
-    */
-
-    function escapeHTML(value) {
-
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-    }
-
-
-    /*
-      CATCH JAVASCRIPT ERRORS
-    */
-
-    window.addEventListener(
-      "error",
-      function(event) {
-
-        showMessage(
-          "Page error: " +
-          event.message,
-          "error"
-        );
-
-      }
-    );
-
-  </script>
-
+</section>
+
+<p class="muted" style="margin-top:20px">© 2026 SastoRoomFinder • Better Rooms • Happier People • Nepal</p>
+</main></div></div>
+
+<div id="sponsorModal" class="modal hidden"><div class="box">
+<div class="mh"><h2 id="sponsorMt">Add Advertisement</h2><button class="close" onclick="closeSponsorModal()">✕</button></div>
+<div class="form">
+<input id="sponsorId" type="hidden">
+<div class="field"><label>Sponsor / Business Name *</label><input id="sponsorName" placeholder="ABC Furniture"></div>
+<div class="field"><label>Advertisement Title *</label><input id="sponsorTitle" placeholder="Special offer for room seekers"></div>
+<div class="field"><label>Position</label><select id="sponsorPosition"><option value="homepage">Homepage</option><option value="top">Top Banner</option><option value="sidebar">Sidebar</option><option value="listing">Property Listings</option><option value="footer">Footer</option></select></div>
+<div class="field"><label>Status</label><select id="sponsorStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+<div class="field"><label>Start Date</label><input id="sponsorStart" type="date"></div>
+<div class="field"><label>End Date</label><input id="sponsorEnd" type="date"></div>
+<div class="field full"><label>Website / YouTube Link</label><input id="sponsorLink" type="url" placeholder="https://..."></div>
+<div class="field"><label>Contact Phone</label><input id="sponsorPhone" placeholder="98XXXXXXXX"></div>
+<div class="field"><label>Logo / Banner Image</label><input id="sponsorImage" type="file" accept="image/jpeg,image/png,image/webp"></div>
+<div class="field full"><label>Description</label><textarea id="sponsorDescription" placeholder="Short advertisement text..."></textarea></div>
+<div id="sponsorMsg" class="field full" style="font-weight:700"></div>
+<div class="fa"><button class="secondary" onclick="closeSponsorModal()">Cancel</button><button class="primary" onclick="saveSponsor()">Save Advertisement</button></div>
+</div></div></div>
+
+<div id="modal" class="modal hidden"><div class="box"><div class="mh"><h2 id="mt">Add Property</h2><button class="close" onclick="closeModal()">✕</button></div>
+<div class="form">
+<input id="id" type="hidden">
+<div class="field"><label>Property Title *</label><input id="title" placeholder="2 BHK Flat for Rent"></div>
+<div class="field"><label>Location *</label><input id="location" placeholder="Kathmandu, Lalitpur"></div>
+<div class="field"><label>Price / Month (Rs.) *</label><input id="price" type="number" min="0" placeholder="15000"></div>
+<div class="field"><label>Room / Property Type</label><select id="type"><option>Single Room</option><option>1BHK</option><option>2BHK</option><option>3BHK</option><option>Flat</option><option>House</option><option>Apartment</option><option>Office</option><option>Land</option><option>Shop</option></select></div>
+<div class="field"><label>Phone / WhatsApp</label><input id="phone" placeholder="98XXXXXXXX"></div>
+<div class="field"><label>Status</label><select id="status"><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option></select></div>
+<div class="field"><label>Bedrooms</label><input id="bedrooms" type="number" min="0" placeholder="2"></div>
+<div class="field"><label>Bathrooms</label><input id="bathrooms" type="number" min="0" placeholder="1"></div>
+<div class="field"><label>Address / Area</label><input id="address" placeholder="Tole, street, nearby landmark"></div>
+<div class="field"><label>Furnished</label><select id="furnished"><option value="false">No</option><option value="true">Yes</option></select></div>
+<div class="field full"><label>Description</label><textarea id="desc" placeholder="Describe rooms, facilities, parking, water, electricity, rules, nearby places..."></textarea></div>
+<div class="field full"><label>Photos (JPG/PNG/WebP)</label><input id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple><small class="muted">Use clear property photos. Existing photos are kept when editing unless new photos are selected.</small></div>
+<div id="sm" class="field full" style="font-weight:700"></div>
+<div class="fa"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="saveRoom()">Save Property</button></div>
+</div></div></div>
+
+<script>
+const URL="https://amhrnahjshsgelacqzyl.supabase.co",KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+let db=null; let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
+
+const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const $=id=>document.getElementById(id);
+const isAdmin=()=>profile?.role==="admin";
+
+function setAuthMode(m){mode=m;$("loginFields").classList.toggle("hidden",m!=="login");$("signupFields").classList.toggle("hidden",m!=="signup");$("loginTab").classList.toggle("active",m==="login");$("signupTab").classList.toggle("active",m==="signup");$("lm").textContent=""}
+
+async function login(){
+  const email=$("email").value.trim(),password=$("pass").value;
+  if(!db){$("lm").textContent="System is still loading. Please wait a moment and try again.";return}
+  $("lm").textContent="Logging in...";
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){$("lm").textContent=error.message;return} await start();
+}
+async function signupOwner(){
+  const name=$("signupName").value.trim(),phone=$("signupPhone").value.trim(),email=$("signupEmail").value.trim(),password=$("signupPass").value;
+  if(!name||!email||password.length<6){$("lm").textContent="Enter name, email and a password of at least 6 characters.";return}
+  $("lm").textContent="Creating owner account...";
+  const {data,error}=await db.auth.signUp({email,password,options:{data:{full_name:name,phone:phone,role:"owner"}}});
+  if(error){$("lm").textContent=error.message;return}
+  if(!data.session){$("lm").style.color="#16834f";$("lm").textContent="Account created. Check your email if confirmation is enabled, then log in.";return}
+  await start();
+}
+async function logout(){await db.auth.signOut();location.reload()}
+
+async function start(){
+  const {data:{user}}=await db.auth.getUser(); me=user;
+  if(!me){return}
+  const {data,error}=await db.from("profiles").select("*").eq("id",me.id).maybeSingle();
+  if(error){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Profile error: "+error.message;
+    return;
+  }
+  profile=data||{id:me.id,role:"owner",full_name:me.user_metadata?.full_name||"House Owner",phone:me.user_metadata?.phone||""};
+  if(!profile.role)profile.role="owner";
+  $("login").classList.add("hidden");$("app").classList.remove("hidden");
+  applyRoleUI();await loadRooms();loadInquiries();if(isAdmin()){loadOwners();loadSponsors();}
+}
+function applyRoleUI(){
+  const admin=isAdmin();$("who").textContent=admin?(profile.full_name||"Admin"):(profile.full_name||"House Owner");
+  $("welcomeTitle").textContent=admin?"👋 Welcome, Admin!":"👋 Welcome, House Owner!";
+  $("welcomeText").textContent=admin?"Review owner listings, manage properties and keep the marketplace clean.":"List and manage your properties. Your new listings are reviewed before publishing.";
+  $("roomsTitle").textContent=admin?"⌂ All Properties":"⌂ My Properties";
+  $("sideTitle").textContent=admin?"SastoRoomFinder Admin":"SastoRoomFinder Owner";
+  document.querySelectorAll(".adminOnly").forEach(x=>x.classList.toggle("hidden",!admin));
+  document.querySelectorAll(".ownerOnly").forEach(x=>x.classList.toggle("hidden",admin));
+}
+function go(id){
+  // Dashboard contains the Properties section. Never hide dashboard when opening Properties.
+  $("dashboard").classList.remove("hidden");
+  ["pending","owners","inquiries","sponsors","settings"].forEach(x=>{
+    const el=$(x); if(el) el.classList.toggle("hidden",x!==id);
+  });
+  document.querySelectorAll(".nav").forEach(b=>b.classList.remove("active"));
+  const nav=document.querySelector('[data-nav="'+id+'"]');
+  if(nav)nav.classList.add("active");
+  if(id==="dashboard"){
+    window.scrollTo({top:0,behavior:"smooth"});
+  }else if(id==="rooms"){
+    $("rooms").scrollIntoView({behavior:"smooth",block:"start"});
+  }else{
+    const el=$(id); if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  if(id==="rooms")loadRooms();
+  if(id==="pending")loadRooms();
+  if(id==="owners")loadOwners();
+  if(id==="inquiries")loadInquiries();
+  if(id==="sponsors")loadSponsors();
+  if(id==="settings")loadSettings();
+}
+async function loadRooms(){
+  $("body").innerHTML='<tr><td colspan="8" class="empty">Loading properties...</td></tr>';
+  let q=db.from("room").select("*");
+  if(!isAdmin() && me)q=q.eq("owner_id",me.id);
+  let {data,error}=await q.order("created_at",{ascending:false});
+  if(error && /created_at/i.test(error.message)){
+    q=db.from("room").select("*");
+    if(!isAdmin() && me)q=q.eq("owner_id",me.id);
+    ({data,error}=await q);
+  }
+  if(error){
+    $("body").innerHTML='<tr><td colspan="8" class="empty errorBox">Could not load properties:<br>'+esc(error.message)+'</td></tr>';
+    $("summary").textContent="Properties could not be loaded.";
+    return;
+  }
+  rooms=data||[];
+  renderRooms();
+  renderPending();
+  updateStats();
+}
+function updateStats(){
+  const available=rooms.filter(r=>r.status==="available"&&r.approval_status==="approved").length;
+  const pending=rooms.filter(r=>r.approval_status==="pending").length;
+  const unavailable=rooms.filter(r=>["rented","sold"].includes(r.status)).length;
+  $("total").textContent=rooms.length;$("avail").textContent=available;$("pendingCount").textContent=pending;$("rent").textContent=unavailable;
+  $("s3label").textContent=isAdmin()?"Pending Review":"Pending Review";
+}
+function renderRooms(){
+  const term=($("search").value||"").toLowerCase(),sf=$("statusFilter").value;
+  let list=rooms.filter(r=>(!term||String(r.title+" "+r.location).toLowerCase().includes(term))&&(!sf||r.status===sf||r.approval_status===sf));
+  $("body").innerHTML=list.length?list.map(r=>{
+    const p=Array.isArray(r.photos)&&r.photos[0];
+    const status=r.approval_status==="pending"?"pending":r.approval_status==="rejected"?"rejected":(r.status||"hidden");
+    const owner=r.owner_name||r.owner_email||"—";
+    let acts='<button class="ib" onclick="editRoom('+JSON.stringify(r.id)+')">✎</button>';
+    if(isAdmin()&&r.approval_status==="pending")acts+='<button class="ib" title="Approve" onclick="approveRoom('+JSON.stringify(r.id)+')">✓</button><button class="ib del" title="Reject" onclick="rejectRoom('+JSON.stringify(r.id)+')">✕</button>';
+    acts+='<button class="ib del" onclick="delRoom('+JSON.stringify(r.id)+')">🗑</button>';
+    return '<tr><td>'+(p?'<img class="thumb" src="'+esc(p)+'">':'🏠')+'</td><td><b>'+esc(r.title)+'</b></td><td>'+esc(r.location)+'</td><td>'+esc(r.room_type)+'</td><td>Rs. '+Number(r.price||0).toLocaleString()+'</td><td><span class="badge '+esc(status)+'">'+esc(status)+'</span></td><td>'+esc(owner)+'</td><td><div class="actions">'+acts+'</div></td></tr>'
+  }).join(""):'<tr><td colspan="8" class="empty">No properties found.</td></tr>';
+  $("summary").textContent="Showing "+list.length+" of "+rooms.length+" properties";
+}
+function renderPending(){
+  if(!isAdmin())return;
+  const list=rooms.filter(r=>r.approval_status==="pending");
+  $("pendingBody").innerHTML=list.length?list.map(r=>'<tr><td><b>'+esc(r.title)+'</b></td><td>'+esc(r.owner_name||r.owner_email||"—")+'</td><td>'+esc(r.location)+'</td><td>Rs. '+Number(r.price||0).toLocaleString()+'</td><td>'+new Date(r.created_at).toLocaleString()+'</td><td><button class="primary" onclick="approveRoom('+JSON.stringify(r.id)+')">Approve</button> <button class="danger" onclick="rejectRoom('+JSON.stringify(r.id)+')">Reject</button></td></tr>').join(""):'<tr><td colspan="6" class="empty">No pending owner submissions.</td></tr>';
+}
+async function approveRoom(id){if(!confirm("Approve this property and allow it to be publishable?"))return;const {error}=await db.from("room").update({approval_status:"approved",status:"available",rejection_reason:null}).eq("id",id);if(error)alert(error.message);else{await loadRooms();$("activity").innerHTML='<div class="act">Property approved <small class="muted">Just now</small></div>'}}
+async function rejectRoom(id){const reason=prompt("Optional rejection reason:","Please update the property details.");if(reason===null)return;const {error}=await db.from("room").update({approval_status:"rejected",rejection_reason:reason}).eq("id",id);if(error)alert(error.message);else await loadRooms()}
+
+function openAdd(){
+  if(!me){alert("Please log in first.");return}
+  clearForm();
+  $("mt").textContent=isAdmin()?"Add Property":"Add Property";
+  $("modal").classList.remove("hidden");
+}
+function closeModal(){$("modal").classList.add("hidden")}
+function clearForm(){["id","title","location","price","phone","bedrooms","bathrooms","address","desc"].forEach(x=>$(x).value="");$("type").value="Single Room";$("status").value="available";$("furnished").value="false";$("photos").value="";$("sm").textContent=""}
+function editRoom(i){
+  const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
+  if(!isAdmin()&&String(r.owner_id)!==String(me.id))return alert("You can only edit your own properties.");
+  $("id").value=r.id;$("title").value=r.title||"";$("location").value=r.location||"";$("price").value=r.price||"";$("type").value=r.room_type||"Single Room";$("phone").value=r.phone||"";$("desc").value=r.description||"";$("status").value=r.status||"available";$("bedrooms").value=r.bedrooms??"";$("bathrooms").value=r.bathrooms??"";$("address").value=r.address||"";$("furnished").value=String(!!r.furnished);$("photos").value="";$("mt").textContent="Edit Property";$("modal").classList.remove("hidden");
+}
+async function upload(fs){
+  const out=[];
+  for(const f of fs){
+    if(f.size>6*1024*1024)throw new Error("Each image must be 6MB or smaller.");
+    const ext=(f.name.split(".").pop()||"jpg").toLowerCase(),name=(me.id||"admin")+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+    const {error}=await db.storage.from("room-images").upload(name,f,{upsert:false,contentType:f.type});
+    if(error)throw error;
+    out.push(db.storage.from("room-images").getPublicUrl(name).data.publicUrl);
+  }
+  return out;
+}
+async function saveRoom(){
+  const titleV=$("title").value.trim(),loc=$("location").value.trim(),priceV=$("price").value;
+  if(!titleV||!loc||!priceV){$("sm").style.color="#b42318";$("sm").textContent="Fill Title, Location and Price.";return}
+  $("sm").style.color="#52708f";$("sm").textContent="Saving...";
+  try{
+    const fs=[...$("photos").files],urls=fs.length?await upload(fs):[];
+    const existing=rooms.find(r=>String(r.id)===String($("id").value));
+    const payload={title:titleV,location:loc,price:Number(priceV),room_type:$("type").value,phone:$("phone").value.trim(),description:$("desc").value.trim(),status:$("status").value,bedrooms:$("bedrooms").value?Number($("bedrooms").value):null,bathrooms:$("bathrooms").value?Number($("bathrooms").value):null,address:$("address").value.trim(),furnished:$("furnished").value==="true"};
+    if(urls.length)payload.photos=[...(existing?.photos||[]),...urls];
+    if(isAdmin())payload.approval_status=existing?.approval_status||"approved";
+    else if(!existing)payload.approval_status="pending";
+    else payload.approval_status="pending";
+    let res;
+    if($("id").value)res=await db.from("room").update(payload).eq("id",$("id").value);
+    else {payload.owner_id=me.id;res=await db.from("room").insert(payload)}
+    if(res.error)throw res.error;
+    $("sm").style.color="#16834f";$("sm").textContent=isAdmin()?"Saved successfully!":"Saved. Your listing is pending admin review.";
+    await loadRooms();setTimeout(closeModal,800);
+  }catch(e){$("sm").style.color="#b42318";$("sm").textContent="Save failed: "+e.message}
+}
+async function delRoom(i){
+  const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
+  if(!isAdmin()&&String(r.owner_id)!==String(me.id))return alert("You can only delete your own properties.");
+  if(!confirm("Delete "+(r.title||"this property")+"?"))return;
+  const {error}=await db.from("room").delete().eq("id",i);if(error)alert(error.message);else loadRooms();
+}
+async function loadOwners(){
+  if(!isAdmin())return;
+  const {data,error}=await db.from("profiles").select("id,full_name,email,phone,created_at").eq("role","owner").order("created_at",{ascending:false});
+  if(error){$("ownersBody").innerHTML='<tr><td colspan="5" class="empty">'+esc(error.message)+'</td></tr>';return}
+  owners=data||[];
+  $("ownersBody").innerHTML=owners.length?owners.map(o=>'<tr><td>'+esc(o.full_name||"—")+'</td><td>'+esc(o.email||"—")+'</td><td>'+esc(o.phone||"—")+'</td><td>'+new Date(o.created_at).toLocaleDateString()+'</td><td>'+rooms.filter(r=>String(r.owner_id)===String(o.id)).length+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">No owners found.</td></tr>';
+}
+async function loadInquiries(){
+  let q=db.from("inquiries").select("*").order("created_at",{ascending:false}).limit(100);
+  if(!isAdmin()&&me)q=q.eq("owner_id",me.id);
+  const {data,error}=await q;
+  if(error){$("inqBody").innerHTML='<tr><td colspan="6" class="empty">'+esc(error.message)+'</td></tr>';return}
+  inquiries=data||[];
+  $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td></tr>').join(""):'<tr><td colspan="6" class="empty">No inquiries yet.</td></tr>';
+}
+
+async function loadSettings(){
+  if(!isAdmin())return;
+  const msg=$("settingsMsg"); if(msg)msg.textContent="Loading...";
+  const {data,error}=await db.from("site_settings").select("*").limit(1).maybeSingle();
+  if(error){
+    if(msg){msg.style.color="#b42318";msg.textContent="Settings error: "+error.message}
+    return;
+  }
+  const s=data||{};
+  $("setSiteName").value=s.site_name||s.name||"SastoRoomFinder";
+  $("setLocation").value=s.location||"";
+  $("setAbout").value=s.about||s.description||"";
+  $("setYoutube").value=s.youtube_url||s.youtube||"";
+  $("setPhone").value=s.phone||s.contact_phone||"";
+  $("setFooter").value=s.footer_text||"";
+  if(msg){msg.style.color="#16834f";msg.textContent=data?"Settings loaded.":"No settings row found yet."}
+}
+async function saveSettings(){
+  if(!isAdmin())return;
+  const msg=$("settingsMsg"); if(msg){msg.style.color="#52708f";msg.textContent="Saving..."}
+  try{
+    const payload={
+      site_name:$("setSiteName").value.trim(),
+      location:$("setLocation").value.trim(),
+      about:$("setAbout").value.trim(),
+      youtube_url:$("setYoutube").value.trim()||null,
+      phone:$("setPhone").value.trim(),
+      footer_text:$("setFooter").value.trim()
+    };
+    const {data:existing,error:readErr}=await db.from("site_settings").select("id").limit(1).maybeSingle();
+    if(readErr)throw readErr;
+    let res;
+    if(existing?.id)res=await db.from("site_settings").update(payload).eq("id",existing.id);
+    else res=await db.from("site_settings").insert(payload);
+    if(res.error)throw res.error;
+    if(msg){msg.style.color="#16834f";msg.textContent="Settings saved successfully."}
+  }catch(e){
+    if(msg){msg.style.color="#b42318";msg.textContent="Settings could not be saved: "+e.message}
+  }
+}
+
+async function loadSponsors(){
+  if(!isAdmin())return;
+  const {data,error}=await db.from("sponsors").select("*").order("created_at",{ascending:false});
+  if(error){$("sponsorBody").innerHTML='<tr><td colspan="8" class="empty">'+esc(error.message)+'</td></tr>';return}
+  sponsors=data||[];renderSponsors();
+}
+function renderSponsors(){
+  if(!isAdmin())return;
+  const term=($("sponsorSearch")?.value||"").toLowerCase(), sf=$("sponsorStatusFilter")?.value||"";
+  const today=new Date().toISOString().slice(0,10);
+  const list=sponsors.filter(x=>
+    (!term||String((x.sponsor_name||"")+" "+(x.title||"")).toLowerCase().includes(term)) &&
+    (!sf||x.status===sf)
+  );
+  $("sponsorBody").innerHTML=list.length?list.map(x=>{
+    const img=x.image_url?'<img class="thumb" src="'+esc(x.image_url)+'">':'📢';
+    const link=x.link_url?'<a href="'+esc(x.link_url)+'" target="_blank" rel="noopener">Open ↗</a>':'—';
+    const dates=(x.start_date||"—")+" → "+(x.end_date||"—");
+    return '<tr><td>'+img+'</td><td><b>'+esc(x.sponsor_name)+'</b><br><small>'+esc(x.phone||"")+'</small></td><td>'+esc(x.title)+'</td><td>'+esc(x.position||"homepage")+'</td><td>'+link+'</td><td><span class="badge '+(x.status==="active"?"approved":"hiddenst")+'">'+esc(x.status)+'</span></td><td>'+esc(dates)+'</td><td><div class="actions"><button class="ib" onclick="editSponsor('+JSON.stringify(x.id)+')">✎</button><button class="ib del" onclick="delSponsor('+JSON.stringify(x.id)+')">🗑</button></div></td></tr>'
+  }).join(""):'<tr><td colspan="8" class="empty">No advertisements found.</td></tr>';
+}
+function openSponsorAdd(){
+  if(!isAdmin())return;
+  clearSponsorForm();$("sponsorMt").textContent="Add Advertisement";$("sponsorModal").classList.remove("hidden");
+}
+function closeSponsorModal(){$("sponsorModal").classList.add("hidden")}
+function clearSponsorForm(){
+  ["sponsorId","sponsorName","sponsorTitle","sponsorStart","sponsorEnd","sponsorLink","sponsorPhone","sponsorDescription"].forEach(x=>$(x).value="");
+  $("sponsorPosition").value="homepage";$("sponsorStatus").value="active";$("sponsorImage").value="";$("sponsorMsg").textContent="";
+}
+function editSponsor(i){
+  const x=sponsors.find(a=>String(a.id)===String(i));if(!x)return;
+  $("sponsorId").value=x.id;$("sponsorName").value=x.sponsor_name||"";$("sponsorTitle").value=x.title||"";
+  $("sponsorPosition").value=x.position||"homepage";$("sponsorStatus").value=x.status||"active";
+  $("sponsorStart").value=x.start_date||"";$("sponsorEnd").value=x.end_date||"";$("sponsorLink").value=x.link_url||"";
+  $("sponsorPhone").value=x.phone||"";$("sponsorDescription").value=x.description||"";$("sponsorImage").value="";
+  $("sponsorMsg").textContent="";$("sponsorMt").textContent="Edit Advertisement";$("sponsorModal").classList.remove("hidden");
+}
+async function uploadSponsorImage(f){
+  if(!f)return null;
+  if(f.size>8*1024*1024)throw new Error("Banner/logo must be 8MB or smaller.");
+  const ext=(f.name.split(".").pop()||"jpg").toLowerCase(),name="sponsors/"+me.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+  const {error}=await db.storage.from("room-images").upload(name,f,{upsert:false,contentType:f.type});
+  if(error)throw error;
+  return db.storage.from("room-images").getPublicUrl(name).data.publicUrl;
+}
+async function saveSponsor(){
+  if(!isAdmin())return;
+  const sponsor_name=$("sponsorName").value.trim(),title=$("sponsorTitle").value.trim();
+  if(!sponsor_name||!title){$("sponsorMsg").style.color="#b42318";$("sponsorMsg").textContent="Fill Sponsor Name and Advertisement Title.";return}
+  $("sponsorMsg").style.color="#52708f";$("sponsorMsg").textContent="Saving...";
+  try{
+    const existing=sponsors.find(x=>String(x.id)===String($("sponsorId").value));
+    const file=$("sponsorImage").files[0];
+    const image_url=file?await uploadSponsorImage(file):(existing?.image_url||null);
+    const payload={
+      sponsor_name,title,position:$("sponsorPosition").value,status:$("sponsorStatus").value,
+      start_date:$("sponsorStart").value||null,end_date:$("sponsorEnd").value||null,
+      link_url:$("sponsorLink").value.trim()||null,phone:$("sponsorPhone").value.trim()||null,
+      description:$("sponsorDescription").value.trim()||null,image_url
+    };
+    let res=$("sponsorId").value
+      ?await db.from("sponsors").update(payload).eq("id",$("sponsorId").value)
+      :await db.from("sponsors").insert(payload);
+    if(res.error)throw res.error;
+    $("sponsorMsg").style.color="#16834f";$("sponsorMsg").textContent="Advertisement saved successfully!";
+    await loadSponsors();setTimeout(closeSponsorModal,700);
+  }catch(e){$("sponsorMsg").style.color="#b42318";$("sponsorMsg").textContent="Save failed: "+e.message}
+}
+async function delSponsor(i){
+  if(!isAdmin())return;
+  const x=sponsors.find(a=>String(a.id)===String(i));if(!x)return;
+  if(!confirm("Delete advertisement '"+(x.title||"this ad")+"'?"))return;
+  const {error}=await db.from("sponsors").delete().eq("id",i);
+  if(error)alert(error.message);else await loadSponsors();
+}
+
+async function check(){const {data:{session}}=await db.auth.getSession();if(session)await start()}
+async function boot(){
+  try{
+    await window.__srfLoadSupabase();
+    db=window.supabase.createClient(URL,KEY);
+    const status=$("lm"); if(status) status.textContent="System ready.";
+    db.auth.onAuthStateChange((_event,session)=>{if(session&&!me)setTimeout(start,0)});
+    await check();
+  }catch(e){
+    const status=$("lm");
+    if(status){status.style.color="#b42318";status.textContent="Script error: "+e.message;}
+    console.error(e);
+  }
+}
+boot();
+</script>
 </body>
 </html>
