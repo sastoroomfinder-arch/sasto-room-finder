@@ -1,8 +1,9 @@
-/*
-  SastoRoomFinder Cloudflare Pages security headers
-  This CSP allows the existing admin.html inline JavaScript and
-  Supabase client connections used by the site.
-*/
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://esm.sh; connect-src 'self' https://amhrnahjshsgelacqzyl.supabase.co wss://amhrnahjshsgelacqzyl.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; frame-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'self';
+/admin.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://esm.sh; connect-src 'self' https://amhrnahjshsgelacqzyl.supabase.co wss://amhrnahjshsgelacqzyl.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; frame-src 'self' https://*.supabase.co https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+
+/admin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://esm.sh; connect-src 'self' https://amhrnahjshsgelacqzyl.supabase.co wss://amhrnahjshsgelacqzyl.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; frame-src 'self' https://*.supabase.co https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
