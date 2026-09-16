@@ -1,11 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- SastoRoomFinder Admin: all-tools fixed build -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SastoRoomFinder — Admin & House Owner</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{--b:#0879e8;--n:#07347c;--o:#f5a623;--g:#20b879;--r:#ef4444;--bg:#f4f9ff;--line:#dce8f7;--muted:#71839b}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--n)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -20,7 +19,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 .filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 17px;border-bottom:1px solid var(--line)}.filters input,.filters select{padding:8px;border:1px solid #cbdcf0;border-radius:8px}.empty{text-align:center;padding:30px;color:var(--muted)}
 @media(max-width:950px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}main{padding:12px}.brand{font-size:19px}.tag{display:none}.stats{gap:8px}.stat{padding:11px}.form{grid-template-columns:1fr}.field.full,.fa{grid-column:auto}.head{padding:0 12px}}
-.errorBox{color:#b42318;background:#fff1f1;border:1px solid #ffcaca;border-radius:8px;padding:18px;font-weight:700}.msg{font-size:13px;margin:8px 0}</style>
+</style>
 </head>
 <body>
 
@@ -32,7 +31,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
     <div id="loginFields">
       <label>Email</label><input id="email" type="email" placeholder="Your email">
       <label>Password</label><input id="pass" type="password" placeholder="Your password">
-      <button class="primary" style="width:100%;margin-top:17px" onclick="doLogin()">Login</button>
+      <button class="primary" style="width:100%;margin-top:17px" onclick="login()">Login</button>
     </div>
     <div id="signupFields" class="hidden">
       <label>Full Name</label><input id="signupName" placeholder="Your name">
@@ -55,7 +54,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <aside>
   <button class="nav active" data-nav="dashboard" onclick="go('dashboard')">⌂ &nbsp; Dashboard</button>
   <button class="nav" data-nav="rooms" onclick="go('rooms')">▣ &nbsp; My / All Properties</button>
-  <button class="nav" data-nav="add" onclick="openAdd()">＋ &nbsp; Add Property</button>
+  <button class="nav ownerOnly" data-nav="add" onclick="openAdd()">＋ &nbsp; Add Property</button>
   <button class="nav adminOnly" data-nav="pending" onclick="go('pending')">⏳ &nbsp; Owner Approvals</button>
   <button class="nav adminOnly" data-nav="owners" onclick="go('owners')">👥 &nbsp; House Owners</button>
   <button class="nav" data-nav="inquiries" onclick="go('inquiries')">✉ &nbsp; Inquiries</button>
@@ -75,13 +74,13 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 
 <div class="grid">
 <section id="rooms" class="panel">
-  <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary" onclick="openAdd()">＋ Add Property</button></div></div>
+  <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary ownerOnly" onclick="openAdd()">＋ Add Property</button></div></div>
   <div class="filters"><input id="search" placeholder="Search title or location" oninput="renderRooms()"><select id="statusFilter" onchange="renderRooms()"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option><option value="rejected">Rejected</option></select></div>
   <div class="table"><table><thead><tr><th>Photo</th><th>Title</th><th>Location</th><th>Type</th><th>Price</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
   <div id="summary" class="muted" style="padding:12px 17px"></div>
 </section>
 <aside style="display:block;border:0;padding:0">
-  <div class="panel q"><h2>⚡ Quick Actions</h2><button onclick="openAdd()">🟢 &nbsp; <b>Add Property</b><br><small>Add a new room/house</small></button><button onclick="go('rooms')">🏠 &nbsp; <b>View Properties</b><br><small>Manage listings</small></button><button class="adminOnly" onclick="go('pending')">⏳ &nbsp; <b>Review Submissions</b><br><small>Approve owner listings</small></button></div>
+  <div class="panel q"><h2>⚡ Quick Actions</h2><button class="ownerOnly" onclick="openAdd()">🟢 &nbsp; <b>List Property</b><br><small>Add a new room/house</small></button><button onclick="go('rooms')">🏠 &nbsp; <b>View Properties</b><br><small>Manage listings</small></button><button class="adminOnly" onclick="go('pending')">⏳ &nbsp; <b>Review Submissions</b><br><small>Approve owner listings</small></button></div>
   <div class="panel activity"><h2>🕒 Recent Activity</h2><div id="activity"><div class="act">Portal connected</div></div></div>
   <div class="help"><h2>💡 Best practice</h2><p class="muted">Use real photos, exact locations and a working phone/WhatsApp number. Mark a property rented as soon as it is no longer available.</p></div>
 </aside>
@@ -100,21 +99,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
   <div class="muted" style="padding:12px 17px">Active advertisements are intended to be displayed by the public website.</div>
 </section>
 
-<section id="settings" class="panel hidden" style="margin-top:16px">
-  <div class="ph"><h2>⚙ Site Settings</h2><button class="secondary" onclick="loadSettings()">↻ Refresh</button></div>
-  <div style="padding:18px">
-    <div id="settingsMsg" class="msg"></div>
-    <div class="form">
-      <div class="field"><label>Site Name</label><input id="setSiteName" placeholder="SastoRoomFinder"></div>
-      <div class="field"><label>Location</label><input id="setLocation" placeholder="Kathmandu, Nepal"></div>
-      <div class="field full"><label>About / Description</label><textarea id="setAbout" placeholder="About SastoRoomFinder..."></textarea></div>
-      <div class="field"><label>YouTube URL</label><input id="setYoutube" type="url" placeholder="https://youtube.com/..."></div>
-      <div class="field"><label>Contact Phone</label><input id="setPhone" placeholder="98XXXXXXXX"></div>
-      <div class="field full"><label>Footer Text</label><input id="setFooter" placeholder="Better Rooms • Happier People • Nepal"></div>
-      <div class="fa"><button class="primary" onclick="saveSettings()">Save Settings</button></div>
-    </div>
-  </div>
-</section>
+<section id="settings" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>⚙ Settings</h2></div><div style="padding:18px"><p><b>Security:</b> Supabase Auth + Row Level Security should protect owner data.</p><p><b>Publishing rule:</b> Owner submissions should remain pending until an admin approves them.</p><p><b>Public website:</b> Query only approved + available properties when showing live listings.</p></div></section>
 
 <p class="muted" style="margin-top:20px">© 2026 SastoRoomFinder • Better Rooms • Happier People • Nepal</p>
 </main></div></div>
@@ -157,9 +142,260 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 </div></div></div>
 
 <script>
-const URL="https://amhrnahjshsgelacqzyl.supabase.co",KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
-const db=supabase.createClient(URL,KEY); let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
+const SUPABASE_URL="https://amhrnahjshsgelacqzyl.supabase.co";
+const SUPABASE_KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+let db=null;
+try{
+  if(!window.supabase) throw new Error("Supabase library did not load. Please refresh the page.");
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+}catch(e){
+  window.addEventListener("DOMContentLoaded",()=>{$("lm").textContent="Connection error: "+e.message});
+} let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
 
 const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const $=id=>document.getElementById(id);
-const isAdmin=()=>profile?.role==="admi
+const isAdmin=()=>profile?.role==="admin";
+
+function setAuthMode(m){mode=m;$("loginFields").classList.toggle("hidden",m!=="login");$("signupFields").classList.toggle("hidden",m!=="signup");$("loginTab").classList.toggle("active",m==="login");$("signupTab").classList.toggle("active",m==="signup");$("lm").textContent=""}
+
+async function login(){
+  const email=$("email").value.trim(),password=$("pass").value;
+  $("lm").style.color="#52708f";
+  $("lm").textContent="Logging in...";
+  try{
+    if(!db) throw new Error("Supabase connection is not ready. Refresh the page and try again.");
+    if(!email||!password) throw new Error("Please enter your email and password.");
+    const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error) throw error;
+    if(!data?.user) throw new Error("Login did not return a user.");
+    await start();
+  }catch(e){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Login failed: "+(e.message||e);
+  }
+}
+async function signupOwner(){
+  const name=$("signupName").value.trim(),phone=$("signupPhone").value.trim(),email=$("signupEmail").value.trim(),password=$("signupPass").value;
+  if(!name||!email||password.length<6){$("lm").textContent="Enter name, email and a password of at least 6 characters.";return}
+  $("lm").textContent="Creating owner account...";
+  const {data,error}=await db.auth.signUp({email,password,options:{data:{full_name:name,phone:phone,role:"owner"}}});
+  if(error){$("lm").textContent=error.message;return}
+  if(!data.session){$("lm").style.color="#16834f";$("lm").textContent="Account created. Check your email if confirmation is enabled, then log in.";return}
+  await start();
+}
+async function logout(){await db.auth.signOut();location.reload()}
+
+async function start(){
+  const {data:{user}}=await db.auth.getUser(); me=user;
+  if(!me){return}
+  const {data,error}=await db.from("profiles").select("*").eq("id",me.id).maybeSingle();
+  if(error){$("lm").textContent="Profile error: "+error.message;return}
+  profile=data||{id:me.id,role:"owner",full_name:me.user_metadata?.full_name||"House Owner",phone:me.user_metadata?.phone||""};
+  if(!profile.role)profile.role="owner";
+  $("login").classList.add("hidden");$("app").classList.remove("hidden");
+  applyRoleUI();await loadRooms();loadInquiries();if(isAdmin()){loadOwners();loadSponsors();}
+}
+function applyRoleUI(){
+  const admin=isAdmin();$("who").textContent=admin?(profile.full_name||"Admin"):(profile.full_name||"House Owner");
+  $("welcomeTitle").textContent=admin?"👋 Welcome, Admin!":"👋 Welcome, House Owner!";
+  $("welcomeText").textContent=admin?"Review owner listings, manage properties and keep the marketplace clean.":"List and manage your properties. Your new listings are reviewed before publishing.";
+  $("roomsTitle").textContent=admin?"⌂ All Properties":"⌂ My Properties";
+  $("sideTitle").textContent=admin?"SastoRoomFinder Admin":"SastoRoomFinder Owner";
+  document.querySelectorAll(".adminOnly").forEach(x=>x.classList.toggle("hidden",!admin));
+  document.querySelectorAll(".ownerOnly").forEach(x=>x.classList.toggle("hidden",admin));
+}
+function go(id){
+  ["dashboard","rooms","pending","owners","inquiries","sponsors","settings"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+  if(id==="rooms")$("rooms").scrollIntoView({behavior:"smooth"});
+  else $(id).scrollIntoView({behavior:"smooth"});
+}
+async function loadRooms(){
+  let q=db.from("room").select("*").order("created_at",{ascending:false});
+  if(!isAdmin() && me)q=q.eq("owner_id",me.id);
+  const {data,error}=await q;
+  if(error){$("body").innerHTML='<tr><td colspan="8" class="empty">'+esc(error.message)+'</td></tr>';return}
+  rooms=data||[];renderRooms();renderPending();updateStats();
+}
+function updateStats(){
+  const available=rooms.filter(r=>r.status==="available"&&r.approval_status==="approved").length;
+  const pending=rooms.filter(r=>r.approval_status==="pending").length;
+  const unavailable=rooms.filter(r=>["rented","sold"].includes(r.status)).length;
+  $("total").textContent=rooms.length;$("avail").textContent=available;$("pendingCount").textContent=pending;$("rent").textContent=unavailable;
+  $("s3label").textContent=isAdmin()?"Pending Review":"Pending Review";
+}
+function renderRooms(){
+  const term=($("search").value||"").toLowerCase(),sf=$("statusFilter").value;
+  let list=rooms.filter(r=>(!term||String(r.title+" "+r.location).toLowerCase().includes(term))&&(!sf||r.status===sf||r.approval_status===sf));
+  $("body").innerHTML=list.length?list.map(r=>{
+    const p=Array.isArray(r.photos)&&r.photos[0];
+    const status=r.approval_status==="pending"?"pending":r.approval_status==="rejected"?"rejected":(r.status||"hidden");
+    const owner=r.owner_name||r.owner_email||"—";
+    let acts='<button class="ib" onclick="editRoom('+JSON.stringify(r.id)+')">✎</button>';
+    if(isAdmin()&&r.approval_status==="pending")acts+='<button class="ib" title="Approve" onclick="approveRoom('+JSON.stringify(r.id)+')">✓</button><button class="ib del" title="Reject" onclick="rejectRoom('+JSON.stringify(r.id)+')">✕</button>';
+    acts+='<button class="ib del" onclick="delRoom('+JSON.stringify(r.id)+')">🗑</button>';
+    return '<tr><td>'+(p?'<img class="thumb" src="'+esc(p)+'">':'🏠')+'</td><td><b>'+esc(r.title)+'</b></td><td>'+esc(r.location)+'</td><td>'+esc(r.room_type)+'</td><td>Rs. '+Number(r.price||0).toLocaleString()+'</td><td><span class="badge '+esc(status)+'">'+esc(status)+'</span></td><td>'+esc(owner)+'</td><td><div class="actions">'+acts+'</div></td></tr>'
+  }).join(""):'<tr><td colspan="8" class="empty">No properties found.</td></tr>';
+  $("summary").textContent="Showing "+list.length+" of "+rooms.length+" properties";
+}
+function renderPending(){
+  if(!isAdmin())return;
+  const list=rooms.filter(r=>r.approval_status==="pending");
+  $("pendingBody").innerHTML=list.length?list.map(r=>'<tr><td><b>'+esc(r.title)+'</b></td><td>'+esc(r.owner_name||r.owner_email||"—")+'</td><td>'+esc(r.location)+'</td><td>Rs. '+Number(r.price||0).toLocaleString()+'</td><td>'+new Date(r.created_at).toLocaleString()+'</td><td><button class="primary" onclick="approveRoom('+JSON.stringify(r.id)+')">Approve</button> <button class="danger" onclick="rejectRoom('+JSON.stringify(r.id)+')">Reject</button></td></tr>').join(""):'<tr><td colspan="6" class="empty">No pending owner submissions.</td></tr>';
+}
+async function approveRoom(id){if(!confirm("Approve this property and allow it to be publishable?"))return;const {error}=await db.from("room").update({approval_status:"approved",status:"available",rejection_reason:null}).eq("id",id);if(error)alert(error.message);else{await loadRooms();$("activity").innerHTML='<div class="act">Property approved <small class="muted">Just now</small></div>'}}
+async function rejectRoom(id){const reason=prompt("Optional rejection reason:","Please update the property details.");if(reason===null)return;const {error}=await db.from("room").update({approval_status:"rejected",rejection_reason:reason}).eq("id",id);if(error)alert(error.message);else await loadRooms()}
+
+function openAdd(){clearForm();$("mt").textContent="Add Property";$("modal").classList.remove("hidden")}
+function closeModal(){$("modal").classList.add("hidden")}
+function clearForm(){["id","title","location","price","phone","bedrooms","bathrooms","address","desc"].forEach(x=>$(x).value="");$("type").value="Single Room";$("status").value="available";$("furnished").value="false";$("photos").value="";$("sm").textContent=""}
+function editRoom(i){
+  const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
+  if(!isAdmin()&&String(r.owner_id)!==String(me.id))return alert("You can only edit your own properties.");
+  $("id").value=r.id;$("title").value=r.title||"";$("location").value=r.location||"";$("price").value=r.price||"";$("type").value=r.room_type||"Single Room";$("phone").value=r.phone||"";$("desc").value=r.description||"";$("status").value=r.status||"available";$("bedrooms").value=r.bedrooms??"";$("bathrooms").value=r.bathrooms??"";$("address").value=r.address||"";$("furnished").value=String(!!r.furnished);$("photos").value="";$("mt").textContent="Edit Property";$("modal").classList.remove("hidden");
+}
+async function upload(fs){
+  const out=[];
+  for(const f of fs){
+    if(f.size>6*1024*1024)throw new Error("Each image must be 6MB or smaller.");
+    const ext=(f.name.split(".").pop()||"jpg").toLowerCase(),name=(me.id||"admin")+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+    const {error}=await db.storage.from("room-images").upload(name,f,{upsert:false,contentType:f.type});
+    if(error)throw error;
+    out.push(db.storage.from("room-images").getPublicUrl(name).data.publicUrl);
+  }
+  return out;
+}
+async function saveRoom(){
+  const titleV=$("title").value.trim(),loc=$("location").value.trim(),priceV=$("price").value;
+  if(!titleV||!loc||!priceV){$("sm").style.color="#b42318";$("sm").textContent="Fill Title, Location and Price.";return}
+  $("sm").style.color="#52708f";$("sm").textContent="Saving...";
+  try{
+    const fs=[...$("photos").files],urls=fs.length?await upload(fs):[];
+    const existing=rooms.find(r=>String(r.id)===String($("id").value));
+    const payload={title:titleV,location:loc,price:Number(priceV),room_type:$("type").value,phone:$("phone").value.trim(),description:$("desc").value.trim(),status:$("status").value,bedrooms:$("bedrooms").value?Number($("bedrooms").value):null,bathrooms:$("bathrooms").value?Number($("bathrooms").value):null,address:$("address").value.trim(),furnished:$("furnished").value==="true"};
+    if(urls.length)payload.photos=[...(existing?.photos||[]),...urls];
+    if(isAdmin())payload.approval_status=existing?.approval_status||"approved";
+    else if(!existing)payload.approval_status="pending";
+    else payload.approval_status="pending";
+    let res;
+    if($("id").value)res=await db.from("room").update(payload).eq("id",$("id").value);
+    else {payload.owner_id=me.id;res=await db.from("room").insert(payload)}
+    if(res.error)throw res.error;
+    $("sm").style.color="#16834f";$("sm").textContent=isAdmin()?"Saved successfully!":"Saved. Your listing is pending admin review.";
+    await loadRooms();setTimeout(closeModal,800);
+  }catch(e){$("sm").style.color="#b42318";$("sm").textContent="Save failed: "+e.message}
+}
+async function delRoom(i){
+  const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
+  if(!isAdmin()&&String(r.owner_id)!==String(me.id))return alert("You can only delete your own properties.");
+  if(!confirm("Delete "+(r.title||"this property")+"?"))return;
+  const {error}=await db.from("room").delete().eq("id",i);if(error)alert(error.message);else loadRooms();
+}
+async function loadOwners(){
+  if(!isAdmin())return;
+  const {data,error}=await db.from("profiles").select("id,full_name,email,phone,created_at").eq("role","owner").order("created_at",{ascending:false});
+  if(error){$("ownersBody").innerHTML='<tr><td colspan="5" class="empty">'+esc(error.message)+'</td></tr>';return}
+  owners=data||[];
+  $("ownersBody").innerHTML=owners.length?owners.map(o=>'<tr><td>'+esc(o.full_name||"—")+'</td><td>'+esc(o.email||"—")+'</td><td>'+esc(o.phone||"—")+'</td><td>'+new Date(o.created_at).toLocaleDateString()+'</td><td>'+rooms.filter(r=>String(r.owner_id)===String(o.id)).length+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">No owners found.</td></tr>';
+}
+async function loadInquiries(){
+  let q=db.from("inquiries").select("*").order("created_at",{ascending:false}).limit(100);
+  if(!isAdmin()&&me)q=q.eq("owner_id",me.id);
+  const {data,error}=await q;
+  if(error){$("inqBody").innerHTML='<tr><td colspan="6" class="empty">'+esc(error.message)+'</td></tr>';return}
+  inquiries=data||[];
+  $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td></tr>').join(""):'<tr><td colspan="6" class="empty">No inquiries yet.</td></tr>';
+}
+
+async function loadSponsors(){
+  if(!isAdmin())return;
+  const {data,error}=await db.from("sponsors").select("*").order("created_at",{ascending:false});
+  if(error){$("sponsorBody").innerHTML='<tr><td colspan="8" class="empty">'+esc(error.message)+'</td></tr>';return}
+  sponsors=data||[];renderSponsors();
+}
+function renderSponsors(){
+  if(!isAdmin())return;
+  const term=($("sponsorSearch")?.value||"").toLowerCase(), sf=$("sponsorStatusFilter")?.value||"";
+  const today=new Date().toISOString().slice(0,10);
+  const list=sponsors.filter(x=>
+    (!term||String((x.sponsor_name||"")+" "+(x.title||"")).toLowerCase().includes(term)) &&
+    (!sf||x.status===sf)
+  );
+  $("sponsorBody").innerHTML=list.length?list.map(x=>{
+    const img=x.image_url?'<img class="thumb" src="'+esc(x.image_url)+'">':'📢';
+    const link=x.link_url?'<a href="'+esc(x.link_url)+'" target="_blank" rel="noopener">Open ↗</a>':'—';
+    const dates=(x.start_date||"—")+" → "+(x.end_date||"—");
+    return '<tr><td>'+img+'</td><td><b>'+esc(x.sponsor_name)+'</b><br><small>'+esc(x.phone||"")+'</small></td><td>'+esc(x.title)+'</td><td>'+esc(x.position||"homepage")+'</td><td>'+link+'</td><td><span class="badge '+(x.status==="active"?"approved":"hiddenst")+'">'+esc(x.status)+'</span></td><td>'+esc(dates)+'</td><td><div class="actions"><button class="ib" onclick="editSponsor('+JSON.stringify(x.id)+')">✎</button><button class="ib del" onclick="delSponsor('+JSON.stringify(x.id)+')">🗑</button></div></td></tr>'
+  }).join(""):'<tr><td colspan="8" class="empty">No advertisements found.</td></tr>';
+}
+function openSponsorAdd(){
+  if(!isAdmin())return;
+  clearSponsorForm();$("sponsorMt").textContent="Add Advertisement";$("sponsorModal").classList.remove("hidden");
+}
+function closeSponsorModal(){$("sponsorModal").classList.add("hidden")}
+function clearSponsorForm(){
+  ["sponsorId","sponsorName","sponsorTitle","sponsorStart","sponsorEnd","sponsorLink","sponsorPhone","sponsorDescription"].forEach(x=>$(x).value="");
+  $("sponsorPosition").value="homepage";$("sponsorStatus").value="active";$("sponsorImage").value="";$("sponsorMsg").textContent="";
+}
+function editSponsor(i){
+  const x=sponsors.find(a=>String(a.id)===String(i));if(!x)return;
+  $("sponsorId").value=x.id;$("sponsorName").value=x.sponsor_name||"";$("sponsorTitle").value=x.title||"";
+  $("sponsorPosition").value=x.position||"homepage";$("sponsorStatus").value=x.status||"active";
+  $("sponsorStart").value=x.start_date||"";$("sponsorEnd").value=x.end_date||"";$("sponsorLink").value=x.link_url||"";
+  $("sponsorPhone").value=x.phone||"";$("sponsorDescription").value=x.description||"";$("sponsorImage").value="";
+  $("sponsorMsg").textContent="";$("sponsorMt").textContent="Edit Advertisement";$("sponsorModal").classList.remove("hidden");
+}
+async function uploadSponsorImage(f){
+  if(!f)return null;
+  if(f.size>8*1024*1024)throw new Error("Banner/logo must be 8MB or smaller.");
+  const ext=(f.name.split(".").pop()||"jpg").toLowerCase(),name="sponsors/"+me.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+  const {error}=await db.storage.from("room-images").upload(name,f,{upsert:false,contentType:f.type});
+  if(error)throw error;
+  return db.storage.from("room-images").getPublicUrl(name).data.publicUrl;
+}
+async function saveSponsor(){
+  if(!isAdmin())return;
+  const sponsor_name=$("sponsorName").value.trim(),title=$("sponsorTitle").value.trim();
+  if(!sponsor_name||!title){$("sponsorMsg").style.color="#b42318";$("sponsorMsg").textContent="Fill Sponsor Name and Advertisement Title.";return}
+  $("sponsorMsg").style.color="#52708f";$("sponsorMsg").textContent="Saving...";
+  try{
+    const existing=sponsors.find(x=>String(x.id)===String($("sponsorId").value));
+    const file=$("sponsorImage").files[0];
+    const image_url=file?await uploadSponsorImage(file):(existing?.image_url||null);
+    const payload={
+      sponsor_name,title,position:$("sponsorPosition").value,status:$("sponsorStatus").value,
+      start_date:$("sponsorStart").value||null,end_date:$("sponsorEnd").value||null,
+      link_url:$("sponsorLink").value.trim()||null,phone:$("sponsorPhone").value.trim()||null,
+      description:$("sponsorDescription").value.trim()||null,image_url
+    };
+    let res=$("sponsorId").value
+      ?await db.from("sponsors").update(payload).eq("id",$("sponsorId").value)
+      :await db.from("sponsors").insert(payload);
+    if(res.error)throw res.error;
+    $("sponsorMsg").style.color="#16834f";$("sponsorMsg").textContent="Advertisement saved successfully!";
+    await loadSponsors();setTimeout(closeSponsorModal,700);
+  }catch(e){$("sponsorMsg").style.color="#b42318";$("sponsorMsg").textContent="Save failed: "+e.message}
+}
+async function delSponsor(i){
+  if(!isAdmin())return;
+  const x=sponsors.find(a=>String(a.id)===String(i));if(!x)return;
+  if(!confirm("Delete advertisement '"+(x.title||"this ad")+"'?"))return;
+  const {error}=await db.from("sponsors").delete().eq("id",i);
+  if(error)alert(error.message);else await loadSponsors();
+}
+
+async function check(){
+  try{
+    if(!db)return;
+    const {data:{session},error}=await db.auth.getSession();
+    if(error)throw error;
+    if(session)await start();
+  }catch(e){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Connection error: "+(e.message||e);
+  }
+}
+db.auth.onAuthStateChange((_event,session)=>{if(session&&!me)setTimeout(start,0)});
+check();
+</script>
+</body>
+</html>
