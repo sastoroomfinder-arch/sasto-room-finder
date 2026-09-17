@@ -1,30 +1,76 @@
-/* =========================================================
-   SASTO ROOM FINDER - PUBLIC WEBSITE SCRIPT
-   Corrected version:
-   - Only approved + available properties are public
-   - WhatsApp goes to property's own phone number
-   - Admin WhatsApp is fallback
-   ========================================================= */
+// Sasto Room Finder - PUBLIC PROPERTY LISTINGS
 
 const SUPABASE_URL = "https://amhrnahjshsgelacqzyl.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
 
 const ADMIN_WHATSAPP = "9779818067008";
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+let db = null;
+let listings = [];
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
+/* =========================
+   LOAD SUPABASE
+========================= */
 
-function $(id) {
-  return document.getElementById(id);
+function loadSupabase() {
+  return new Promise((resolve, reject) => {
+
+    if (window.supabase) {
+      resolve();
+      return;
+    }
+
+    const urls = [
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+      "https://unpkg.com/@supabase/supabase-js@2"
+    ];
+
+    let i = 0;
+
+    function next() {
+
+      if (window.supabase) {
+        resolve();
+        return;
+      }
+
+      if (i >= urls.length) {
+        reject(
+          new Error("Supabase library could not be loaded.")
+        );
+        return;
+      }
+
+      const script = document.createElement("script");
+
+      script.src = urls[i++];
+
+      script.onload = () => {
+        if (window.supabase) {
+          resolve();
+        } else {
+          next();
+        }
+      };
+
+      script.onerror = () => {
+        next();
+      };
+
+      document.head.appendChild(script);
+    }
+
+    next();
+  });
 }
 
-function escapeHTML(value) {
+
+/* =========================
+   HTML ESCAPE
+========================= */
+
+function escapeHtml(value) {
+
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -33,34 +79,93 @@ function escapeHTML(value) {
     .replace(/'/g, "&#039;");
 }
 
-/*
-  Convert phone number to WhatsApp format.
 
-  Examples:
-  9812345678      -> 9779812345678
-  9812345678      -> 9779812345678
-  09812345678     -> 9779812345678
-  +9779812345678  -> 9779812345678
-*/
-function normalizeWhatsAppNumber(phone) {
-  let number = String(phone || "").trim();
+/* =========================
+   PRICE
+========================= */
+
+function formatPrice(price) {
+
+  if (
+    price === null ||
+    price === undefined ||
+    price === ""
+  ) {
+    return "Contact for current price";
+  }
+
+  const number = Number(price);
+
+  if (Number.isNaN(number)) {
+    return String(price);
+  }
+
+  return "Rs. " +
+    number.toLocaleString("en-IN") +
+    " / month";
+}
+
+
+/* =========================
+   PHOTOS
+========================= */
+
+function normalizePhotos(photos) {
+
+  if (!photos) {
+    return [];
+  }
+
+  if (Array.isArray(photos)) {
+    return photos.filter(Boolean);
+  }
+
+  if (typeof photos === "string") {
+
+    try {
+
+      const parsed = JSON.parse(photos);
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+
+    } catch (_) {}
+
+    return photos
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+
+/* =========================
+   WHATSAPP NUMBER
+========================= */
+
+function normalizeWhatsApp(phone) {
+
+  if (!phone || !String(phone).trim()) {
+    return ADMIN_WHATSAPP;
+  }
+
+  let number = String(phone)
+    .trim()
+    .replace(/\D/g, "");
 
   if (!number) {
     return ADMIN_WHATSAPP;
   }
 
-  number = number.replace(/\D/g, "");
-
-  if (!number) {
-    return ADMIN_WHATSAPP;
-  }
-
-  // Already Nepal country code
+  // Already has Nepal country code
   if (number.startsWith("977")) {
     return number;
   }
 
-  // Nepal local number beginning with 0
+  // Local number with 0
   if (number.startsWith("0")) {
     number = number.substring(1);
   }
@@ -68,759 +173,545 @@ function normalizeWhatsAppNumber(phone) {
   // Nepal mobile number
   if (
     number.length === 10 &&
-    (number.startsWith("97") || number.startsWith("98"))
+    (
+      number.startsWith("98") ||
+      number.startsWith("97")
+    )
   ) {
     return "977" + number;
   }
 
-  // If another valid international number was entered,
-  // use it as entered.
   return number;
 }
 
-function getPropertyWhatsApp(property) {
-  const phone = property?.phone;
 
-  if (!phone || !String(phone).trim()) {
-    return ADMIN_WHATSAPP;
-  }
+/* =========================
+   PROPERTY WHATSAPP
+========================= */
 
-  return normalizeWhatsAppNumber(phone);
-}
+function getWhatsAppLink(property) {
 
-function propertyWhatsAppLink(property) {
-  const number = getPropertyWhatsApp(property);
+  const number =
+    normalizeWhatsApp(property.phone);
 
   const roomType =
-    property?.room_type ||
-    property?.type ||
-    "property";
-
-  const location =
-    property?.location ||
-    property?.address ||
-    "the listed property";
-
-  const title =
-    property?.title ||
-    "this property";
-
-  const message =
-    `Hello Sasto Room Finder, I am interested in ${title}. ` +
-    `Room type: ${roomType}. ` +
-    `Location: ${location}. ` +
-    `Please send me the current details.`;
-
-  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-}
-
-/* =========================================================
-   IMAGE HELPERS
-   ========================================================= */
-
-function getFirstImage(property) {
-  if (!property) return "";
-
-  let photos = property.photos;
-
-  if (typeof photos === "string") {
-    try {
-      photos = JSON.parse(photos);
-    } catch (e) {
-      photos = [photos];
-    }
-  }
-
-  if (Array.isArray(photos) && photos.length > 0) {
-    return photos[0];
-  }
-
-  if (property.image_url) {
-    return property.image_url;
-  }
-
-  if (property.image) {
-    return property.image;
-  }
-
-  return "";
-}
-
-function getAllImages(property) {
-  let photos = property?.photos;
-
-  if (typeof photos === "string") {
-    try {
-      photos = JSON.parse(photos);
-    } catch (e) {
-      photos = [photos];
-    }
-  }
-
-  if (Array.isArray(photos)) {
-    return photos.filter(Boolean);
-  }
-
-  if (property?.image_url) {
-    return [property.image_url];
-  }
-
-  if (property?.image) {
-    return [property.image];
-  }
-
-  return [];
-}
-
-/* =========================================================
-   FORMATTERS
-   ========================================================= */
-
-function formatPrice(price) {
-  if (
-    price === null ||
-    price === undefined ||
-    price === "" ||
-    Number.isNaN(Number(price))
-  ) {
-    return "Price on request";
-  }
-
-  return "Rs. " + Number(price).toLocaleString("en-IN");
-}
-
-function formatDate(date) {
-  if (!date) return "";
-
-  try {
-    return new Date(date).toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    });
-  } catch (e) {
-    return "";
-  }
-}
-
-/* =========================================================
-   PROPERTY CARD
-   ========================================================= */
-
-function createPropertyCard(property) {
-  const image = getFirstImage(property);
-
-  const title =
-    property.title ||
     property.room_type ||
-    "Room / Property";
+    "property";
 
   const location =
     property.location ||
     property.address ||
-    "Location not specified";
+    "the listed property";
 
-  const description =
-    property.description ||
-    "Contact owner for more details.";
+  const title =
+    property.title ||
+    "this property";
 
-  const roomType =
-    property.room_type ||
-    property.type ||
-    "Room";
+  const message =
+    `Hello Sasto Room Finder, I am interested in ${title} at ${location}. ` +
+    `Room type: ${roomType}. ` +
+    `Please send me the current details.`;
 
-  const price = formatPrice(property.price);
-
-  const whatsapp = propertyWhatsAppLink(property);
-
-  const imageHTML = image
-    ? `
-      <img
-        src="${escapeHTML(image)}"
-        alt="${escapeHTML(title)}"
-        loading="lazy"
-        onerror="this.style.display='none';"
-      >
-    `
-    : `
-      <div class="listing-image-placeholder">
-        <span>🏠</span>
-      </div>
-    `;
-
-  return `
-    <article class="listing">
-
-      <div class="listing-image">
-        ${imageHTML}
-      </div>
-
-      <div class="listing-content">
-
-        <h3>${escapeHTML(title)}</h3>
-
-        <p class="listing-location">
-          📍 ${escapeHTML(location)}
-        </p>
-
-        <p class="listing-price">
-          ${escapeHTML(price)}
-        </p>
-
-        <p class="listing-type">
-          ${escapeHTML(roomType)}
-        </p>
-
-        <p class="listing-description">
-          ${escapeHTML(description)}
-        </p>
-
-        ${
-          property.bedrooms
-            ? `<p>🛏 Bedrooms: ${escapeHTML(property.bedrooms)}</p>`
-            : ""
-        }
-
-        ${
-          property.bathrooms
-            ? `<p>🚿 Bathrooms: ${escapeHTML(property.bathrooms)}</p>`
-            : ""
-        }
-
-        ${
-          property.furnished === true
-            ? `<p>🛋 Furnished</p>`
-            : ""
-        }
-
-        <a
-          class="btn btn-dark full"
-          style="margin-top:14px"
-          href="${whatsapp}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Enquire on WhatsApp
-        </a>
-
-      </div>
-
-    </article>
-  `;
+  return (
+    "https://wa.me/" +
+    number +
+    "?text=" +
+    encodeURIComponent(message)
+  );
 }
 
-/* =========================================================
-   LOAD PUBLIC LISTINGS
-   ========================================================= */
 
-async function loadListings() {
-  const container =
-    $("listings") ||
-    $("property-listings") ||
-    $("properties") ||
-    $("rooms");
+/* =========================
+   RENDER LISTINGS
+========================= */
 
-  if (!container) {
-    console.warn("Listing container not found.");
+function renderListings(data = listings) {
+
+  const grid =
+    document.getElementById("listingGrid");
+
+  if (!grid) {
     return;
   }
 
-  container.innerHTML = `
-    <div class="loading">
+  if (!data || !data.length) {
+
+    grid.innerHTML = `
+      <div class="listing-empty">
+        No properties are currently available.
+      </div>
+    `;
+
+    return;
+  }
+
+  grid.innerHTML = data.map(property => {
+
+    const type =
+      escapeHtml(
+        property.room_type ||
+        "Property"
+      );
+
+    const title =
+      escapeHtml(
+        property.title ||
+        property.location ||
+        "Property"
+      );
+
+    const location =
+      escapeHtml(
+        property.location ||
+        "Location not provided"
+      );
+
+    const description =
+      escapeHtml(
+        property.description ||
+        ""
+      );
+
+    const price =
+      escapeHtml(
+        formatPrice(property.price)
+      );
+
+    const photos =
+      normalizePhotos(property.photos);
+
+    const image =
+      photos.length
+        ? `
+          <img
+            src="${escapeHtml(photos[0])}"
+            alt="${title}"
+            class="listing-image"
+            loading="lazy"
+            onerror="this.style.display='none';"
+          >
+        `
+        : "🏠";
+
+    const whatsapp =
+      getWhatsAppLink(property);
+
+    return `
+      <article class="listing">
+
+        <div class="listing-photo">
+          ${image}
+        </div>
+
+        <div class="listing-body">
+
+          <span class="eyebrow">
+            ${type}
+          </span>
+
+          <h3>
+            ${title}
+          </h3>
+
+          <p>
+            📍 ${location}
+          </p>
+
+          ${
+            description
+              ? `<p>${description}</p>`
+              : ""
+          }
+
+          <div class="listing-price">
+            ${price}
+          </div>
+
+          <a
+            class="btn btn-dark full"
+            style="margin-top:14px"
+            href="${whatsapp}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Enquire on WhatsApp
+          </a>
+
+        </div>
+
+      </article>
+    `;
+
+  }).join("");
+}
+
+
+/* =========================
+   LOAD APPROVED LISTINGS
+========================= */
+
+async function loadListings() {
+
+  const grid =
+    document.getElementById("listingGrid");
+
+  if (!grid) {
+    return;
+  }
+
+  grid.innerHTML = `
+    <div class="listing-empty">
       Loading properties...
     </div>
   `;
 
   try {
+
     /*
       IMPORTANT:
-      Public website will ONLY receive:
-      approval_status = approved
-      status = available
+
+      Only properties that are:
+      1. approved
+      2. available
+
+      will appear publicly.
     */
 
     let result = await db
       .from("room")
       .select("*")
-      .eq("approval_status", "approved")
       .eq("status", "available")
+      .eq("approval_status", "approved")
       .order("created_at", {
         ascending: false
       });
 
     /*
-      Some old database versions may not have created_at.
-      Retry without ordering if needed.
+      If created_at does not exist,
+      retry without ordering.
     */
 
-    if (result.error) {
-      console.warn(
-        "First listing query failed. Retrying...",
-        result.error
-      );
+    if (
+      result.error &&
+      /created_at/i.test(result.error.message)
+    ) {
 
       result = await db
         .from("room")
         .select("*")
-        .eq("approval_status", "approved")
-        .eq("status", "available");
+        .eq("status", "available")
+        .eq("approval_status", "approved");
     }
 
     if (result.error) {
+
       console.error(
-        "Supabase listing error:",
+        "Supabase property loading error:",
         result.error
       );
 
-      container.innerHTML = `
-        <div class="empty-state">
-          <h3>Unable to load properties</h3>
-          <p>Please try again later.</p>
+      grid.innerHTML = `
+        <div class="listing-empty">
+          Unable to load properties right now.
+          Please try again later.
         </div>
       `;
 
       return;
     }
 
-    const properties = result.data || [];
+    listings = result.data || [];
 
-    if (!properties.length) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <h3>No properties available</h3>
-          <p>New rooms and properties will appear here after approval.</p>
-        </div>
-      `;
-
-      return;
-    }
-
-    container.innerHTML = properties
-      .map(createPropertyCard)
-      .join("");
+    renderListings();
 
   } catch (error) {
+
     console.error(
-      "Unexpected listing error:",
+      "Property loading error:",
       error
     );
 
-    container.innerHTML = `
-      <div class="empty-state">
-        <h3>Something went wrong</h3>
-        <p>Please refresh the page and try again.</p>
+    grid.innerHTML = `
+      <div class="listing-empty">
+        Website connection is temporarily unavailable.
+        Please refresh.
       </div>
     `;
   }
 }
 
-/* =========================================================
+
+/* =========================
+   FILTER PROPERTIES
+========================= */
+
+function filterProperties() {
+
+  const search =
+    (
+      document.getElementById(
+        "filterSearch"
+      )?.value || ""
+    )
+      .toLowerCase()
+      .trim();
+
+  const type =
+    (
+      document.getElementById(
+        "filterType"
+      )?.value || ""
+    )
+      .toLowerCase()
+      .trim();
+
+  const filtered =
+    listings.filter(property => {
+
+      const text = [
+        property.title,
+        property.location,
+        property.room_type,
+        property.description,
+        property.price
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        (!search || text.includes(search)) &&
+        (
+          !type ||
+          String(
+            property.room_type || ""
+          )
+            .toLowerCase()
+            .includes(type)
+        )
+      );
+    });
+
+  renderListings(filtered);
+}
+
+
+/* =========================
    HOME SEARCH
-   ========================================================= */
+========================= */
 
 function searchFromHome() {
-  const locationInput =
-    $("homeLocation") ||
-    $("location") ||
-    $("searchLocation") ||
-    $("search-location");
-
-  const typeInput =
-    $("homeType") ||
-    $("type") ||
-    $("searchType") ||
-    $("search-type");
 
   const location =
-    locationInput?.value?.trim() || "";
+    document.getElementById(
+      "homeLocation"
+    )?.value || "";
 
-  const type =
-    typeInput?.value?.trim() || "";
+  const budget =
+    document.getElementById(
+      "homeBudget"
+    )?.value || "";
 
-  const params = new URLSearchParams();
+  const message =
+    `Hello Sasto Room Finder. ` +
+    `I need a property in ` +
+    `${location || "Kathmandu Valley"} ` +
+    `with budget ` +
+    `${budget || "to be discussed"}. ` +
+    `Please send available options.`;
 
-  if (location) {
-    params.set("location", location);
-  }
-
-  if (type) {
-    params.set("type", type);
-  }
-
-  /*
-    If your public page has a properties.html page,
-    send the search there.
-  */
-
-  const target =
-    "properties.html" +
-    (params.toString()
-      ? "?" + params.toString()
-      : "");
-
-  window.location.href = target;
+  window.open(
+    "https://wa.me/" +
+    ADMIN_WHATSAPP +
+    "?text=" +
+    encodeURIComponent(message),
+    "_blank"
+  );
 }
 
-/* =========================================================
-   SEARCH LISTINGS ON PROPERTIES PAGE
-   ========================================================= */
 
-async function searchListings() {
-  const container =
-    $("listings") ||
-    $("property-listings") ||
-    $("properties") ||
-    $("rooms");
+/* =========================
+   OLD INQUIRY COMPATIBILITY
+========================= */
 
-  if (!container) {
-    return;
+function sendInquiry(event) {
+
+  if (event) {
+    event.preventDefault();
   }
 
-  const params =
-    new URLSearchParams(window.location.search);
+  const nameField =
+    document.getElementById("name");
 
-  const location =
-    (params.get("location") || "").trim();
+  const phoneField =
+    document.getElementById("phone");
 
-  const type =
-    (params.get("type") || "").trim();
+  const needField =
+    document.getElementById("need");
 
-  container.innerHTML = `
-    <div class="loading">
-      Searching properties...
-    </div>
-  `;
+  const locationField =
+    document.getElementById("location");
 
-  try {
-    let query = db
-      .from("room")
-      .select("*")
-      .eq("approval_status", "approved")
-      .eq("status", "available");
+  const messageField =
+    document.getElementById("message");
 
-    if (location) {
-      query = query.ilike(
-        "location",
-        `%${location}%`
-      );
-    }
+  const message =
+    `Hello Sasto Room Finder Pvt. Ltd.
+Name: ${nameField?.value || ""}
+Phone: ${phoneField?.value || ""}
+Need: ${needField?.value || ""}
+Location: ${locationField?.value || ""}
+Details/Budget: ${messageField?.value || ""}`;
 
-    if (type) {
-      query = query.ilike(
-        "room_type",
-        `%${type}%`
-      );
-    }
+  window.open(
+    "https://wa.me/" +
+    ADMIN_WHATSAPP +
+    "?text=" +
+    encodeURIComponent(message),
+    "_blank"
+  );
+}
 
-    let result = await query.order(
-      "created_at",
-      {
-        ascending: false
-      }
-    );
 
-    if (result.error) {
+/* =========================
+   START WEBSITE
+========================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    try {
+
+      await loadSupabase();
+
+      db =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
+
       /*
-        Retry without created_at ordering.
+        Your actual public page uses
+        #listingGrid.
       */
 
-      let retry = db
-        .from("room")
-        .select("*")
-        .eq("approval_status", "approved")
-        .eq("status", "available");
+      if (
+        document.getElementById(
+          "listingGrid"
+        )
+      ) {
 
-      if (location) {
-        retry = retry.ilike(
-          "location",
-          `%${location}%`
-        );
+        await loadListings();
       }
 
-      if (type) {
-        retry = retry.ilike(
-          "room_type",
-          `%${type}%`
+    } catch (error) {
+
+      console.error(error);
+
+      const grid =
+        document.getElementById(
+          "listingGrid"
         );
+
+      if (grid) {
+
+        grid.innerHTML = `
+          <div class="listing-empty">
+            Website connection is temporarily unavailable.
+            Please refresh.
+          </div>
+        `;
       }
-
-      result = await retry;
     }
 
-    if (result.error) {
-      console.error(
-        "Search error:",
-        result.error
-      );
 
-      container.innerHTML = `
-        <div class="empty-state">
-          <h3>Unable to search</h3>
-          <p>Please try again.</p>
-        </div>
-      `;
+    /* =========================
+       MOBILE MENU
+    ========================= */
 
-      return;
-    }
+    document
+      .querySelector(".menu")
+      ?.addEventListener(
+        "click",
+        () => {
 
-    const properties =
-      result.data || [];
+          const nav =
+            document.querySelector("nav");
 
-    if (!properties.length) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <h3>No matching properties found</h3>
-          <p>Try another location or room type.</p>
-        </div>
-      `;
+          if (!nav) {
+            return;
+          }
 
-      return;
-    }
+          nav.style.display =
+            nav.style.display === "flex"
+              ? "none"
+              : "flex";
 
-    container.innerHTML =
-      properties
-        .map(createPropertyCard)
-        .join("");
+          nav.style.flexDirection =
+            "column";
 
-  } catch (error) {
-    console.error(
-      "Search failed:",
-      error
-    );
+          nav.style.position =
+            "absolute";
 
-    container.innerHTML = `
-      <div class="empty-state">
-        <h3>Something went wrong</h3>
-        <p>Please refresh and try again.</p>
-      </div>
-    `;
-  }
-}
+          nav.style.top =
+            "68px";
 
-/* =========================================================
-   DIRECT WHATSAPP INQUIRY
-   ========================================================= */
+          nav.style.right =
+            "4%";
 
-function enquireOnWhatsApp(property) {
-  const link =
-    propertyWhatsAppLink(property);
+          nav.style.background =
+            "#fff";
 
-  window.open(
-    link,
-    "_blank",
-    "noopener,noreferrer"
-  );
-}
+          nav.style.padding =
+            "18px";
 
-/* =========================================================
-   OLD INQUIRY FUNCTION
-   Kept for compatibility with existing HTML.
-   It now uses the property's phone number.
-   ========================================================= */
+          nav.style.border =
+            "1px solid #dfe4df";
 
-async function sendInquiry(property) {
-  if (!property) {
-    return;
-  }
-
-  const whatsapp =
-    propertyWhatsAppLink(property);
-
-  window.open(
-    whatsapp,
-    "_blank",
-    "noopener,noreferrer"
-  );
-}
-
-/* =========================================================
-   SPONSORS
-   ========================================================= */
-
-async function loadSponsors() {
-  const containers = [
-    $("sponsors"),
-    $("sponsor-list"),
-    $("sponsorList"),
-    $("ads"),
-    $("advertisements")
-  ].filter(Boolean);
-
-  if (!containers.length) {
-    return;
-  }
-
-  try {
-    const { data, error } =
-      await db
-        .from("sponsors")
-        .select("*")
-        .eq("active", true)
-        .order("created_at", {
-          ascending: false
-        });
-
-    if (error) {
-      console.warn(
-        "Sponsors could not be loaded:",
-        error
-      );
-      return;
-    }
-
-    const sponsors = data || [];
-
-    if (!sponsors.length) {
-      containers.forEach(
-        container => {
-          container.innerHTML = "";
+          nav.style.borderRadius =
+            "12px";
         }
       );
-      return;
-    }
 
-    const html =
-      sponsors
-        .map(sponsor => {
 
-          const image =
-            sponsor.image_url ||
-            sponsor.image ||
-            "";
+    /* =========================
+       FILTERS
+    ========================= */
 
-          const title =
-            sponsor.title ||
-            sponsor.name ||
-            "Sponsor";
+    document
+      .getElementById(
+        "filterSearch"
+      )
+      ?.addEventListener(
+        "input",
+        filterProperties
+      );
 
-          const description =
-            sponsor.description ||
-            "";
+    document
+      .getElementById(
+        "filterType"
+      )
+      ?.addEventListener(
+        "change",
+        filterProperties
+      );
 
-          const link =
-            sponsor.link ||
-            sponsor.url ||
-            "#";
-
-          return `
-            <div class="sponsor-card">
-
-              ${
-                image
-                  ? `
-                    <img
-                      src="${escapeHTML(image)}"
-                      alt="${escapeHTML(title)}"
-                      loading="lazy"
-                    >
-                  `
-                  : ""
-              }
-
-              <h3>
-                ${escapeHTML(title)}
-              </h3>
-
-              ${
-                description
-                  ? `
-                    <p>
-                      ${escapeHTML(description)}
-                    </p>
-                  `
-                  : ""
-              }
-
-              ${
-                link !== "#"
-                  ? `
-                    <a
-                      href="${escapeHTML(link)}"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View Sponsor
-                    </a>
-                  `
-                  : ""
-              }
-
-            </div>
-          `;
-        })
-        .join("");
-
-    containers.forEach(
-      container => {
-        container.innerHTML = html;
-      }
-    );
-
-  } catch (error) {
-    console.warn(
-      "Sponsor loading error:",
-      error
-    );
   }
-}
+);
 
-/* =========================================================
-   PAGE INITIALIZATION
-   ========================================================= */
 
-function initializePublicWebsite() {
-
-  /*
-    Load sponsors wherever sponsor containers exist.
-  */
-
-  loadSponsors();
-
-  /*
-    If URL has search parameters,
-    use searchListings().
-    Otherwise load all approved listings.
-  */
-
-  const hasSearch =
-    new URLSearchParams(
-      window.location.search
-    ).has("location") ||
-    new URLSearchParams(
-      window.location.search
-    ).has("type");
-
-  if (hasSearch) {
-    searchListings();
-  } else {
-    loadListings();
-  }
-}
-
-/* =========================================================
-   DOM READY
-   ========================================================= */
-
-if (
-  document.readyState === "loading"
-) {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializePublicWebsite
-  );
-} else {
-  initializePublicWebsite();
-}
-
-/* =========================================================
+/* =========================
    GLOBAL FUNCTIONS
-   ========================================================= */
+========================= */
 
 window.loadListings =
   loadListings;
 
-window.searchListings =
-  searchListings;
+window.renderListings =
+  renderListings;
+
+window.filterProperties =
+  filterProperties;
 
 window.searchFromHome =
   searchFromHome;
@@ -828,14 +719,8 @@ window.searchFromHome =
 window.sendInquiry =
   sendInquiry;
 
-window.enquireOnWhatsApp =
-  enquireOnWhatsApp;
+window.normalizeWhatsApp =
+  normalizeWhatsApp;
 
-window.loadSponsors =
-  loadSponsors;
-
-window.propertyWhatsAppLink =
-  propertyWhatsAppLink;
-
-window.normalizeWhatsAppNumber =
-  normalizeWhatsAppNumber;
+window.getWhatsAppLink =
+  getWhatsAppLink;
