@@ -1,57 +1,38 @@
-// ============================================================
-// SASTO ROOM FINDER - PUBLIC WEBSITE SCRIPT
-// ============================================================
-
-const SUPABASE_URL =
-  "https://amhrnahjshsgelacqzyl.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+// Sasto Room Finder - public property listings
+const SUPABASE_URL = "https://amhrnahjshsgelacqzyl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
 
 let db = null;
 let listings = [];
 
-// ============================================================
-// LOAD SUPABASE
-// ============================================================
-
 function loadSupabase() {
+  return new Promise((resolve, reject) => {
+    if (window.supabase) return resolve();
 
-  return new Promise((resolve,reject)=>{
-
-    if(window.supabase)
-      return resolve();
-
-    const urls=[
+    const urls = [
       "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
       "https://unpkg.com/@supabase/supabase-js@2"
     ];
 
-    let i=0;
+    let i = 0;
 
-    const next=()=>{
+    const next = () => {
+      if (window.supabase) return resolve();
 
-      if(window.supabase)
-        return resolve();
-
-      if(i>=urls.length)
+      if (i >= urls.length) {
         return reject(
-          new Error(
-            "Supabase library could not be loaded."
-          )
+          new Error("Supabase library could not be loaded.")
         );
+      }
 
-      const sc=document.createElement("script");
+      const sc = document.createElement("script");
+      sc.src = urls[i++];
 
-      sc.src=urls[i++];
-
-      sc.onload=()=>{
-        window.supabase
-          ?resolve()
-          :next();
+      sc.onload = () => {
+        window.supabase ? resolve() : next();
       };
 
-      sc.onerror=next;
+      sc.onerror = next;
 
       document.head.appendChild(sc);
     };
@@ -60,422 +41,318 @@ function loadSupabase() {
   });
 }
 
-// ============================================================
-// HTML ESCAPE
-// ============================================================
-
-function escapeHtml(value){
-
-  return String(value??"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-// ============================================================
-// PRICE
-// ============================================================
-
-function formatPrice(price){
-
-  if(
-    price===null||
-    price===undefined||
-    price===""
-  )
+function formatPrice(price) {
+  if (
+    price === null ||
+    price === undefined ||
+    price === ""
+  ) {
     return "Contact for current price";
+  }
 
-  const n=Number(price);
+  const n = Number(price);
 
   return Number.isNaN(n)
-    ?String(price)
-    :"Rs. "+
-      n.toLocaleString("en-IN")+
-      " / month";
+    ? String(price)
+    : "Rs. " + n.toLocaleString("en-IN") + " / month";
 }
 
-// ============================================================
-// NORMALIZE PHOTOS
-// ============================================================
+function normalizePhotos(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map(String);
+  }
 
-function normalizePhotos(value){
+  if (!value) return [];
 
-  if(Array.isArray(value))
-    return value
-      .filter(Boolean)
-      .map(String);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
 
-  if(!value)
-    return [];
-
-  if(typeof value==="string"){
-
-    try{
-
-      const parsed=JSON.parse(value);
-
-      if(Array.isArray(parsed))
-        return parsed
-          .filter(Boolean)
-          .map(String);
-
-    }catch(e){}
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean).map(String);
+      }
+    } catch (e) {}
 
     return value
       .split(",")
-      .map(v=>v.trim())
+      .map(v => v.trim())
       .filter(Boolean);
   }
 
   return [];
 }
 
-// ============================================================
-// WHATSAPP NUMBER
-// ============================================================
+/* =========================================================
+   PUBLIC UI
+   ========================================================= */
 
-function waNumber(value){
+function ensurePublicUI() {
+  if (!document.getElementById("srf-public-styles")) {
+    const st = document.createElement("style");
 
-  let n=
-    String(value||"")
-    .replace(/[^\d]/g,"");
+    st.id = "srf-public-styles";
 
-  if(n.startsWith("0"))
-    n="977"+n.slice(1);
+    st.textContent = `
+      .srf-sponsors{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:16px;
+        margin:0 0 28px;
+      }
 
-  else if(
-    n.startsWith("98") &&
-    n.length===10
-  )
-    n="977"+n;
+      .srf-sponsor{
+        border:1px solid #e2e8e4;
+        border-radius:14px;
+        overflow:hidden;
+        background:#fff;
+        display:block;
+        text-decoration:none;
+        color:inherit;
+      }
 
-  return n||"9779818067008";
-}
+      .srf-sponsor img{
+        width:100%;
+        height:130px;
+        object-fit:cover;
+        display:block;
+      }
 
-// ============================================================
-// PROPERTY OWNER WHATSAPP
-// ============================================================
+      .srf-sponsor-body{
+        padding:14px;
+      }
 
-function propertyWhatsApp(x){
+      .srf-sponsor-body h3{
+        margin:4px 0 6px;
+      }
 
-  const msg=
-`Hello Sasto Room Finder. I am interested in this property:
+      .srf-sponsor-body p{
+        margin:0 0 8px;
+      }
 
-${x.title||"Property"}
+      .srf-inquire{
+        border:0;
+        cursor:pointer;
+        padding:11px 15px;
+        border-radius:9px;
+        background:#111;
+        color:#fff;
+        font-weight:700;
+        width:100%;
+        margin-top:12px;
+      }
 
-Location: ${x.location||x.address||"Not specified"}
+      .srf-modal{
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:18px;
+        z-index:9999;
+      }
 
-Price: Rs. ${x.price||"Contact for price"}
+      .srf-modal.open{
+        display:flex;
+      }
 
-Please send me the current details.`;
+      .srf-box{
+        background:#fff;
+        width:min(520px,100%);
+        border-radius:16px;
+        padding:20px;
+        position:relative;
+      }
 
-  return (
-    "https://wa.me/"+
-    waNumber(x.phone)+
-    "?text="+
-    encodeURIComponent(msg)
-  );
-}
+      .srf-box h2{
+        margin:0 30px 6px 0;
+      }
 
-// ============================================================
-// PUBLIC UI
-// ============================================================
+      .srf-close{
+        position:absolute;
+        right:12px;
+        top:10px;
+        border:0;
+        background:none;
+        font-size:28px;
+        cursor:pointer;
+      }
 
-function ensurePublicUI(){
+      .srf-box label{
+        display:block;
+        font-weight:600;
+        margin-top:11px;
+      }
 
-  if(!document.getElementById("srf-public-styles")){
+      .srf-box input,
+      .srf-box textarea{
+        width:100%;
+        box-sizing:border-box;
+        padding:11px;
+        margin-top:5px;
+        border:1px solid #ccd5cf;
+        border-radius:9px;
+        font:inherit;
+      }
 
-    const st=document.createElement("style");
+      .srf-box textarea{
+        min-height:90px;
+        resize:vertical;
+      }
 
-    st.id="srf-public-styles";
+      .srf-submit{
+        width:100%;
+        margin-top:14px;
+        padding:12px;
+        border:0;
+        border-radius:9px;
+        background:#111;
+        color:#fff;
+        font-weight:700;
+      }
 
-    st.textContent=`
+      .srf-msg{
+        margin-top:10px;
+        font-weight:600;
+      }
 
-.srf-sponsors{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(220px,1fr));
-  gap:16px;
-  margin:0 0 28px;
-}
-
-.srf-sponsor{
-  border:1px solid #e2e8e4;
-  border-radius:14px;
-  overflow:hidden;
-  background:#fff;
-}
-
-.srf-sponsor img{
-  width:100%;
-  height:130px;
-  object-fit:cover;
-  display:block;
-}
-
-.srf-sponsor-body{
-  padding:14px;
-}
-
-.srf-sponsor-body h3{
-  margin:4px 0 6px;
-}
-
-.srf-sponsor-body p{
-  margin:0 0 8px;
-}
-
-.srf-inquire{
-  border:0;
-  cursor:pointer;
-  padding:11px 15px;
-  border-radius:9px;
-  background:#111;
-  color:#fff;
-  font-weight:700;
-  width:100%;
-  margin-top:12px;
-}
-
-.srf-modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  z-index:9999;
-}
-
-.srf-modal.open{
-  display:flex;
-}
-
-.srf-box{
-  background:#fff;
-  width:min(520px,100%);
-  border-radius:16px;
-  padding:20px;
-  position:relative;
-}
-
-.srf-box h2{
-  margin:0 30px 6px 0;
-}
-
-.srf-close{
-  position:absolute;
-  right:12px;
-  top:10px;
-  border:0;
-  background:none;
-  font-size:28px;
-  cursor:pointer;
-}
-
-.srf-box label{
-  display:block;
-  font-weight:600;
-  margin-top:11px;
-}
-
-.srf-box input,
-.srf-box textarea{
-  width:100%;
-  box-sizing:border-box;
-  padding:11px;
-  margin-top:5px;
-  border:1px solid #ccd5cf;
-  border-radius:9px;
-  font:inherit;
-}
-
-.srf-box textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
-.srf-submit{
-  width:100%;
-  margin-top:14px;
-  padding:12px;
-  border:0;
-  border-radius:9px;
-  background:#111;
-  color:#fff;
-  font-weight:700;
-}
-
-.srf-msg{
-  margin-top:10px;
-  font-weight:600;
-}
-
-.srf-sponsored-label{
-  font-size:12px;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  opacity:.65;
-}
-
-@media(max-width:600px){
-
-  .srf-sponsors{
-    grid-template-columns:1fr;
-  }
-
-  .srf-box{
-    max-height:92vh;
-    overflow:auto;
-  }
-}
-
-`;
+      .srf-sponsored-label{
+        font-size:12px;
+        letter-spacing:.04em;
+        text-transform:uppercase;
+        opacity:.65;
+      }
+    `;
 
     document.head.appendChild(st);
   }
 
-  if(!document.getElementById("srfInquiryModal")){
+  if (!document.getElementById("srfInquiryModal")) {
+    const m = document.createElement("div");
 
-    const m=document.createElement("div");
+    m.id = "srfInquiryModal";
+    m.className = "srf-modal";
 
-    m.id="srfInquiryModal";
-    m.className="srf-modal";
+    m.innerHTML = `
+      <div class="srf-box" role="dialog" aria-modal="true">
 
-    m.innerHTML=`
+        <button
+          class="srf-close"
+          type="button"
+          aria-label="Close"
+        >×</button>
 
-<div class="srf-box"
-     role="dialog"
-     aria-modal="true">
+        <h2>Send Inquiry</h2>
 
-<button
- class="srf-close"
- type="button"
- aria-label="Close">
-×
-</button>
+        <p id="srfInquiryProperty"></p>
 
-<h2>Send Inquiry</h2>
+        <form id="srfInquiryForm">
 
-<p id="srfInquiryProperty"></p>
+          <label>
+            Name
+            <input
+              id="srfName"
+              required
+              maxlength="100"
+            >
+          </label>
 
-<form id="srfInquiryForm">
+          <label>
+            Phone
+            <input
+              id="srfPhone"
+              required
+              maxlength="30"
+              inputmode="tel"
+            >
+          </label>
 
-<label>
-Name
-<input
- id="srfName"
- required
- maxlength="100">
-</label>
+          <label>
+            Message
+            <textarea
+              id="srfMessage"
+              maxlength="1000"
+              required
+            ></textarea>
+          </label>
 
-<label>
-Phone
-<input
- id="srfPhone"
- required
- maxlength="30"
- inputmode="tel">
-</label>
+          <button
+            class="srf-submit"
+            type="submit"
+          >
+            Send Inquiry
+          </button>
 
-<label>
-Message
-<textarea
- id="srfMessage"
- maxlength="1000"
- required>
-</textarea>
-</label>
+          <div
+            id="srfInquiryMsg"
+            class="srf-msg"
+            aria-live="polite"
+          ></div>
 
-<button
- class="srf-submit"
- type="submit">
-Send Inquiry
-</button>
+        </form>
 
-<div
- id="srfInquiryMsg"
- class="srf-msg"
- aria-live="polite">
-</div>
-
-</form>
-
-</div>
-`;
+      </div>
+    `;
 
     document.body.appendChild(m);
 
     m.querySelector(".srf-close")
-      .addEventListener(
-        "click",
-        closeInquiry
-      );
+      .addEventListener("click", closeInquiry);
 
-    m.addEventListener(
-      "click",
-      e=>{
-        if(e.target===m)
-          closeInquiry();
+    m.addEventListener("click", e => {
+      if (e.target === m) {
+        closeInquiry();
       }
-    );
+    });
 
-    m.querySelector(
-      "#srfInquiryForm"
-    ).addEventListener(
-      "submit",
-      submitInquiry
-    );
+    m.querySelector("#srfInquiryForm")
+      .addEventListener("submit", submitInquiry);
   }
 
-  if(!document.getElementById("srfSponsorWrap")){
+  if (!document.getElementById("srfSponsorWrap")) {
+    const g = document.getElementById("listingGrid");
 
-    const g=
-      document.getElementById("listingGrid");
+    if (g) {
+      const wrap = document.createElement("div");
 
-    if(g){
+      wrap.id = "srfSponsorWrap";
 
-      const wrap=
-        document.createElement("div");
-
-      wrap.id="srfSponsorWrap";
-
-      g.parentNode.insertBefore(
-        wrap,
-        g
-      );
+      g.parentNode.insertBefore(wrap, g);
     }
   }
 }
 
-// ============================================================
-// INQUIRY
-// ============================================================
+let inquiryRoom = null;
 
-let inquiryRoom=null;
+/* =========================================================
+   INQUIRY
+   ========================================================= */
 
-function openInquiry(room){
-
+function openInquiry(room) {
   ensurePublicUI();
 
-  inquiryRoom=room;
+  inquiryRoom = room;
 
   document.getElementById(
     "srfInquiryProperty"
-  ).textContent=
-    "Property: "+
-    (
-      room.title||
-      room.location||
-      "Selected property"
-    );
+  ).textContent =
+    "Property: " +
+    (room.title ||
+      room.location ||
+      "Selected property");
 
   document.getElementById(
     "srfInquiryMsg"
-  ).textContent="";
+  ).textContent = "";
 
   document.getElementById(
     "srfInquiryForm"
@@ -490,82 +367,65 @@ function openInquiry(room){
   ).focus();
 }
 
-function closeInquiry(){
+function closeInquiry() {
+  document.getElementById(
+    "srfInquiryModal"
+  )?.classList.remove("open");
 
-  document
-    .getElementById(
-      "srfInquiryModal"
-    )
-    ?.classList.remove("open");
-
-  inquiryRoom=null;
+  inquiryRoom = null;
 }
 
-async function submitInquiry(e){
-
+async function submitInquiry(e) {
   e.preventDefault();
 
-  if(!inquiryRoom)
-    return;
+  if (!inquiryRoom) return;
 
-  const msg=
-    document.getElementById(
-      "srfInquiryMsg"
-    );
+  const msg =
+    document.getElementById("srfInquiryMsg");
 
-  msg.textContent="Sending...";
+  msg.textContent = "Sending...";
 
-  const {error}=
-    await db
+  const { error } = await db
     .from("inquiries")
     .insert({
-
-      room_id:
-        inquiryRoom.id||null,
-
-      owner_id:
-        inquiryRoom.owner_id||null,
-
+      room_id: inquiryRoom.id || null,
+      owner_id: inquiryRoom.owner_id || null,
       property_title:
-        inquiryRoom.title||
-        inquiryRoom.location||
+        inquiryRoom.title ||
+        inquiryRoom.location ||
         "Property",
 
       name:
-        document
-        .getElementById("srfName")
-        .value
-        .trim(),
+        document.getElementById(
+          "srfName"
+        ).value.trim(),
 
       phone:
-        document
-        .getElementById("srfPhone")
-        .value
-        .trim(),
+        document.getElementById(
+          "srfPhone"
+        ).value.trim(),
 
       message:
-        document
-        .getElementById("srfMessage")
-        .value
-        .trim(),
+        document.getElementById(
+          "srfMessage"
+        ).value.trim(),
 
-      status:"new"
+      status: "new"
     });
 
-  if(error){
-
+  if (error) {
     console.error(
       "Inquiry error:",
       error
     );
 
-    msg.textContent=
+    msg.textContent =
       "Unable to send inquiry. Please try again.";
 
     return;
   }
 
-  msg.textContent=
+  msg.textContent =
     "Inquiry sent successfully.";
 
   setTimeout(
@@ -574,363 +434,385 @@ async function submitInquiry(e){
   );
 }
 
-// ============================================================
-// PROPERTY DETAILS MODAL
-// ============================================================
+/* =========================================================
+   WHATSAPP
+   ========================================================= */
 
-function ensurePropertyModal(){
+function waNumber(value) {
+  let n = String(value || "")
+    .replace(/[^\d]/g, "");
 
-  if(
+  if (n.startsWith("0")) {
+    n = "977" + n.slice(1);
+  } else if (
+    n.startsWith("98") &&
+    n.length === 10
+  ) {
+    n = "977" + n;
+  }
+
+  return n || "9779818067008";
+}
+
+function propertyWhatsApp(x) {
+  const msg =
+`Hello Sasto Room Finder. I am interested in this property:
+${x.title || "Property"}
+Location: ${x.location || x.address || "Not specified"}
+Price: Rs. ${x.price || "Contact for price"}
+
+Please send me the current details.`;
+
+  return (
+    "https://wa.me/" +
+    waNumber(x.phone) +
+    "?text=" +
+    encodeURIComponent(msg)
+  );
+}
+
+/* =========================================================
+   PROPERTY DETAILS MODAL
+   ========================================================= */
+
+function ensurePropertyModal() {
+  if (
     document.getElementById(
       "srfPropertyModal"
     )
-  )
+  ) {
     return;
-
-  const st=document.createElement("style");
-
-  st.id="srf-property-style";
-
-  st.textContent=`
-
-#srfPropertyModal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.68);
-  z-index:99999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-}
-
-#srfPropertyModal.open{
-  display:flex;
-}
-
-#srfPropertyModal .srf-box{
-  background:#fff;
-  border-radius:16px;
-  max-width:900px;
-  width:100%;
-  max-height:92vh;
-  overflow:auto;
-  position:relative;
-  padding:0;
-}
-
-#srfPropertyModal .srf-close{
-  position:absolute;
-  right:12px;
-  top:10px;
-  border:0;
-  background:#fff;
-  border-radius:50%;
-  width:42px;
-  height:42px;
-  font-size:24px;
-  cursor:pointer;
-  z-index:2;
-}
-
-#srfPropertyModal .srf-main-img{
-  width:100%;
-  height:min(58vw,440px);
-  object-fit:cover;
-  background:#eef3f8;
-}
-
-#srfPropertyModal .srf-thumbs{
-  display:flex;
-  gap:8px;
-  overflow:auto;
-  padding:10px 14px;
-}
-
-#srfPropertyModal .srf-thumbs img{
-  width:72px;
-  height:58px;
-  object-fit:cover;
-  border-radius:8px;
-  cursor:pointer;
-  flex:0 0 auto;
-}
-
-#srfPropertyModal .srf-body{
-  padding:16px 18px 22px;
-}
-
-#srfPropertyModal .srf-body h2{
-  margin:0 0 8px;
-}
-
-#srfPropertyModal .srf-meta{
-  display:grid;
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-  gap:8px;
-  margin:14px 0;
-}
-
-#srfPropertyModal .srf-meta div{
-  padding:9px 10px;
-  background:#f5f8fb;
-  border-radius:9px;
-}
-
-#srfPropertyModal .srf-wa{
-  display:block;
-  text-align:center;
-  text-decoration:none;
-  padding:12px;
-  border-radius:10px;
-  background:#16834f;
-  color:#fff;
-  font-weight:700;
-  margin-top:14px;
-}
-
-@media(max-width:560px){
-
-  #srfPropertyModal{
-    padding:8px;
   }
 
-  #srfPropertyModal .srf-meta{
-    grid-template-columns:1fr;
-  }
+  const st =
+    document.createElement("style");
 
-  #srfPropertyModal .srf-main-img{
-    height:55vw;
-    min-height:220px;
-  }
-}
+  st.id = "srf-property-style";
 
-`;
+  st.textContent = `
+    #srfPropertyModal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.68);
+      z-index:99999;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+
+    #srfPropertyModal.open{
+      display:flex;
+    }
+
+    #srfPropertyModal .srf-box{
+      background:#fff;
+      border-radius:16px;
+      max-width:900px;
+      width:100%;
+      max-height:92vh;
+      overflow:auto;
+      position:relative;
+    }
+
+    #srfPropertyModal .srf-close{
+      position:absolute;
+      right:12px;
+      top:10px;
+      border:0;
+      background:#fff;
+      border-radius:50%;
+      width:42px;
+      height:42px;
+      font-size:24px;
+      cursor:pointer;
+      z-index:2;
+    }
+
+    #srfPropertyModal .srf-main-img{
+      width:100%;
+      height:min(58vw,440px);
+      object-fit:cover;
+      background:#eef3f8;
+    }
+
+    #srfPropertyModal .srf-thumbs{
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      padding:10px 14px;
+    }
+
+    #srfPropertyModal .srf-thumbs img{
+      width:72px;
+      height:58px;
+      object-fit:cover;
+      border-radius:8px;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+
+    #srfPropertyModal .srf-body{
+      padding:16px 18px 22px;
+    }
+
+    #srfPropertyModal .srf-body h2{
+      margin:0 0 8px;
+    }
+
+    #srfPropertyModal .srf-meta{
+      display:grid;
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+      gap:8px;
+      margin:14px 0;
+    }
+
+    #srfPropertyModal .srf-meta div{
+      padding:9px 10px;
+      background:#f5f8fb;
+      border-radius:9px;
+    }
+
+    #srfPropertyModal .srf-wa{
+      display:block;
+      text-align:center;
+      text-decoration:none;
+      padding:12px;
+      border-radius:10px;
+      background:#16834f;
+      color:#fff;
+      font-weight:700;
+      margin-top:14px;
+    }
+
+    @media(max-width:560px){
+      #srfPropertyModal .srf-meta{
+        grid-template-columns:1fr;
+      }
+
+      #srfPropertyModal{
+        padding:8px;
+      }
+
+      #srfPropertyModal .srf-main-img{
+        height:55vw;
+      }
+    }
+  `;
 
   document.head.appendChild(st);
 
-  const m=document.createElement("div");
+  const m =
+    document.createElement("div");
 
-  m.id="srfPropertyModal";
+  m.id = "srfPropertyModal";
 
-  m.innerHTML=`
+  m.innerHTML = `
+    <div class="srf-box">
 
-<div class="srf-box">
+      <button
+        class="srf-close"
+        type="button"
+        aria-label="Close"
+      >×</button>
 
-<button
- class="srf-close"
- type="button"
- aria-label="Close">
-×
-</button>
+      <img
+        class="srf-main-img"
+        id="srfModalImg"
+        alt=""
+      >
 
-<img
- class="srf-main-img"
- id="srfModalImg"
- alt="">
+      <div
+        class="srf-thumbs"
+        id="srfModalThumbs"
+      ></div>
 
-<div
- class="srf-thumbs"
- id="srfModalThumbs">
-</div>
+      <div
+        class="srf-body"
+        id="srfModalBody"
+      ></div>
 
-<div
- class="srf-body"
- id="srfModalBody">
-</div>
-
-</div>
-`;
+    </div>
+  `;
 
   document.body.appendChild(m);
 
-  m.querySelector(
-    ".srf-close"
-  ).addEventListener(
-    "click",
-    ()=>{
-      m.classList.remove("open");
-    }
-  );
-
-  m.addEventListener(
-    "click",
-    e=>{
-      if(e.target===m)
-        m.classList.remove("open");
-    }
-  );
-}
-
-function openPropertyDetails(id){
-
-  const x=
-    listings.find(
-      r=>String(r.id)===String(id)
+  m.querySelector(".srf-close")
+    .addEventListener(
+      "click",
+      () => m.classList.remove("open")
     );
 
-  if(!x)return;
+  m.addEventListener("click", e => {
+    if (e.target === m) {
+      m.classList.remove("open");
+    }
+  });
+}
+
+function openPropertyDetails(id) {
+  const x = listings.find(
+    r => String(r.id) === String(id)
+  );
+
+  if (!x) return;
 
   ensurePropertyModal();
 
-  const photos=
+  const photos =
     normalizePhotos(x.photos);
 
-  const img=
+  const img =
     document.getElementById(
       "srfModalImg"
     );
 
-  const thumbs=
+  const thumbs =
     document.getElementById(
       "srfModalThumbs"
     );
 
-  img.src=
-    photos[0]||"";
+  img.src = photos[0] || "";
+  img.alt =
+    x.title ||
+    "Property photo";
 
-  img.alt=
-    x.title||"Property photo";
-
-  thumbs.innerHTML=
+  thumbs.innerHTML =
     photos
-    .map(
-      (p,i)=>
-        `
-<img
- src="${escapeHtml(p)}"
- alt="Photo ${i+1}"
- data-photo="${escapeHtml(p)}"
- loading="lazy">
-`
-    )
-    .join("");
+      .map(
+        (p, i) =>
+          `<img
+            src="${escapeHtml(p)}"
+            alt="Photo ${i + 1}"
+            data-photo="${escapeHtml(p)}"
+          >`
+      )
+      .join("");
 
   thumbs
     .querySelectorAll("img")
-    .forEach(t=>{
-
+    .forEach(t => {
       t.addEventListener(
         "click",
-        ()=>{
-          img.src=
+        () => {
+          img.src =
             t.dataset.photo;
         }
       );
     });
 
-  const price=
-    x.price!==null &&
-    x.price!==undefined &&
-    x.price!==""
-    ?
-    "Rs. "+
-    Number(x.price)
-      .toLocaleString()+
-    " / month"
-    :
-    "Contact for price";
+  const price =
+    x.price !== null &&
+    x.price !== undefined &&
+    x.price !== ""
+      ? "Rs. " +
+        Number(x.price)
+          .toLocaleString() +
+        " / month"
+      : "Contact for price";
 
   document.getElementById(
     "srfModalBody"
-  ).innerHTML=`
+  ).innerHTML = `
 
-<h2>
-${escapeHtml(
-  x.title||"Property"
-)}
-</h2>
+    <h2>
+      ${escapeHtml(
+        x.title || "Property"
+      )}
+    </h2>
 
-<div>
-${escapeHtml(
-  x.location||
-  x.address||
-  "Location not specified"
-)}
-</div>
+    <div>
+      ${escapeHtml(
+        x.location ||
+        x.address ||
+        "Location not specified"
+      )}
+    </div>
 
-<div class="srf-meta">
+    <div class="srf-meta">
 
-<div>
-<b>Price</b>
-<br>
-${escapeHtml(price)}
-</div>
+      <div>
+        <b>Price</b><br>
+        ${escapeHtml(price)}
+      </div>
 
-<div>
-<b>Type</b>
-<br>
-${escapeHtml(
-  x.room_type||"Property"
-)}
-</div>
+      <div>
+        <b>Type</b><br>
+        ${escapeHtml(
+          x.room_type ||
+          "Property"
+        )}
+      </div>
 
-<div>
-<b>Bedrooms</b>
-<br>
-${escapeHtml(
-  x.bedrooms??"—"
-)}
-</div>
+      <div>
+        <b>Bedrooms</b><br>
+        ${escapeHtml(
+          x.bedrooms ??
+          "—"
+        )}
+      </div>
 
-<div>
-<b>Bathrooms</b>
-<br>
-${escapeHtml(
-  x.bathrooms??"—"
-)}
-</div>
+      <div>
+        <b>Bathrooms</b><br>
+        ${escapeHtml(
+          x.bathrooms ??
+          "—"
+        )}
+      </div>
 
-<div>
-<b>Furnished</b>
-<br>
-${x.furnished===true?"Yes":"No"}
-</div>
+      <div>
+        <b>Furnished</b><br>
+        ${
+          x.furnished === true
+            ? "Yes"
+            : "No"
+        }
+      </div>
 
-<div>
-<b>Contact</b>
-<br>
-${escapeHtml(
-  x.phone||"Not provided"
-)}
-</div>
+      <div>
+        <b>Contact</b><br>
+        ${escapeHtml(
+          x.phone ||
+          "Not provided"
+        )}
+      </div>
 
-</div>
+    </div>
 
-${
-  x.description
-  ?
-  `<p>${
-    escapeHtml(
-      String(x.description)
-    ).replace(
-      /\n/g,
-      "<br>"
-    )
-  }</p>`
-  :""
-}
+    ${
+      x.description
+        ? `<p>
+            ${escapeHtml(
+              String(x.description)
+            ).replace(
+              /\n/g,
+              "<br>"
+            )}
+          </p>`
+        : ""
+    }
 
-${
-  x.address
-  ?
-  `<p>
-  <b>Address / Area:</b>
-  ${escapeHtml(x.address)}
-  </p>`
-  :""
-}
+    ${
+      x.address
+        ? `<p>
+            <b>Address / Area:</b>
+            ${escapeHtml(
+              x.address
+            )}
+          </p>`
+        : ""
+    }
 
-<a
- class="srf-wa"
- href="${propertyWhatsApp(x)}"
- target="_blank"
- rel="noopener">
- WhatsApp Owner
-</a>
-
-`;
+    <a
+      class="srf-wa"
+      href="${propertyWhatsApp(x)}"
+      target="_blank"
+      rel="noopener"
+    >
+      WhatsApp Owner
+    </a>
+  `;
 
   document
     .getElementById(
@@ -939,466 +821,228 @@ ${
     .classList.add("open");
 }
 
-// ============================================================
-// GALLERY CSS
-// ============================================================
+/* =========================================================
+   PROPERTY GALLERY
+   ========================================================= */
 
-function ensurePublicGalleryStyle(){
-
-  if(
+function ensurePublicGalleryStyle() {
+  if (
     document.getElementById(
       "srf-gallery-style"
     )
-  )
+  ) {
     return;
-
-  const st=document.createElement("style");
-
-  st.id="srf-gallery-style";
-
-  st.textContent=`
-
-.srf-gallery{
-  position:relative;
-  background:#eef3f8;
-}
-
-.srf-card-img{
-  display:block;
-  width:100%;
-  height:240px;
-  object-fit:cover;
-  cursor:pointer;
-}
-
-.srf-photo-row{
-  display:flex;
-  gap:6px;
-  padding:7px;
-  overflow-x:auto;
-  background:#fff;
-}
-
-.srf-photo-row img{
-  width:58px;
-  height:48px;
-  object-fit:cover;
-  border-radius:6px;
-  cursor:pointer;
-  flex:0 0 auto;
-}
-
-.srf-photo-count{
-  position:absolute;
-  right:8px;
-  top:8px;
-  background:rgba(0,0,0,.68);
-  color:#fff;
-  padding:5px 8px;
-  border-radius:999px;
-  font-size:12px;
-}
-
-.srf-no-photo{
-  height:240px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#eef3f8;
-  color:#71839b;
-}
-
-@media(max-width:600px){
-
-  .srf-card-img{
-    height:220px;
   }
 
-  .srf-photo-row img{
-    width:64px;
-    height:52px;
-  }
-}
+  const st =
+    document.createElement("style");
 
-`;
+  st.id = "srf-gallery-style";
+
+  st.textContent = `
+    .srf-gallery{
+      position:relative;
+      background:#eef3f8;
+    }
+
+    .srf-card-img{
+      display:block;
+      width:100%;
+      height:240px;
+      object-fit:cover;
+    }
+
+    .srf-photo-row{
+      display:flex;
+      gap:6px;
+      padding:7px;
+      overflow-x:auto;
+      background:#fff;
+    }
+
+    .srf-photo-row img{
+      width:58px;
+      height:48px;
+      object-fit:cover;
+      border-radius:6px;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+
+    .srf-photo-count{
+      position:absolute;
+      right:8px;
+      top:8px;
+      background:rgba(0,0,0,.68);
+      color:#fff;
+      padding:5px 8px;
+      border-radius:999px;
+      font-size:12px;
+    }
+
+    .srf-no-photo{
+      height:240px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#eef3f8;
+      color:#71839b;
+    }
+
+    @media(max-width:600px){
+      .srf-card-img{
+        height:210px;
+      }
+
+      .srf-no-photo{
+        height:210px;
+      }
+    }
+  `;
 
   document.head.appendChild(st);
 }
 
-// ============================================================
-// RENDER LISTINGS
-// ============================================================
+/* =========================================================
+   RENDER LISTINGS
+   ========================================================= */
 
-function renderListings(items=listings){
-
+function renderListings(items = listings) {
   ensurePublicGalleryStyle();
 
-  const g=
+  const g =
     document.getElementById(
       "listingGrid"
     );
 
-  if(!g)return;
+  if (!g) return;
 
-  if(!items.length){
-
-    g.innerHTML=
-      '<div class="listing-empty">'+
-      'No properties available right now.'+
-      '</div>';
+  if (!items.length) {
+    g.innerHTML =
+      '<div class="listing-empty">No properties available right now.</div>';
 
     return;
   }
 
-  g.innerHTML=
+  g.innerHTML =
     items
-    .map(x=>{
-
-      const photos=
-        normalizePhotos(x.photos);
-
-      const first=
-        photos[0]||"";
-
-      const price=
-        x.price!==null &&
-        x.price!==undefined &&
-        x.price!==""
-        ?
-        "Rs. "+
-        Number(x.price)
-          .toLocaleString()+
-        " / month"
-        :
-        "Contact for price";
-
-      const wa=
-        propertyWhatsApp(x);
-
-      const gallery=
-        photos.length
-        ?
-        `
-
-<div class="srf-gallery">
-
-<img
- class="srf-card-img"
- src="${escapeHtml(first)}"
- alt="${escapeHtml(
-   x.title||"Property photo"
- )}"
- loading="lazy"
- onclick="openPropertyDetails('${escapeHtml(x.id)}')">
-
-${
-  photos.length>1
-  ?
-  `
-<div class="srf-photo-count">
-${photos.length} photos
-</div>
-
-<div class="srf-photo-row">
-
-${
-  photos
-  .map(
-    (p,i)=>
-      `
-<img
- src="${escapeHtml(p)}"
- data-photo="${escapeHtml(p)}"
- alt="Photo ${i+1}"
- loading="lazy">
-`
-  )
-  .join("")
-}
-
-</div>
-`
-  :""
-}
-
-</div>
-
-`
-        :
-        `
-<div class="srf-no-photo">
-No photo available
-</div>
-`;
-
-      return `
-
-<article
- class="listing"
- data-id="${escapeHtml(x.id)}">
-
-${gallery}
-
-<div class="listing-body">
-
-<h3>
-${escapeHtml(
-  x.title||"Property"
-)}
-</h3>
-
-<div class="listing-location">
-${escapeHtml(
-  x.location||
-  x.address||
-  ""
-)}
-</div>
-
-<div class="listing-price">
-${escapeHtml(price)}
-</div>
-
-<div class="listing-meta">
-
-${escapeHtml(
-  x.room_type||""
-)}
-
-${
-  x.bedrooms!==null &&
-  x.bedrooms!==undefined
-  ?
-  " • "+
-  escapeHtml(x.bedrooms)+
-  " bed"
-  :""
-}
-
-</div>
-
-${
-  x.description
-  ?
-  `<p>${
-    escapeHtml(
-      String(x.description)
-        .slice(0,150)
-    )
-  }${
-    String(x.description).length>150
-    ?"…"
-    :""
-  }</p>`
-  :""
-}
-
-<div
- style="
- display:flex;
- gap:8px;
- flex-wrap:wrap;
- margin-top:12px
- ">
-
-<button
- type="button"
- class="btn btn-dark srf-details"
- data-id="${escapeHtml(x.id)}">
-
-View Property Details
-
-</button>
-
-<a
- class="btn btn-dark"
- href="${wa}"
- target="_blank"
- rel="noopener">
-
-Enquire on WhatsApp
-
-</a>
-
-</div>
-
-</div>
-
-</article>
-`;
-
-    })
-    .join("");
-
-  g.querySelectorAll(
-    ".srf-details"
-  ).forEach(b=>{
-
-    b.addEventListener(
-      "click",
-      ()=>{
-        openPropertyDetails(
-          b.dataset.id
-        );
-      }
-    );
-  });
-
-  g.querySelectorAll(
-    ".srf-gallery"
-  ).forEach(box=>{
-
-    const main=
-      box.querySelector(
-        ".srf-card-img"
-      );
-
-    box.querySelectorAll(
-      ".srf-photo-row img"
-    ).forEach(t=>{
-
-      t.addEventListener(
-        "click",
-        e=>{
-
-          e.stopPropagation();
-
-          main.src=
-            t.dataset.photo;
-        }
-      );
-    });
-  });
-}
-
-// ============================================================
-// LOAD SPONSORS
-// ============================================================
-
-async function loadSponsors(){
-
-  const wrap=
-    document.getElementById(
-      "srfSponsorWrap"
-    );
-
-  if(!wrap)return;
-
-  const {
-    data,
-    error
-  }=
-    await db
-    .from("sponsors")
-    .select("*")
-    .eq("status","active")
-    .order(
-      "created_at",
-      {ascending:false}
-    );
-
-  if(error){
-
-    console.warn(
-      "Sponsors unavailable:",
-      error.message
-    );
-
-    wrap.innerHTML="";
-
-    return;
-  }
-
-  const now=new Date();
-
-  const active=
-    (data||[]).filter(s=>{
-
-      const from=
-        s.start_date
-        ?new Date(
-          s.start_date+
-          "T00:00:00"
-        )
-        :null;
-
-      const to=
-        s.end_date
-        ?new Date(
-          s.end_date+
-          "T23:59:59"
-        )
-        :null;
-
-      return (
-        (!from||now>=from) &&
-        (!to||now<=to)
-      );
-    });
-
-  if(!active.length){
-
-    wrap.innerHTML="";
-
-    return;
-  }
-
-  wrap.innerHTML=
-    `
-<div class="srf-sponsors">
-
-${
-  active
-  .map(s=>{
-
-    const image=
-      s.image_url||
-      s.image||
-      "";
-
-    const link=
-      s.link_url||
-      s.link||
-      "";
-
-    const body=
-      `
-<div class="srf-sponsor-body">
-
-<div class="srf-sponsored-label">
-Sponsored
-</div>
-
-<h3>
-${escapeHtml(
-  s.title||
-  s.sponsor_name||
-  "Advertisement"
-)}
-</h3>
-
-${
-  s.description
-  ?
-  `<p>${escapeHtml(
-    s.description
-  )}</p>`
-  :""
-}
-
-</div>
-`;
-
-    return link
-      ?
-      `
-<a
- class="srf-sponsor"
- href="${escapeHtml(link)}"
- target="_blank"
- rel="noopener">
-
-${
-  image
-  ?
-  `<
+      .map(x => {
+
+        const photos =
+          normalizePhotos(
+            x.photos
+          );
+
+        const first =
+          photos[0] || "";
+
+        const price =
+          x.price !== null &&
+          x.price !== undefined &&
+          x.price !== ""
+            ? "Rs. " +
+              Number(x.price)
+                .toLocaleString() +
+              " / month"
+            : "Contact for price";
+
+        const wa =
+          propertyWhatsApp(x);
+
+        const gallery =
+          photos.length
+            ? `
+              <div class="srf-gallery">
+
+                <img
+                  class="srf-card-img"
+                  src="${escapeHtml(first)}"
+                  alt="${escapeHtml(
+                    x.title ||
+                    "Property photo"
+                  )}"
+                  loading="lazy"
+                >
+
+                ${
+                  photos.length > 1
+                    ? `
+                      <div class="srf-photo-count">
+                        ${photos.length} photos
+                      </div>
+
+                      <div class="srf-photo-row">
+
+                        ${photos
+                          .map(
+                            (p, i) =>
+                              `
+                              <img
+                                src="${escapeHtml(p)}"
+                                data-photo="${escapeHtml(p)}"
+                                alt="Photo ${i + 1}"
+                                loading="lazy"
+                              >
+                              `
+                          )
+                          .join("")}
+
+                      </div>
+                    `
+                    : ""
+                }
+
+              </div>
+            `
+            : `
+              <div class="srf-no-photo">
+                No photo available
+              </div>
+            `;
+
+        return `
+          <article
+            class="listing"
+            data-id="${escapeHtml(
+              x.id
+            )}"
+          >
+
+            ${gallery}
+
+            <div class="listing-body">
+
+              <h3>
+                ${escapeHtml(
+                  x.title ||
+                  "Property"
+                )}
+              </h3>
+
+              <div class="listing-location">
+                ${escapeHtml(
+                  x.location ||
+                  x.address ||
+                  ""
+                )}
+              </div>
+
+              <div class="listing-price">
+                ${escapeHtml(price)}
+              </div>
+
+              <div class="listing-meta">
+
+                ${escapeHtml(
+                  x.room_type ||
+                  ""
+                )}
+
+                ${
+                  x.bedrooms !==
+                    null &&
+                  x.bedrooms !==
+                    undefined
+                    ? " • " +
+                      escapeHtml(
+                      
