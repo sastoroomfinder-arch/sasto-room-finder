@@ -1,10 +1,5 @@
 "use strict";
 
-/* =========================================
-   SASTO ROOM FINDER
-   PUBLIC PROPERTIES LOADER
-   ========================================= */
-
 const SUPABASE_URL =
   "https://amhrnahjshsgelacqzyl.supabase.co";
 
@@ -13,19 +8,19 @@ const SUPABASE_KEY =
 
 const ADMIN_WHATSAPP = "9779818067008";
 
-let allProperties = [];
+var listings = [];
 
 
-/* =========================================
-   BASIC HELPERS
-   ========================================= */
+/* =========================
+   HELPERS
+========================= */
 
-function el(id) {
+function get(id) {
   return document.getElementById(id);
 }
 
-function safe(value) {
-  return String(value ?? "")
+function esc(value) {
+  return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -33,213 +28,136 @@ function safe(value) {
     .replace(/'/g, "&#039;");
 }
 
+function field(room, names, fallback) {
+  var i;
+  var value;
 
-function value(room, names, fallback = "") {
-
-  for (const name of names) {
+  for (i = 0; i < names.length; i++) {
+    value = room[names[i]];
 
     if (
-      room &&
-      room[name] !== null &&
-      room[name] !== undefined &&
-      String(room[name]).trim() !== ""
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== ""
     ) {
-      return room[name];
+      return value;
     }
-
   }
 
-  return fallback;
+  return fallback || "";
 }
 
-
-function title(room) {
-  return value(
+function propertyTitle(room) {
+  return field(
     room,
     ["title", "name", "property_name"],
     "Room / Property"
   );
 }
 
-
-function location(room) {
-  return value(
+function propertyLocation(room) {
+  return field(
     room,
-    [
-      "location",
-      "address",
-      "area",
-      "city",
-      "district",
-      "municipality"
-    ],
+    ["location", "address", "area", "city", "district"],
     "Kathmandu Valley"
   );
 }
 
-
 function propertyType(room) {
-  return value(
+  return field(
     room,
-    [
-      "room_type",
-      "property_type",
-      "type",
-      "category"
-    ],
+    ["room_type", "property_type", "type", "category"],
     "Property"
   );
 }
 
-
-function description(room) {
-  return value(
+function propertyDescription(room) {
+  return field(
     room,
-    [
-      "description",
-      "details",
-      "about"
-    ],
+    ["description", "details", "about"],
     ""
   );
 }
 
-
-function price(room) {
-
-  const p = value(
+function propertyPrice(room) {
+  var value = field(
     room,
-    [
-      "price",
-      "rent",
-      "monthly_rent",
-      "amount"
-    ],
+    ["price", "rent", "monthly_rent", "amount"],
     ""
   );
 
-  if (p === "") {
+  if (value === "") {
     return "Contact for price";
   }
 
-  const number =
-    Number(
-      String(p)
-        .replace(/,/g, "")
-        .replace(/[^\d.-]/g, "")
-    );
+  var number = Number(
+    String(value)
+      .replace(/,/g, "")
+      .replace(/[^\d.-]/g, "")
+  );
 
-  if (Number.isFinite(number)) {
-
+  if (!isNaN(number)) {
     return (
       "Rs. " +
       number.toLocaleString("en-IN") +
       " / month"
     );
-
   }
 
-  return String(p);
+  return String(value);
 }
 
 
-/* =========================================
+/* =========================
    PHOTOS
-   ========================================= */
+========================= */
 
-function photos(room) {
+function propertyPhotos(room) {
 
-  let p = value(
+  var value = field(
     room,
-    [
-      "photos",
-      "images",
-      "image_urls",
-      "photo_urls",
-      "image"
-    ],
+    ["photos", "images", "image_urls", "photo_urls"],
     []
   );
 
-
-  if (Array.isArray(p)) {
-
-    return p
-      .map(x => {
-
-        if (typeof x === "string") {
-          return x;
-        }
-
-        if (x && typeof x === "object") {
-          return (
-            x.url ||
-            x.publicUrl ||
-            x.public_url ||
-            ""
-          );
-        }
-
-        return "";
-
-      })
-      .filter(Boolean);
-
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
   }
 
+  if (typeof value === "string") {
 
-  if (typeof p === "string") {
-
-    p = p.trim();
-
-    if (!p) {
+    if (!value.trim()) {
       return [];
     }
 
-
     try {
-
-      const parsed = JSON.parse(p);
+      var parsed = JSON.parse(value);
 
       if (Array.isArray(parsed)) {
-
-        return parsed
-          .map(x =>
-            typeof x === "string"
-              ? x
-              : (
-                  x?.url ||
-                  x?.publicUrl ||
-                  x?.public_url ||
-                  ""
-                )
-          )
-          .filter(Boolean);
-
+        return parsed.filter(Boolean);
       }
 
-    } catch (_) {}
+    } catch (e) {}
 
-
-    return p
+    return value
       .split(",")
-      .map(x => x.trim())
+      .map(function (x) {
+        return x.trim();
+      })
       .filter(Boolean);
-
   }
-
 
   return [];
 }
 
 
-/* =========================================
-   PHONE / WHATSAPP
-   ========================================= */
+/* =========================
+   WHATSAPP
+========================= */
 
-function phone(room) {
+function propertyPhone(room) {
 
-  let p = value(
+  var phone = field(
     room,
     [
       "phone",
@@ -253,49 +171,51 @@ function phone(room) {
     ADMIN_WHATSAPP
   );
 
-  p = String(p).replace(/\D/g, "");
+  phone = String(phone).replace(/\D/g, "");
 
-  if (p.startsWith("00")) {
-    p = p.substring(2);
+  if (phone.indexOf("00") === 0) {
+    phone = phone.substring(2);
   }
 
-  if (p.startsWith("0")) {
-    p = "977" + p.substring(1);
+  if (phone.indexOf("0") === 0) {
+    phone = "977" + phone.substring(1);
   }
 
-  if (p.length === 10 && p.startsWith("9")) {
-    p = "977" + p;
+  if (
+    phone.length === 10 &&
+    phone.indexOf("9") === 0
+  ) {
+    phone = "977" + phone;
   }
 
-  return p || ADMIN_WHATSAPP;
+  return phone || ADMIN_WHATSAPP;
 }
-
 
 function whatsapp(room) {
 
-  const message =
+  var text =
     "Hello Sasto Room Finder, I am interested in " +
-    title(room) +
+    propertyTitle(room) +
     " at " +
-    location(room) +
-    ". Please send me the current details.";
+    propertyLocation(room) +
+    ". Please send current details.";
 
   return (
     "https://wa.me/" +
-    phone(room) +
+    propertyPhone(room) +
     "?text=" +
-    encodeURIComponent(message)
+    encodeURIComponent(text)
   );
 }
 
 
-/* =========================================
-   SHOW MESSAGE
-   ========================================= */
+/* =========================
+   MESSAGE
+========================= */
 
-function message(text, error = false) {
+function showMessage(text) {
 
-  const grid = el("listingGrid");
+  var grid = get("listingGrid");
 
   if (!grid) {
     return;
@@ -308,346 +228,318 @@ function message(text, error = false) {
     "text-align:center;" +
     "background:#f5f5f5;" +
     "border-radius:12px;" +
-    "color:" +
-    (error ? "#b00020" : "#555") +
-    ';">' +
-    safe(text) +
+    '">' +
+    esc(text) +
     "</div>";
 }
 
 
-/* =========================================
-   RENDER PROPERTIES
-   ========================================= */
+/* =========================
+   RENDER
+========================= */
 
-function renderProperties(properties) {
+function renderListings(rows) {
 
-  const grid = el("listingGrid");
+  var grid = get("listingGrid");
 
   if (!grid) {
-
     console.error(
-      "ERROR: #listingGrid was not found."
+      "Sasto Room Finder: listingGrid not found."
     );
-
     return;
   }
 
+  if (!rows || rows.length === 0) {
 
-  if (!properties.length) {
-
-    message(
+    showMessage(
       "No approved and available properties found."
     );
 
     return;
   }
 
+  grid.innerHTML = rows.map(function (room) {
 
-  grid.innerHTML =
-    properties
-      .map(room => {
+    var title = esc(propertyTitle(room));
+    var location = esc(propertyLocation(room));
+    var type = esc(propertyType(room));
+    var description =
+      esc(propertyDescription(room));
+    var price =
+      esc(propertyPrice(room));
 
-        const pics = photos(room);
+    var pics = propertyPhotos(room);
 
-        let image = "";
+    var photo;
 
-        if (pics.length) {
+    if (pics.length > 0) {
 
-          image =
-            '<img src="' +
-            safe(pics[0]) +
-            '" ' +
-            'alt="' +
-            safe(title(room)) +
-            '" ' +
-            'loading="lazy" ' +
-            'style="width:100%;height:220px;object-fit:cover;">';
+      photo =
+        '<img src="' +
+        esc(pics[0]) +
+        '" ' +
+        'alt="' +
+        title +
+        '" ' +
+        'loading="lazy" ' +
+        'style="width:100%;height:220px;object-fit:cover;">';
 
-        } else {
+    } else {
 
-          image =
-            '<div style="' +
-            "height:220px;" +
-            "display:flex;" +
-            "align-items:center;" +
-            "justify-content:center;" +
-            "background:#eef2f0;" +
-            "font-size:55px;" +
-            '">🏠</div>';
+      photo =
+        '<div style="' +
+        "height:220px;" +
+        "display:flex;" +
+        "align-items:center;" +
+        "justify-content:center;" +
+        "background:#eef2f0;" +
+        "font-size:55px;" +
+        '">' +
+        "🏠" +
+        "</div>";
+    }
 
-        }
+    return (
+      '<article class="listing">' +
 
+        '<div class="listing-photo">' +
+          photo +
+        "</div>" +
 
-        return (
+        '<div class="listing-body">' +
 
-          '<article class="listing" ' +
-          'style="' +
-          "overflow:hidden;" +
-          "background:white;" +
-          "border-radius:16px;" +
-          "border:1px solid #e5e5e5;" +
-          'box-shadow:0 4px 15px rgba(0,0,0,.08);">' +
+          '<span class="eyebrow">' +
+            type +
+          "</span>" +
 
-            '<div class="listing-photo">' +
-              image +
-            "</div>" +
+          "<h3>" +
+            title +
+          "</h3>" +
 
-            '<div class="listing-body" ' +
-            'style="padding:18px;">' +
+          "<p>📍 " +
+            location +
+          "</p>" +
 
-              '<span class="eyebrow">' +
-                safe(propertyType(room)) +
-              "</span>" +
+          (
+            description
+              ? "<p>" +
+                description +
+                "</p>"
+              : ""
+          ) +
 
-              "<h3>" +
-                safe(title(room)) +
-              "</h3>" +
+          '<div class="listing-price">' +
+            price +
+          "</div>" +
 
-              "<p>📍 " +
-                safe(location(room)) +
-              "</p>" +
+          '<a class="btn btn-dark full" ' +
+          'href="' +
+          esc(whatsapp(room)) +
+          '" ' +
+          'target="_blank" ' +
+          'rel="noopener noreferrer" ' +
+          'style="margin-top:14px;">' +
+          "Enquire on WhatsApp" +
+          "</a>" +
 
-              (
-                description(room)
-                  ? "<p>" +
-                    safe(description(room)) +
-                    "</p>"
-                  : ""
-              ) +
+        "</div>" +
 
-              '<div class="listing-price">' +
-                safe(price(room)) +
-              "</div>" +
+      "</article>"
+    );
 
-              '<a href="' +
-                safe(whatsapp(room)) +
-                '" ' +
-                'target="_blank" ' +
-                'rel="noopener noreferrer" ' +
-                'class="btn btn-dark full" ' +
-                'style="display:block;text-align:center;margin-top:15px;">' +
-                "Enquire on WhatsApp" +
-              "</a>" +
-
-            "</div>" +
-
-          "</article>"
-
-        );
-
-      })
-      .join("");
+  }).join("");
 }
 
 
-/* =========================================
-   LOAD FROM SUPABASE
-   ========================================= */
+/* =========================
+   LOAD SUPABASE
+========================= */
 
-async function loadListings() {
+function loadListings() {
 
-  console.log(
-    "Sasto Room Finder: starting property load..."
-  );
-
-
-  const grid = el("listingGrid");
+  var grid = get("listingGrid");
 
   if (!grid) {
-
     console.error(
-      "Sasto Room Finder ERROR: listingGrid does not exist."
+      "Sasto Room Finder: #listingGrid does not exist."
     );
-
     return;
   }
 
+  showMessage("Loading properties...");
 
-  message("Loading properties...");
+  /*
+     IMPORTANT:
+     We deliberately do NOT put
+     status / approval_status / created_at
+     into the REST URL.
+  */
 
-
-  const endpoint =
+  var url =
     SUPABASE_URL +
-    "/rest/v1/room" +
-    "?select=*" +
-    "&status=eq.available" +
-    "&approval_status=eq.approved" +
-    "&order=created_at.desc";
+    "/rest/v1/room?select=*";
 
+  fetch(url, {
 
-  console.log(
-    "Supabase endpoint:",
-    endpoint
-  );
+    method: "GET",
 
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Accept": "application/json"
+    },
 
-  try {
+    cache: "no-store"
 
-    const response =
-      await fetch(
-        endpoint,
-        {
-          method: "GET",
+  })
 
-          headers: {
-            "apikey": SUPABASE_KEY,
-            "Accept": "application/json"
-          },
+  .then(function (response) {
 
-          cache: "no-store"
+    return response.text()
+      .then(function (body) {
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Supabase HTTP " +
+            response.status +
+            ": " +
+            body
+          );
         }
-      );
 
+        return body;
+      });
 
-    const body =
-      await response.text();
+  })
 
-
-    console.log(
-      "Supabase HTTP status:",
-      response.status
-    );
-
+  .then(function (body) {
 
     console.log(
-      "Supabase response:",
+      "Supabase raw response:",
       body
     );
 
-
-    if (!response.ok) {
-
-      throw new Error(
-        "Supabase HTTP " +
-        response.status +
-        ": " +
-        body
-      );
-
-    }
-
-
-    let data;
+    var data;
 
     try {
-
       data = JSON.parse(body);
-
-    } catch (_) {
-
+    } catch (e) {
       throw new Error(
         "Supabase did not return JSON."
       );
-
     }
-
 
     if (!Array.isArray(data)) {
 
       throw new Error(
-        "Supabase returned unexpected data."
+        "Unexpected Supabase response."
       );
-
     }
 
+    /*
+       Filter AFTER receiving the data.
+    */
 
-    allProperties = data;
+    listings = data.filter(function (room) {
 
+      return (
+        String(room.status || "")
+          .toLowerCase() === "available" &&
 
-    console.log(
-      "PROPERTIES LOADED:",
-      allProperties.length
-    );
-
-
-    renderProperties(
-      allProperties
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "SASTO ROOM FINDER ERROR:",
-      error
-    );
-
-
-    message(
-      "Property loading failed: " +
-      error.message,
-      true
-    );
-
-  }
-
-}
-
-
-/* =========================================
-   SEARCH / FILTER
-   ========================================= */
-
-function filterProperties() {
-
-  const search =
-    String(
-      el("filterSearch")?.value || ""
-    )
-      .toLowerCase()
-      .trim();
-
-
-  const type =
-    String(
-      el("filterType")?.value || ""
-    )
-      .toLowerCase()
-      .trim();
-
-
-  const results =
-    allProperties.filter(room => {
-
-      const text = [
-
-        title(room),
-        location(room),
-        propertyType(room),
-        description(room),
-        price(room)
-
-      ]
-        .join(" ")
-        .toLowerCase();
-
-
-      const searchOK =
-        !search ||
-        text.includes(search);
-
-
-      const typeOK =
-        !type ||
-        propertyType(room)
-          .toLowerCase()
-          .includes(type);
-
-
-      return searchOK && typeOK;
+        String(room.approval_status || "")
+          .toLowerCase() === "approved"
+      );
 
     });
 
+    console.log(
+      "Total rows received:",
+      data.length
+    );
 
-  renderProperties(results);
+    console.log(
+      "Public properties:",
+      listings.length
+    );
 
+    renderListings(listings);
+
+  })
+
+  .catch(function (error) {
+
+    console.error(
+      "Sasto Room Finder ERROR:",
+      error
+    );
+
+    showMessage(
+      "Property loading error: " +
+      error.message
+    );
+
+  });
 }
 
 
-/* =========================================
-   PUBLIC FUNCTIONS
-   ========================================= */
+/* =========================
+   SEARCH
+========================= */
+
+function filterProperties() {
+
+  var search =
+    get("filterSearch");
+
+  var type =
+    get("filterType");
+
+  var q =
+    search
+      ? String(search.value)
+          .toLowerCase()
+          .trim()
+      : "";
+
+  var t =
+    type
+      ? String(type.value)
+          .toLowerCase()
+          .trim()
+      : "";
+
+  var results =
+    listings.filter(function (room) {
+
+      var text = [
+
+        propertyTitle(room),
+        propertyLocation(room),
+        propertyType(room),
+        propertyDescription(room),
+        propertyPrice(room)
+
+      ].join(" ").toLowerCase();
+
+      return (
+        (!q || text.indexOf(q) !== -1) &&
+        (
+          !t ||
+          propertyType(room)
+            .toLowerCase()
+            .indexOf(t) !== -1
+        )
+      );
+
+    });
+
+  renderListings(results);
+}
+
+
+/* =========================
+   GLOBAL FUNCTIONS
+========================= */
 
 window.loadListings =
   loadListings;
@@ -656,46 +548,23 @@ window.filterProperties =
   filterProperties;
 
 
-window.sendInquiry =
-  function(room) {
-
-    if (!room) {
-
-      alert(
-        "Please select a property first."
-      );
-
-      return;
-    }
-
-    window.open(
-      whatsapp(room),
-      "_blank"
-    );
-
-  };
-
-
-/* =========================================
+/* =========================
    START
-   ========================================= */
+========================= */
 
 document.addEventListener(
   "DOMContentLoaded",
-  function() {
+  function () {
 
     console.log(
-      "Sasto Room Finder script started."
+      "Sasto Room Finder script loaded."
     );
 
+    var search =
+      get("filterSearch");
 
-    const search =
-      el("filterSearch");
-
-
-    const type =
-      el("filterType");
-
+    var type =
+      get("filterType");
 
     if (search) {
 
@@ -706,7 +575,6 @@ document.addEventListener(
 
     }
 
-
     if (type) {
 
       type.addEventListener(
@@ -715,7 +583,6 @@ document.addEventListener(
       );
 
     }
-
 
     loadListings();
 
