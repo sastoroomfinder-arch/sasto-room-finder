@@ -8,7 +8,8 @@ const SUPABASE_KEY =
 
 const ADMIN_WHATSAPP = "9779818067008";
 
-var listings = [];
+window.listings = [];
+var listings = window.listings;
 
 
 /* =========================
