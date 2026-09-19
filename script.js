@@ -1,11 +1,30 @@
-// Sasto Room Finder - public property listings
-const SUPABASE_URL = "https://amhrnahjshsgelacqzyl.supabase.co";
-const SUPABASE_KEY = "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFJ";
+"use strict";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let listings = [];
+/* =========================================
+   SASTO ROOM FINDER
+   PUBLIC PROPERTIES LOADER
+   ========================================= */
 
-function escapeHtml(value) {
+const SUPABASE_URL =
+  "https://amhrnahjshsgelacqzyl.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+
+const ADMIN_WHATSAPP = "9779818067008";
+
+let allProperties = [];
+
+
+/* =========================================
+   BASIC HELPERS
+   ========================================= */
+
+function el(id) {
+  return document.getElementById(id);
+}
+
+function safe(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -14,227 +33,691 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-function formatPrice(price) {
-  if (price === null || price === undefined || price === "") {
-    return "Contact for current price";
+
+function value(room, names, fallback = "") {
+
+  for (const name of names) {
+
+    if (
+      room &&
+      room[name] !== null &&
+      room[name] !== undefined &&
+      String(room[name]).trim() !== ""
+    ) {
+      return room[name];
+    }
+
   }
 
-  const n = Number(price);
-
-  return Number.isNaN(n)
-    ? String(price)
-    : "Rs. " + n.toLocaleString("en-IN") + " / month";
+  return fallback;
 }
 
-function normalizePhotos(photos) {
-  if (!photos) return [];
 
-  if (Array.isArray(photos)) {
-    return photos.filter(Boolean);
+function title(room) {
+  return value(
+    room,
+    ["title", "name", "property_name"],
+    "Room / Property"
+  );
+}
+
+
+function location(room) {
+  return value(
+    room,
+    [
+      "location",
+      "address",
+      "area",
+      "city",
+      "district",
+      "municipality"
+    ],
+    "Kathmandu Valley"
+  );
+}
+
+
+function propertyType(room) {
+  return value(
+    room,
+    [
+      "room_type",
+      "property_type",
+      "type",
+      "category"
+    ],
+    "Property"
+  );
+}
+
+
+function description(room) {
+  return value(
+    room,
+    [
+      "description",
+      "details",
+      "about"
+    ],
+    ""
+  );
+}
+
+
+function price(room) {
+
+  const p = value(
+    room,
+    [
+      "price",
+      "rent",
+      "monthly_rent",
+      "amount"
+    ],
+    ""
+  );
+
+  if (p === "") {
+    return "Contact for price";
   }
 
-  if (typeof photos === "string") {
+  const number =
+    Number(
+      String(p)
+        .replace(/,/g, "")
+        .replace(/[^\d.-]/g, "")
+    );
+
+  if (Number.isFinite(number)) {
+
+    return (
+      "Rs. " +
+      number.toLocaleString("en-IN") +
+      " / month"
+    );
+
+  }
+
+  return String(p);
+}
+
+
+/* =========================================
+   PHOTOS
+   ========================================= */
+
+function photos(room) {
+
+  let p = value(
+    room,
+    [
+      "photos",
+      "images",
+      "image_urls",
+      "photo_urls",
+      "image"
+    ],
+    []
+  );
+
+
+  if (Array.isArray(p)) {
+
+    return p
+      .map(x => {
+
+        if (typeof x === "string") {
+          return x;
+        }
+
+        if (x && typeof x === "object") {
+          return (
+            x.url ||
+            x.publicUrl ||
+            x.public_url ||
+            ""
+          );
+        }
+
+        return "";
+
+      })
+      .filter(Boolean);
+
+  }
+
+
+  if (typeof p === "string") {
+
+    p = p.trim();
+
+    if (!p) {
+      return [];
+    }
+
+
     try {
-      const parsed = JSON.parse(photos);
+
+      const parsed = JSON.parse(p);
 
       if (Array.isArray(parsed)) {
-        return parsed.filter(Boolean);
+
+        return parsed
+          .map(x =>
+            typeof x === "string"
+              ? x
+              : (
+                  x?.url ||
+                  x?.publicUrl ||
+                  x?.public_url ||
+                  ""
+                )
+          )
+          .filter(Boolean);
+
       }
+
     } catch (_) {}
 
-    return photos
+
+    return p
       .split(",")
       .map(x => x.trim())
       .filter(Boolean);
+
   }
+
 
   return [];
 }
 
-function renderListings(data = listings) {
-  const g = document.getElementById("listingGrid");
 
-  if (!g) return;
+/* =========================================
+   PHONE / WHATSAPP
+   ========================================= */
 
-  if (!data.length) {
-    g.innerHTML =
-      '<div class="listing-empty">No properties are currently available.</div>';
+function phone(room) {
+
+  let p = value(
+    room,
+    [
+      "phone",
+      "whatsapp",
+      "whatsapp_number",
+      "contact",
+      "contact_number",
+      "owner_phone",
+      "mobile"
+    ],
+    ADMIN_WHATSAPP
+  );
+
+  p = String(p).replace(/\D/g, "");
+
+  if (p.startsWith("00")) {
+    p = p.substring(2);
+  }
+
+  if (p.startsWith("0")) {
+    p = "977" + p.substring(1);
+  }
+
+  if (p.length === 10 && p.startsWith("9")) {
+    p = "977" + p;
+  }
+
+  return p || ADMIN_WHATSAPP;
+}
+
+
+function whatsapp(room) {
+
+  const message =
+    "Hello Sasto Room Finder, I am interested in " +
+    title(room) +
+    " at " +
+    location(room) +
+    ". Please send me the current details.";
+
+  return (
+    "https://wa.me/" +
+    phone(room) +
+    "?text=" +
+    encodeURIComponent(message)
+  );
+}
+
+
+/* =========================================
+   SHOW MESSAGE
+   ========================================= */
+
+function message(text, error = false) {
+
+  const grid = el("listingGrid");
+
+  if (!grid) {
     return;
   }
 
-  g.innerHTML = data.map(x => {
-    const type = escapeHtml(x.room_type || "Property");
-    const title = escapeHtml(x.title || x.location || "Property");
-    const loc = escapeHtml(x.location || "Location not provided");
-    const detail = escapeHtml(x.description || "");
-    const price = escapeHtml(formatPrice(x.price));
-
-    const photos = normalizePhotos(x.photos);
-
-    const image = photos.length
-      ? `<img src="${escapeHtml(photos[0])}" alt="${title}" class="listing-image" loading="lazy">`
-      : "🏠";
-
-    const text =
-      `Hello Sasto Room Finder, I am interested in the ${x.room_type || "property"} at ${x.location || "the listed property"}. Please send current details.`;
-
-    return `<article class="listing">
-      <div class="listing-photo">${image}</div>
-
-      <div class="listing-body">
-        <span class="eyebrow">${type}</span>
-
-        <h3>${title}</h3>
-
-        <p>${loc}</p>
-
-        ${detail ? `<p>${detail}</p>` : ""}
-
-        <div class="listing-price">${price}</div>
-
-        <a
-          class="btn btn-dark full"
-          style="margin-top:14px"
-          href="https://wa.me/9779818067008?text=${encodeURIComponent(text)}"
-          target="_blank"
-          rel="noopener"
-        >
-          Enquire on WhatsApp
-        </a>
-      </div>
-    </article>`;
-  }).join("");
+  grid.innerHTML =
+    '<div style="' +
+    "grid-column:1/-1;" +
+    "padding:30px;" +
+    "text-align:center;" +
+    "background:#f5f5f5;" +
+    "border-radius:12px;" +
+    "color:" +
+    (error ? "#b00020" : "#555") +
+    ';">' +
+    safe(text) +
+    "</div>";
 }
+
+
+/* =========================================
+   RENDER PROPERTIES
+   ========================================= */
+
+function renderProperties(properties) {
+
+  const grid = el("listingGrid");
+
+  if (!grid) {
+
+    console.error(
+      "ERROR: #listingGrid was not found."
+    );
+
+    return;
+  }
+
+
+  if (!properties.length) {
+
+    message(
+      "No approved and available properties found."
+    );
+
+    return;
+  }
+
+
+  grid.innerHTML =
+    properties
+      .map(room => {
+
+        const pics = photos(room);
+
+        let image = "";
+
+        if (pics.length) {
+
+          image =
+            '<img src="' +
+            safe(pics[0]) +
+            '" ' +
+            'alt="' +
+            safe(title(room)) +
+            '" ' +
+            'loading="lazy" ' +
+            'style="width:100%;height:220px;object-fit:cover;">';
+
+        } else {
+
+          image =
+            '<div style="' +
+            "height:220px;" +
+            "display:flex;" +
+            "align-items:center;" +
+            "justify-content:center;" +
+            "background:#eef2f0;" +
+            "font-size:55px;" +
+            '">🏠</div>';
+
+        }
+
+
+        return (
+
+          '<article class="listing" ' +
+          'style="' +
+          "overflow:hidden;" +
+          "background:white;" +
+          "border-radius:16px;" +
+          "border:1px solid #e5e5e5;" +
+          'box-shadow:0 4px 15px rgba(0,0,0,.08);">' +
+
+            '<div class="listing-photo">' +
+              image +
+            "</div>" +
+
+            '<div class="listing-body" ' +
+            'style="padding:18px;">' +
+
+              '<span class="eyebrow">' +
+                safe(propertyType(room)) +
+              "</span>" +
+
+              "<h3>" +
+                safe(title(room)) +
+              "</h3>" +
+
+              "<p>📍 " +
+                safe(location(room)) +
+              "</p>" +
+
+              (
+                description(room)
+                  ? "<p>" +
+                    safe(description(room)) +
+                    "</p>"
+                  : ""
+              ) +
+
+              '<div class="listing-price">' +
+                safe(price(room)) +
+              "</div>" +
+
+              '<a href="' +
+                safe(whatsapp(room)) +
+                '" ' +
+                'target="_blank" ' +
+                'rel="noopener noreferrer" ' +
+                'class="btn btn-dark full" ' +
+                'style="display:block;text-align:center;margin-top:15px;">' +
+                "Enquire on WhatsApp" +
+              "</a>" +
+
+            "</div>" +
+
+          "</article>"
+
+        );
+
+      })
+      .join("");
+}
+
+
+/* =========================================
+   LOAD FROM SUPABASE
+   ========================================= */
 
 async function loadListings() {
-  const g = document.getElementById("listingGrid");
 
-  if (!g) return;
+  console.log(
+    "Sasto Room Finder: starting property load..."
+  );
 
-  g.innerHTML =
-    '<div class="listing-empty">Loading properties...</div>';
 
-  const { data, error } = await db
-    .from("room")
-    .select("*")
-    .eq("status", "available")
-    .order("created_at", { ascending: false });
+  const grid = el("listingGrid");
 
-  if (error) {
-    console.error("Supabase property loading error:", error);
+  if (!grid) {
 
-    g.innerHTML =
-      '<div class="listing-empty">Unable to load properties right now. Please try again later.</div>';
+    console.error(
+      "Sasto Room Finder ERROR: listingGrid does not exist."
+    );
 
     return;
   }
 
-  listings = data || [];
 
-  renderListings();
+  message("Loading properties...");
+
+
+  const endpoint =
+    SUPABASE_URL +
+    "/rest/v1/room" +
+    "?select=*" +
+    "&status=eq.available" +
+    "&approval_status=eq.approved" +
+    "&order=created_at.desc";
+
+
+  console.log(
+    "Supabase endpoint:",
+    endpoint
+  );
+
+
+  try {
+
+    const response =
+      await fetch(
+        endpoint,
+        {
+          method: "GET",
+
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Accept": "application/json"
+          },
+
+          cache: "no-store"
+        }
+      );
+
+
+    const body =
+      await response.text();
+
+
+    console.log(
+      "Supabase HTTP status:",
+      response.status
+    );
+
+
+    console.log(
+      "Supabase response:",
+      body
+    );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Supabase HTTP " +
+        response.status +
+        ": " +
+        body
+      );
+
+    }
+
+
+    let data;
+
+    try {
+
+      data = JSON.parse(body);
+
+    } catch (_) {
+
+      throw new Error(
+        "Supabase did not return JSON."
+      );
+
+    }
+
+
+    if (!Array.isArray(data)) {
+
+      throw new Error(
+        "Supabase returned unexpected data."
+      );
+
+    }
+
+
+    allProperties = data;
+
+
+    console.log(
+      "PROPERTIES LOADED:",
+      allProperties.length
+    );
+
+
+    renderProperties(
+      allProperties
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "SASTO ROOM FINDER ERROR:",
+      error
+    );
+
+
+    message(
+      "Property loading failed: " +
+      error.message,
+      true
+    );
+
+  }
+
 }
 
+
+/* =========================================
+   SEARCH / FILTER
+   ========================================= */
+
 function filterProperties() {
-  const q =
-    (document.getElementById("filterSearch")?.value || "")
+
+  const search =
+    String(
+      el("filterSearch")?.value || ""
+    )
       .toLowerCase()
       .trim();
 
-  const t =
-    (document.getElementById("filterType")?.value || "")
+
+  const type =
+    String(
+      el("filterType")?.value || ""
+    )
       .toLowerCase()
       .trim();
 
-  renderListings(
-    listings.filter(x => {
+
+  const results =
+    allProperties.filter(room => {
+
       const text = [
-        x.title,
-        x.location,
-        x.room_type,
-        x.description,
-        x.price
+
+        title(room),
+        location(room),
+        propertyType(room),
+        description(room),
+        price(room)
+
       ]
         .join(" ")
         .toLowerCase();
 
-      return (
-        (!q || text.includes(q)) &&
-        (!t ||
-          String(x.room_type || "")
-            .toLowerCase()
-            .includes(t))
+
+      const searchOK =
+        !search ||
+        text.includes(search);
+
+
+      const typeOK =
+        !type ||
+        propertyType(room)
+          .toLowerCase()
+          .includes(type);
+
+
+      return searchOK && typeOK;
+
+    });
+
+
+  renderProperties(results);
+
+}
+
+
+/* =========================================
+   PUBLIC FUNCTIONS
+   ========================================= */
+
+window.loadListings =
+  loadListings;
+
+window.filterProperties =
+  filterProperties;
+
+
+window.sendInquiry =
+  function(room) {
+
+    if (!room) {
+
+      alert(
+        "Please select a property first."
       );
-    })
-  );
-}
 
-function searchFromHome() {
-  const l =
-    document.getElementById("homeLocation")?.value || "";
+      return;
+    }
 
-  const b =
-    document.getElementById("homeBudget")?.value || "";
+    window.open(
+      whatsapp(room),
+      "_blank"
+    );
 
-  const msg =
-    `Hello Sasto Room Finder. I need a property in ${l || "Kathmandu Valley"} with budget ${b || "to be discussed"}. Please send available options.`;
+  };
 
-  window.open(
-    "https://wa.me/9779818067008?text=" +
-      encodeURIComponent(msg),
-    "_blank"
-  );
-}
 
-function sendInquiry(e) {
-  e.preventDefault();
+/* =========================================
+   START
+   ========================================= */
 
-  const msg =
-    `Hello Sasto Room Finder Pvt. Ltd.\n` +
-    `Name: ${name.value}\n` +
-    `Phone: ${phone.value}\n` +
-    `Need: ${need.value}\n` +
-    `Location: ${location.value}\n` +
-    `Details/Budget: ${message.value}`;
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
 
-  window.open(
-    "https://wa.me/9779818067008?text=" +
-      encodeURIComponent(msg),
-    "_blank"
-  );
-}
+    console.log(
+      "Sasto Room Finder script started."
+    );
 
-document.addEventListener("DOMContentLoaded", () => {
 
-  if (document.getElementById("listingGrid")) {
+    const search =
+      el("filterSearch");
+
+
+    const type =
+      el("filterType");
+
+
+    if (search) {
+
+      search.addEventListener(
+        "input",
+        filterProperties
+      );
+
+    }
+
+
+    if (type) {
+
+      type.addEventListener(
+        "change",
+        filterProperties
+      );
+
+    }
+
+
     loadListings();
+
   }
-
-  document.querySelector(".menu")?.addEventListener("click", () => {
-
-    const n = document.querySelector("nav");
-
-    if (!n) return;
-
-    n.style.display =
-      n.style.display === "flex"
-        ? "none"
-        : "flex";
-
-    n.style.flexDirection = "column";
-    n.style.position = "absolute";
-    n.style.top = "68px";
-    n.style.right = "4%";
-    n.style.background = "#fff";
-    n.style.padding = "18px";
-    n.style.border = "1px solid #dfe4df";
-    n.style.borderRadius = "12px";
-  });
-
-  document
-    .getElementById("filterSearch")
-    ?.addEventListener("input", filterProperties);
-
-  document
-    .getElementById("filterType")
-    ?.addEventListener("change", filterProperties);
-});
+);
