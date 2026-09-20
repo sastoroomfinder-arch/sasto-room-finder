@@ -1,1505 +1,1158 @@
-/* Sasto Room Finder - responsive property cards + mobile popup + watermark
-   + Sponsors / Ads + Public Inquiries
-*/
-(()=>{"use strict";
+// SastoRoomFinder public script.js
+// Property listings + popup/gallery + watermark + WhatsApp + Maps + Share
+// Sponsors/Ads + Inquiry form
+// IMPORTANT: fetches ALL room rows first, then filters locally.
 
-const U="https://amhrnahjshsgelacqzyl.supabase.co",
-K="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj",
-ADMIN="9779818067008",
-WM="sastoroomfinder pvt. ltd.";
+const SUPABASE_URL = "https://amhrnahjshsgelacqzyl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+const ADMIN_WHATSAPP = "9779818067008";
 
-let rows=[],shown=[],active=null,pi=0,inquiryRoom=null;
-const $=id=>document.getElementById(id);
+let listings = [];
+let selectedProperty = null;
+let galleryIndex = 0;
 
-const V=(...a)=>{
-  for(const x of a)
-    if(x!=null&&String(x).trim())return x;
-  return "";
-};
+const esc = v =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
-const E=x=>String(x??"")
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
+function photosOf(v) {
+  if (!v) return [];
 
-const J=x=>{
-  try{return typeof x=="object"?x:JSON.parse(x)}
-  catch{return null}
-};
-
-function photos(r){
-  let p=V(r.photos,r.images,r.photo_urls,r.image_urls);
-
-  if(typeof p=="string"){
-    let j=J(p);
-    p=Array.isArray(j)?j:p.includes(",")?p.split(","):[p];
+  if (Array.isArray(v)) {
+    return v.filter(Boolean);
   }
 
-  if(!Array.isArray(p))p=[];
-
-  p=p.map(x=>
-    typeof x=="string"
-      ?x.trim()
-      :V(x?.url,x?.src,x?.path)
-  ).filter(Boolean);
-
-  let q=V(r.image_url,r.image,r.photo_url,r.thumbnail);
-
-  if(!p.length&&q)p=[q];
-
-  return [...new Set(p)];
-}
-
-const type=r=>String(
-  V(r.property_type,r.type,r.category,"Property")
-);
-
-const title=r=>String(
-  V(r.title,r.property_title,r.name,`${type(r)} for Rent`)
-);
-
-const loc=r=>String(
-  V(r.location,r.address,r.area,r.city,"Kathmandu Valley")
-);
-
-function price(r){
-  let p=V(r.price,r.rent,r.monthly_rent,r.amount);
-
-  if(!p)return"Price on request";
-
-  let n=String(p)
-    .replace(/,/g,"")
-    .replace(/[^\d.]/g,"");
-
-  return n
-    ?`Rs. ${Number(n).toLocaleString("en-IN")} / month`
-    :String(p);
-}
-
-const desc=r=>String(
-  V(
-    r.description,
-    r.details,
-    r.about,
-    r.content,
-    "Contact the owner for more information and viewing details."
-  )
-);
-
-const phone=r=>String(
-  V(r.phone,r.owner_phone,r.contact,r.whatsapp,ADMIN)
-);
-
-const owner=r=>String(
-  V(r.owner_name,r.owner,r.full_name,"Property Owner")
-);
-
-function wa(r){
-  let p=String(phone(r)).replace(/\D/g,"");
-
-  if(p.startsWith("0"))
-    p="977"+p.slice(1);
-
-  if(!p.startsWith("977")&&p.length==10)
-    p="977"+p;
-
-  return `https://wa.me/${p}?text=${encodeURIComponent(
-`Hello Sasto Room Finder, I am interested in:
-
-${title(r)}
-Location: ${loc(r)}
-Price: ${price(r)}`
-  )}`;
-}
-
-const map=r=>V(
-  r.google_maps_url,
-  r.maps_url,
-  r.map_url,
-  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc(r))}`
-);
-
-function ok(r){
-  let s=String(r.status??"").trim().toLowerCase();
-  let a=String(r.approval_status??"").trim().toLowerCase();
-
-  return (!s||s=="available")&&(!a||a=="approved");
-}
-
-function css(){
-
-  if($("srfcss"))return;
-
-  let s=document.createElement("style");
-
-  s.id="srfcss";
-
-  s.textContent=`
-
-.srfwm{
-position:absolute;
-z-index:5;
-left:50%;
-top:50%;
-transform:translate(-50%,-50%) rotate(-18deg);
-white-space:nowrap;
-color:#fff;
-font-weight:900;
-font-size:clamp(13px,2.3vw,24px);
-text-shadow:0 2px 8px #000;
-opacity:.8;
-pointer-events:none
-}
-
-.srfphoto{
-position:relative;
-overflow:hidden;
-background:#edf2f7
-}
-
-.srfphoto img{
-width:100%;
-height:100%;
-object-fit:cover;
-display:block
-}
-
-.srfcard{
-background:#fff;
-border:1px solid #e1e8f0;
-border-radius:18px;
-overflow:hidden;
-box-shadow:0 8px 28px #0b274013
-}
-
-.srfcard .srfimg{
-height:240px
-}
-
-.srfbody{
-padding:16px
-}
-
-.srfbody h3{
-margin:0 0 6px;
-color:#071a33;
-font-size:19px
-}
-
-.srfloc{
-color:#637187;
-font-size:13px
-}
-
-.srfprice{
-color:#008d59;
-font-weight:900;
-font-size:18px;
-margin:10px 0
-}
-
-.srffacts{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:6px;
-margin:12px 0
-}
-
-.srffact{
-background:#f7f9fc;
-border:1px solid #e4eaf1;
-border-radius:9px;
-padding:7px 4px;
-text-align:center;
-font-size:11px;
-color:#647287
-}
-
-.srffact b{
-display:block;
-color:#17263c
-}
-
-.srfactions{
-display:grid;
-gap:8px
-}
-
-.srfbtn{
-min-height:45px;
-border-radius:10px;
-border:1px solid #071a33;
-font:inherit;
-font-weight:800;
-cursor:pointer;
-padding:9px 12px
-}
-
-.srfdark{
-background:#071a33;
-color:#fff
-}
-
-.srfwa{
-background:#fff;
-color:#087d4d;
-border-color:#087d4d
-}
-
-/* SPONSORS */
-
-.srf-sponsors{
-display:grid;
-gap:14px;
-margin:0 0 18px
-}
-
-.srf-sponsor{
-display:flex;
-gap:14px;
-align-items:center;
-padding:14px;
-border:1px solid #dce6f0;
-border-radius:16px;
-background:linear-gradient(135deg,#f8fbff,#fff);
-text-decoration:none;
-color:#071a33;
-box-shadow:0 5px 18px #0b27400d
-}
-
-.srf-sponsor img{
-width:92px;
-height:72px;
-object-fit:cover;
-border-radius:10px;
-background:#edf2f7;
-flex:0 0 auto
-}
-
-.srf-sponsor-body h3{
-margin:4px 0;
-color:#071a33;
-font-size:17px
-}
-
-.srf-sponsor-body p{
-margin:0;
-color:#637187;
-font-size:13px;
-line-height:1.45
-}
-
-.srf-sponsored-label{
-font-size:10px;
-text-transform:uppercase;
-letter-spacing:.08em;
-font-weight:900;
-color:#0b66d6
-}
-
-/* INQUIRY */
-
-.srf-inquiry-ov{
-position:fixed;
-inset:0;
-z-index:1000000;
-background:#031022b8;
-backdrop-filter:blur(5px);
-display:none;
-align-items:center;
-justify-content:center;
-padding:16px
-}
-
-.srf-inquiry-ov.open{
-display:flex
-}
-
-.srf-inquiry-box{
-width:min(520px,100%);
-background:#fff;
-border-radius:20px;
-padding:20px;
-position:relative;
-box-shadow:0 30px 90px #0005
-}
-
-.srf-inquiry-close{
-position:absolute;
-right:12px;
-top:10px;
-width:40px;
-height:40px;
-border:0;
-border-radius:50%;
-background:#071a33;
-color:#fff;
-font-size:22px;
-cursor:pointer
-}
-
-.srf-inquiry-box h2{
-margin:0 48px 5px 0;
-color:#071a33
-}
-
-.srf-inquiry-box p{
-color:#637187;
-margin:0 0 14px
-}
-
-.srf-inquiry-box label{
-display:block;
-font-weight:700;
-color:#17263c;
-margin-top:10px
-}
-
-.srf-inquiry-box input,
-.srf-inquiry-box textarea{
-width:100%;
-box-sizing:border-box;
-padding:12px;
-margin-top:5px;
-border:1px solid #ccd7e3;
-border-radius:10px;
-font:inherit
-}
-
-.srf-inquiry-box textarea{
-min-height:100px;
-resize:vertical
-}
-
-.srf-inquiry-submit{
-width:100%;
-margin-top:14px;
-min-height:48px;
-border:0;
-border-radius:10px;
-background:#071a33;
-color:#fff;
-font:inherit;
-font-weight:900;
-cursor:pointer
-}
-
-.srf-inquiry-msg{
-margin-top:10px;
-font-weight:800
-}
-
-/* POPUP */
-
-.srfov{
-position:fixed;
-inset:0;
-z-index:999999;
-background:#031022b8;
-backdrop-filter:blur(5px);
-display:none;
-align-items:center;
-justify-content:center;
-padding:16px;
-overflow:auto
-}
-
-.srfov.open{
-display:flex
-}
-
-.srfmodal{
-width:min(1050px,100%);
-max-height:95vh;
-overflow:auto;
-background:#fff;
-border-radius:22px;
-box-shadow:0 30px 90px #0005
-}
-
-.srfhead{
-padding:20px 24px 14px;
-border-bottom:1px solid #edf1f5;
-position:sticky;
-top:0;
-background:#fff;
-z-index:20
-}
-
-.srfclose{
-position:absolute;
-right:16px;
-top:14px;
-width:42px;
-height:42px;
-border:0;
-border-radius:50%;
-background:#071a33;
-color:#fff;
-font-size:22px;
-cursor:pointer
-}
-
-.srfhead small{
-display:inline-block;
-background:#eaf2ff;
-color:#0b4ea2;
-padding:6px 10px;
-border-radius:99px;
-font-weight:900
-}
-
-.srfhead h2{
-margin:8px 50px 5px 0;
-color:#071a33;
-font-size:clamp(22px,4vw,31px)
-}
-
-.srfsub{
-display:flex;
-flex-wrap:wrap;
-gap:12px;
-color:#637187;
-font-size:14px
-}
-
-.srfmprice{
-color:#008d59;
-font-weight:900;
-margin-left:auto
-}
-
-.srfgallery{
-padding:18px 24px 0
-}
-
-.srfmain{
-height:min(52vh,510px);
-min-height:270px;
-border-radius:16px
-}
-
-.srfarr{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-z-index:8;
-width:46px;
-height:46px;
-border:0;
-border-radius:50%;
-background:#071a33d9;
-color:#fff;
-font-size:28px;
-cursor:pointer
-}
-
-.srfprev{
-left:14px
-}
-
-.srfnext{
-right:14px
-}
-
-.srfcount{
-position:absolute;
-right:14px;
-bottom:14px;
-background:#071a33df;
-color:#fff;
-padding:6px 10px;
-border-radius:99px;
-font-size:12px
-}
-
-.srfthumbs{
-display:flex;
-gap:8px;
-overflow:auto;
-padding:10px 0
-}
-
-.srfthumb{
-flex:0 0 82px;
-width:82px;
-height:62px;
-border:2px solid transparent;
-border-radius:9px;
-padding:0;
-overflow:hidden;
-background:#edf2f7;
-cursor:pointer
-}
-
-.srfthumb.on{
-border-color:#0b66d6
-}
-
-.srfthumb img{
-width:100%;
-height:100%;
-object-fit:cover
-}
-
-.srfdetails{
-padding:20px 24px
-}
-
-.srfspecs{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-border:1px solid #e0e8f1;
-border-radius:14px;
-overflow:hidden;
-background:#f7faff
-}
-
-.srfspec{
-padding:13px;
-border-right:1px solid #e0e8f1;
-border-bottom:1px solid #e0e8f1
-}
-
-.srfspec:nth-child(3n){
-border-right:0
-}
-
-.srfspec span{
-display:block;
-color:#738096;
-font-size:12px
-}
-
-.srfspec b{
-display:block;
-color:#12243d;
-margin-top:3px;
-overflow-wrap:anywhere
-}
-
-.srfdesc p{
-color:#526176;
-line-height:1.7;
-white-space:pre-line
-}
-
-.srfmacts{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:10px;
-padding:0 24px 24px
-}
-
-.srfmacts .srfbtn{
-min-height:50px
-}
-
-@media(max-width:700px){
-
-.srfov{
-padding:0;
-align-items:flex-end
-}
-
-.srfmodal{
-width:100%;
-max-height:96vh;
-border-radius:22px 22px 0 0
-}
-
-.srfhead{
-padding:16px
-}
-
-.srfgallery{
-padding:12px
-}
-
-.srfmain{
-height:54vw;
-min-height:230px;
-max-height:390px
-}
-
-.srfdetails{
-padding:15px 12px
-}
-
-.srfspecs{
-grid-template-columns:repeat(2,1fr)
-}
-
-.srfspec:nth-child(3n){
-border-right:1px solid #e0e8f1
-}
-
-.srfspec:nth-child(2n){
-border-right:0
-}
-
-.srfmacts{
-grid-template-columns:1fr;
-padding:0 12px 14px;
-position:sticky;
-bottom:0;
-background:#fff;
-z-index:30;
-border-top:1px solid #e7edf4
-}
-
-.srfcard .srfimg{
-height:210px
-}
-
-.srffacts{
-grid-template-columns:repeat(2,1fr)
-}
-
-}
-`;
-
-  document.head.appendChild(s);
-}
-
-function ensureExtraPublicUI(){
-
-  if(!$("srfSponsorWrap")){
-
-    const g=$("listingGrid");
-
-    if(g){
-
-      const w=document.createElement("div");
-
-      w.id="srfSponsorWrap";
-
-      g.parentNode.insertBefore(w,g);
+  if (typeof v === "string") {
+    try {
+      const x = JSON.parse(v);
+      if (Array.isArray(x)) return x.filter(Boolean);
+    } catch (e) {}
+
+    return v
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function photosFor(r) {
+  let a = [];
+
+  for (const v of [
+    r?.photos,
+    r?.images,
+    r?.image_urls,
+    r?.photo_urls,
+    r?.image
+  ]) {
+    if (!v) continue;
+
+    if (Array.isArray(v)) {
+      a.push(...v);
+      continue;
+    }
+
+    if (typeof v === "string") {
+      try {
+        const x = JSON.parse(v);
+
+        if (Array.isArray(x)) {
+          a.push(...x);
+          continue;
+        }
+      } catch (e) {}
+
+      a.push(
+        ...v
+          .split(",")
+          .map(x => x.trim())
+          .filter(Boolean)
+      );
     }
   }
 
-  if(!$("srfInquiryOv")){
-
-    const o=document.createElement("div");
-
-    o.id="srfInquiryOv";
-
-    o.className="srf-inquiry-ov";
-
-    o.innerHTML=`
-<div class="srf-inquiry-box">
-
-<button
-class="srf-inquiry-close"
-type="button"
-aria-label="Close">×</button>
-
-<h2>Send Property Inquiry</h2>
-
-<p id="srfInquiryProperty"></p>
-
-<form id="srfInquiryForm">
-
-<label>
-Name
-<input id="srfInquiryName"
-required
-maxlength="100">
-</label>
-
-<label>
-Phone
-<input id="srfInquiryPhone"
-required
-maxlength="30"
-inputmode="tel">
-</label>
-
-<label>
-Message
-<textarea
-id="srfInquiryMessage"
-required
-maxlength="1000"></textarea>
-</label>
-
-<button
-class="srf-inquiry-submit"
-type="submit">
-Send Inquiry
-</button>
-
-<div
-id="srfInquiryMsg"
-class="srf-inquiry-msg"
-aria-live="polite"></div>
-
-</form>
-
-</div>`;
-
-    document.body.appendChild(o);
-
-    o.querySelector(".srf-inquiry-close")
-      .onclick=closeInquiry;
-
-    o.addEventListener("click",e=>{
-      if(e.target===o)closeInquiry();
-    });
-
-    o.querySelector("#srfInquiryForm")
-      .addEventListener("submit",submitInquiry);
-  }
+  return [...new Set(a.filter(Boolean))];
 }
 
-function openInquiry(r){
+function titleOf(r) {
+  return (
+    r?.title ||
+    r?.property_title ||
+    r?.name ||
+    r?.property_name ||
+    "Property"
+  );
+}
 
-  ensureExtraPublicUI();
+function locationOf(r) {
+  return (
+    r?.location ||
+    r?.address ||
+    r?.area ||
+    r?.city ||
+    r?.district ||
+    "Nepal"
+  );
+}
 
-  inquiryRoom=r;
+function priceOf(r) {
+  const p =
+    r?.price ??
+    r?.rent ??
+    r?.monthly_rent ??
+    r?.amount ??
+    "";
 
-  $("srfInquiryProperty").textContent=
-    `Property: ${title(r)} • ${loc(r)}`;
+  if (!p) return "Price on request";
 
-  $("srfInquiryMsg").textContent="";
+  return "Rs. " + Number(p).toLocaleString("en-NP") + "/month";
+}
 
-  $("srfInquiryForm").reset();
+function typeOf(r) {
+  return (
+    r?.property_type ||
+    r?.type ||
+    r?.category ||
+    "Property"
+  );
+}
 
-  $("srfInquiryOv").classList.add("open");
+function descriptionOf(r) {
+  return (
+    r?.description ||
+    r?.details ||
+    r?.about ||
+    "No description available."
+  );
+}
+
+function phoneOf(r) {
+  let p =
+    r?.owner_phone ||
+    r?.phone ||
+    r?.contact_phone ||
+    r?.whatsapp ||
+    ADMIN_WHATSAPP;
+
+  p = String(p).replace(/\D/g, "");
+
+  if (!p) p = ADMIN_WHATSAPP;
+
+  if (p.startsWith("0")) {
+    p = "977" + p.substring(1);
+  }
+
+  if (!p.startsWith("977") && p.length === 10) {
+    p = "977" + p;
+  }
+
+  return p;
+}
+
+function ownerOf(r) {
+  return (
+    r?.owner_name ||
+    r?.owner ||
+    r?.full_name ||
+    "Property Owner"
+  );
+}
+
+function whatsapp(r) {
+  const message =
+    `Hello, I am interested in this property:\n\n` +
+    `Property: ${titleOf(r)}\n` +
+    `Location: ${locationOf(r)}\n` +
+    `Price: ${priceOf(r)}\n\n` +
+    `I found it on Sasto Room Finder.`;
+
+  return (
+    "https://wa.me/" +
+    phoneOf(r) +
+    "?text=" +
+    encodeURIComponent(message)
+  );
+}
+
+function mapsUrl(r) {
+  const q =
+    r?.address ||
+    r?.location ||
+    r?.area ||
+    titleOf(r);
+
+  return (
+    "https://www.google.com/maps/search/?api=1&query=" +
+    encodeURIComponent(q)
+  );
+}
+
+function propertyApproved(r) {
+  return (
+    String(r?.status || "")
+      .trim()
+      .toLowerCase() === "available" &&
+    String(r?.approval_status || "")
+      .trim()
+      .toLowerCase() === "approved"
+  );
+}
+
+/* =========================================================
+   CSS
+========================================================= */
+
+function addStyles() {
+  if (document.getElementById("srf-final-public-css")) return;
+
+  const style = document.createElement("style");
+  style.id = "srf-final-public-css";
+
+  style.textContent = `
+
+  .srf-watermark{
+    position:absolute;
+    left:10px;
+    bottom:10px;
+    z-index:5;
+    padding:5px 9px;
+    border-radius:6px;
+    background:rgba(0,0,0,.62);
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.4px;
+    pointer-events:none;
+  }
+
+  .srf-card-photo{
+    position:relative;
+  }
+
+  .srf-view-btn{
+    cursor:pointer;
+  }
+
+  .srf-property-modal{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.78);
+    padding:14px;
+  }
+
+  .srf-property-modal.open{
+    display:flex;
+  }
+
+  .srf-property-box{
+    width:min(900px,100%);
+    max-height:94vh;
+    overflow:auto;
+    background:#fff;
+    border-radius:18px;
+    position:relative;
+  }
+
+  .srf-property-close{
+    position:absolute;
+    right:12px;
+    top:12px;
+    z-index:30;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:0 4px 15px rgba(0,0,0,.25);
+    font-size:25px;
+    cursor:pointer;
+  }
+
+  .srf-gallery{
+    background:#111827;
+    padding:12px;
+  }
+
+  .srf-main-photo{
+    position:relative;
+    background:#000;
+    border-radius:12px;
+    overflow:hidden;
+  }
+
+  .srf-main-photo img{
+    display:block;
+    width:100%;
+    height:min(55vh,520px);
+    object-fit:contain;
+    background:#000;
+  }
+
+  .srf-photo-controls{
+    position:absolute;
+    left:10px;
+    right:10px;
+    top:50%;
+    display:flex;
+    justify-content:space-between;
+    transform:translateY(-50%);
+  }
+
+  .srf-photo-controls button{
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.9);
+    cursor:pointer;
+    font-size:20px;
+  }
+
+  .srf-photo-counter{
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    background:rgba(0,0,0,.65);
+    color:#fff;
+    padding:5px 9px;
+    border-radius:8px;
+    font-size:12px;
+  }
+
+  .srf-thumbnails{
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    padding-top:10px;
+  }
+
+  .srf-thumb{
+    flex:0 0 70px;
+    height:55px;
+    border:2px solid transparent;
+    border-radius:7px;
+    overflow:hidden;
+    cursor:pointer;
+    background:#222;
+  }
+
+  .srf-thumb.active{
+    border-color:#16a34a;
+  }
+
+  .srf-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  .srf-property-content{
+    padding:20px;
+  }
+
+  .srf-property-type{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#e8f5ee;
+    color:#16834f;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+  }
+
+  .srf-property-content h2{
+    margin:9px 0 5px;
+    color:#111827;
+  }
+
+  .srf-property-location{
+    color:#64748b;
+    margin-bottom:7px;
+  }
+
+  .srf-property-price{
+    color:#16834f;
+    font-size:20px;
+    font-weight:900;
+    margin-bottom:16px;
+  }
+
+  .srf-details-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:9px;
+    margin:15px 0;
+  }
+
+  .srf-detail{
+    padding:11px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#f8fafc;
+  }
+
+  .srf-detail small{
+    display:block;
+    color:#64748b;
+    font-size:10px;
+  }
+
+  .srf-detail strong{
+    display:block;
+    margin-top:3px;
+    color:#111827;
+    font-size:13px;
+  }
+
+  .srf-description{
+    line-height:1.65;
+    color:#475569;
+    white-space:pre-wrap;
+  }
+
+  .srf-action-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:9px;
+    margin-top:18px;
+  }
+
+  .srf-action-row a,
+  .srf-action-row button{
+    min-height:45px;
+    border:0;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    cursor:pointer;
+    font-weight:800;
+  }
+
+  .srf-wa{
+    background:#16a34a;
+    color:#fff;
+  }
+
+  .srf-map{
+    background:#111827;
+    color:#fff;
+  }
+
+  .srf-share{
+    background:#e2e8f0;
+    color:#111827;
+  }
+
+  /* Sponsors */
+
+  .srf-sponsors{
+    width:min(1180px,calc(100% - 28px));
+    margin:22px auto;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .srf-sponsor{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 8px 25px rgba(15,23,42,.07);
+  }
+
+  .srf-sponsor img{
+    width:100%;
+    height:150px;
+    object-fit:cover;
+    display:block;
+  }
+
+  .srf-sponsor-body{
+    padding:14px;
+  }
+
+  .srf-sponsor-badge{
+    display:inline-block;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+    background:#e6fffb;
+    color:#0f766e;
+    padding:5px 8px;
+    border-radius:999px;
+  }
+
+  .srf-sponsor h3{
+    margin:8px 0 5px;
+    font-size:17px;
+    color:#111827;
+  }
+
+  .srf-sponsor p{
+    margin:0 0 10px;
+    color:#64748b;
+    font-size:13px;
+    line-height:1.5;
+  }
+
+  .srf-sponsor-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:40px;
+    padding:0 14px;
+    border-radius:10px;
+    background:#111827;
+    color:#fff;
+    text-decoration:none;
+    font-weight:800;
+    font-size:13px;
+  }
+
+  /* Inquiry */
+
+  .srf-inquiry-btn{
+    margin-top:10px;
+    width:100%;
+    min-height:44px;
+    border:0;
+    border-radius:11px;
+    background:#0f766e;
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  .srf-inquiry-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.72);
+    z-index:100000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+  }
+
+  .srf-inquiry-modal.open{
+    display:flex;
+  }
+
+  .srf-inquiry-box{
+    width:min(520px,100%);
+    background:#fff;
+    border-radius:18px;
+    padding:20px;
+    position:relative;
+  }
+
+  .srf-inquiry-box h3{
+    margin:0 36px 5px 0;
+    color:#111827;
+  }
+
+  .srf-inquiry-box p{
+    margin:0 0 15px;
+    color:#64748b;
+    font-size:13px;
+  }
+
+  .srf-inquiry-close{
+    position:absolute;
+    right:12px;
+    top:12px;
+    width:38px;
+    height:38px;
+    border:0;
+    border-radius:50%;
+    background:#e2e8f0;
+    font-size:24px;
+    cursor:pointer;
+  }
+
+  .srf-inquiry-box input,
+  .srf-inquiry-box textarea{
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    padding:11px;
+    margin:6px 0;
+    font:inherit;
+  }
+
+  .srf-inquiry-box textarea{
+    min-height:105px;
+    resize:vertical;
+  }
+
+  .srf-inquiry-submit{
+    width:100%;
+    min-height:46px;
+    border:0;
+    border-radius:11px;
+    background:#16a34a;
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+    margin-top:8px;
+  }
+
+  .srf-inquiry-status{
+    font-size:12px;
+    margin-top:8px;
+    min-height:18px;
+  }
+
+  @media(max-width:800px){
+    .srf-sponsors{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .srf-details-grid{
+      grid-template-columns:repeat(2,1fr);
+    }
+  }
+
+  @media(max-width:600px){
+    .srf-sponsors{
+      grid-template-columns:1fr;
+      width:calc(100% - 20px);
+      margin:16px auto;
+    }
+
+    .srf-sponsor img{
+      height:170px;
+    }
+
+    .srf-action-row{
+      grid-template-columns:1fr;
+    }
+
+    .srf-inquiry-modal{
+      align-items:flex-end;
+      padding:0;
+    }
+
+    .srf-inquiry-box{
+      border-radius:18px 18px 0 0;
+    }
+  }
+
+  `;
+
+  document.head.appendChild(style);
+}
+
+/* =========================================================
+   PROPERTY POPUP
+========================================================= */
+
+function ensurePropertyModal(){
+  if(document.getElementById("srf-property-modal")) return;
+
+  const m=document.createElement("div");
+
+  m.id="srf-property-modal";
+  m.className="srf-property-modal";
+
+  m.innerHTML=`
+    <div class="srf-property-box">
+
+      <button
+        type="button"
+        class="srf-property-close"
+        onclick="closePropertyDetails()"
+      >
+        ×
+      </button>
+
+      <div id="srf-property-body"></div>
+
+    </div>
+  `;
+
+  document.body.appendChild(m);
+
+  m.addEventListener("click",e=>{
+    if(e.target===m) closePropertyDetails();
+  });
+}
+
+function openPropertyDetails(index){
+
+  const r=listings[index];
+
+  if(!r) return;
+
+  selectedProperty=r;
+  galleryIndex=0;
+
+  ensurePropertyModal();
+
+  renderPropertyDetails();
+
+  document
+    .getElementById("srf-property-modal")
+    .classList.add("open");
 
   document.body.style.overflow="hidden";
-
-  $("srfInquiryName").focus();
 }
 
-function closeInquiry(){
+function closePropertyDetails(){
 
-  $("srfInquiryOv")?.classList.remove("open");
+  const m=document.getElementById("srf-property-modal");
 
-  if(!$("srfov")?.classList.contains("open"))
+  if(m){
+    m.classList.remove("open");
+  }
+
+  if(
+    !document
+      .getElementById("srf-inquiry-modal")
+      ?.classList.contains("open")
+  ){
     document.body.style.overflow="";
-
-  inquiryRoom=null;
+  }
 }
 
-async function submitInquiry(e){
+function renderPropertyDetails(){
 
-  e.preventDefault();
+  if(!selectedProperty) return;
 
-  if(!inquiryRoom)return;
+  const r=selectedProperty;
 
-  const msg=$("srfInquiryMsg");
+  const imgs=photosFor(r);
 
-  msg.style.color="#071a33";
+  const main=imgs[galleryIndex] || "";
 
-  msg.textContent="Sending...";
+  const bedrooms=
+    r?.bedrooms ??
+    r?.bedroom ??
+    r?.rooms ??
+    "-";
 
-  const payload={
+  const bathrooms=
+    r?.bathrooms ??
+    r?.bathroom ??
+    "-";
 
-    room_id:inquiryRoom.id||null,
+  const furnished=
+    r?.furnished ??
+    r?.furnishing ??
+    "-";
 
-    owner_id:inquiryRoom.owner_id||null,
+  const area=
+    r?.area ??
+    r?.size ??
+    r?.square_feet ??
+    "-";
 
-    property_title:title(inquiryRoom),
+  const propertyId=
+    r?.id ??
+    "-";
 
-    name:$("srfInquiryName").value.trim(),
+  const posted=
+    r?.created_at
+      ? new Date(r.created_at).toLocaleDateString("en-NP")
+      : "-";
 
-    phone:$("srfInquiryPhone").value.trim(),
+  const html=`
 
-    message:$("srfInquiryMessage").value.trim(),
+    <div class="srf-gallery">
 
-    status:"new"
+      <div class="srf-main-photo">
 
-  };
+        ${
+          main
+            ? `
+              <img
+                src="${esc(main)}"
+                alt="${esc(titleOf(r))}"
+              >
+            `
+            : `
+              <div style="
+                height:320px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#fff;
+              ">
+                No Photo
+              </div>
+            `
+        }
 
-  try{
+        <div class="srf-watermark">
+          sastoroomfinder pvt. ltd.
+        </div>
 
-    const res=await fetch(
-      `${U}/rest/v1/inquiries`,
-      {
-        method:"POST",
-        headers:{
-          apikey:K,
-          Authorization:`Bearer ${K}`,
-          "Content-Type":"application/json",
-          "Prefer":"return=minimal"
-        },
-        body:JSON.stringify(payload)
+        ${
+          imgs.length>1
+            ? `
+              <div class="srf-photo-controls">
+
+                <button
+                  type="button"
+                  onclick="changePhoto(-1)"
+                >
+                  ‹
+                </button>
+
+                <button
+                  type="button"
+                  onclick="changePhoto(1)"
+                >
+                  ›
+                </button>
+
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          imgs.length
+            ? `
+              <div class="srf-photo-counter">
+                ${galleryIndex+1}/${imgs.length}
+              </div>
+            `
+            : ""
+        }
+
+      </div>
+
+      ${
+        imgs.length>1
+          ? `
+            <div class="srf-thumbnails">
+
+              ${imgs.map((x,i)=>`
+
+                <button
+                  type="button"
+                  class="srf-thumb ${
+                    i===galleryIndex ? "active" : ""
+                  }"
+                  onclick="setPhoto(${i})"
+                >
+
+                  <img
+                    src="${esc(x)}"
+                    alt=""
+                  >
+
+                </button>
+
+              `).join("")}
+
+            </div>
+          `
+          : ""
       }
+
+    </div>
+
+    <div class="srf-property-content">
+
+      <span class="srf-property-type">
+        ${esc(typeOf(r))}
+      </span>
+
+      <h2>
+        ${esc(titleOf(r))}
+      </h2>
+
+      <div class="srf-property-location">
+        📍 ${esc(locationOf(r))}
+      </div>
+
+      <div class="srf-property-price">
+        ${esc(priceOf(r))}
+      </div>
+
+      <div class="srf-details-grid">
+
+        <div class="srf-detail">
+          <small>Bedrooms</small>
+          <strong>${esc(bedrooms)}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Bathrooms</small>
+          <strong>${esc(bathrooms)}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Furnished</small>
+          <strong>${esc(furnished)}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Area</small>
+          <strong>${esc(area)}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Property ID</small>
+          <strong>${esc(propertyId)}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Owner</small>
+          <strong>${esc(ownerOf(r))}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Posted</small>
+          <strong>${esc(posted)}</strong>
+        </div>
+
+        <div class="srf-detail">
+          <small>Status</small>
+          <strong>Available</strong>
+        </div>
+
+      </div>
+
+      ${
+        r?.address
+          ? `
+            <p>
+              <strong>Address:</strong>
+              ${esc(r.address)}
+            </p>
+          `
+          : ""
+      }
+
+      <h3>Property Description</h3>
+
+      <div class="srf-description">
+        ${esc(descriptionOf(r))}
+      </div>
+
+      <div class="srf-action-row">
+
+        <a
+          class="srf-wa"
+          href="${whatsapp(r)}"
+          target="_blank"
+          rel="noopener"
+        >
+          WhatsApp Owner
+        </a>
+
+        <a
+          class="srf-map"
+          href="${mapsUrl(r)}"
+          target="_blank"
+          rel="noopener"
+        >
+          📍 Google Maps
+        </a>
+
+        <button
+          type="button"
+          class="srf-share"
+          onclick="shareCurrentProperty()"
+        >
+          Share Property
+        </button>
+
+      </div>
+
+      <button
+        type="button"
+        class="srf-inquiry-btn"
+        onclick="openInquiry('${esc(r.id)}')"
+      >
+        ✉️ Send Inquiry
+      </button>
+
+    </div>
+  `;
+
+  document.getElementById("srf-property-body").innerHTML=html;
+}
+
+function setPhoto(i){
+
+  const imgs=photosFor(selectedProperty);
+
+  if(!imgs.length) return;
+
+  galleryIndex=
+    Math.max(
+      0,
+      Math.min(i,imgs.length-1)
     );
 
-    if(!res.ok)
-      throw Error(await res.text());
+  renderPropertyDetails();
+}
 
-    msg.style.color="#087d4d";
+function changePhoto(direction){
 
-    msg.textContent="Inquiry sent successfully.";
+  const imgs=photosFor(selectedProperty);
 
-    setTimeout(closeInquiry,900);
+  if(!imgs.length) return;
 
-  }catch(err){
+  galleryIndex=
+    (galleryIndex+direction+imgs.length)
+    %imgs.length;
 
-    console.error("Inquiry error:",err);
+  renderPropertyDetails();
+}
 
-    msg.style.color="#b42318";
+async function shareCurrentProperty(){
 
-    msg.textContent=
-      "Unable to send inquiry. Please try again.";
+  if(!selectedProperty) return;
+
+  const url=window.location.href;
+
+  const text=
+    `${titleOf(selectedProperty)} - `+
+    `${locationOf(selectedProperty)} - `+
+    `${priceOf(selectedProperty)}`;
+
+  if(navigator.share){
+
+    try{
+
+      await navigator.share({
+        title:titleOf(selectedProperty),
+        text,
+        url
+      });
+
+    }catch(e){}
+
+  }else{
+
+    try{
+
+      await navigator.clipboard.writeText(
+        url
+      );
+
+      alert("Property link copied.");
+
+    }catch(e){
+
+      alert(url);
+
+    }
+
   }
+}
+
+/* =========================================================
+   SPONSORS
+========================================================= */
+
+function sponsorIsActive(s){
+
+  const status=
+    String(s.status||"")
+      .trim()
+      .toLowerCase();
+
+  if(status && status!=="active"){
+    return false;
+  }
+
+  const today=new Date();
+
+  today.setHours(0,0,0,0);
+
+  if(s.start_date){
+
+    const d=new Date(s.start_date);
+
+    d.setHours(0,0,0,0);
+
+    if(today<d) return false;
+
+  }
+
+  if(s.end_date){
+
+    const d=new Date(s.end_date);
+
+    d.setHours(0,0,0,0);
+
+    if(today>d) return false;
+
+  }
+
+  return true;
 }
 
 async function loadSponsors(){
 
-  ensureExtraPublicUI();
+  const old=
+    document.getElementById(
+      "srf-public-sponsors"
+    );
 
-  const wrap=$("srfSponsorWrap");
-
-  if(!wrap)return;
+  if(old) old.remove();
 
   try{
 
     const res=await fetch(
-      `${U}/rest/v1/sponsors?select=*&status=eq.active&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/sponsors?select=*&order=created_at.desc`,
       {
         headers:{
-          apikey:K,
+          apikey:SUPABASE_KEY,
           Accept:"application/json"
         },
         cache:"no-store"
       }
     );
 
-    if(!res.ok)
-      throw Error("Sponsors "+res.status);
+    if(!res.ok){
+      throw new Error(
+        "Sponsors HTTP "+res.status
+      );
+    }
 
     const data=await res.json();
 
-    const now=new Date();
-
-    const active=(Array.isArray(data)?data:[])
-      .filter(s=>{
-
-        const from=s.start_date
-          ?new Date(`${s.start_date}T00:00:00`)
-          :null;
-
-        const to=s.end_date
-          ?new Date(`${s.end_date}T23:59:59`)
-          :null;
-
-        const pos=String(
-          s.position||"homepage"
-        ).toLowerCase();
-
-        return(
-          (!from||now>=from)&&
-          (!to||now<=to)&&
-          ["homepage","top","listing"].includes(pos)
-        );
-      });
-
-    if(!active.length){
-
-      wrap.innerHTML="";
-
-      return;
-    }
-
-    wrap.innerHTML=`
-<div class="srf-sponsors">
-
-${active.map(s=>{
-
-  const image=V(
-    s.image_url,
-    s.image,
-    s.photo_url
-  );
-
-  const link=V(
-    s.link_url,
-    s.link
-  );
-
-  const body=`
-
-<div class="srf-sponsor-body">
-
-<div class="srf-sponsored-label">
-Sponsored
-</div>
-
-<h3>
-${E(
-  V(
-    s.title,
-    s.sponsor_name,
-    "Advertisement"
-  )
-)}
-</h3>
-
-${
-  s.description
-  ?`<p>${E(s.description)}</p>`
-  :""
-}
-
-</div>`;
-
-  return link
-
-    ?`<a
-class="srf-sponsor"
-href="${E(link)}"
-target="_blank"
-rel="noopener">
-
-${
-  image
-  ?`<img
-src="${E(image)}"
-alt="">`
-  :""
-}
-
-${body}
-
-</a>`
-
-    :`<div class="srf-sponsor">
-
-${
-  image
-  ?`<img
-src="${E(image)}"
-alt="">`
-  :""
-}
-
-${body}
-
-</div>`;
-
-}).join("")}
-
-</div>`;
-
-  }catch(err){
-
-    console.warn(
-      "Sponsors unavailable:",
-      err
-    );
-
-    wrap.innerHTML="";
-  }
-}
-
-function modal(){
-
-  if($("srfov"))return;
-
-  let o=document.createElement("div");
-
-  o.id="srfov";
-
-  o.className="srfov";
-
-  o.innerHTML=
-    '<div class="srfmodal"><div id="srfm"></div></div>';
-
-  o.onclick=e=>{
-    if(e.target===o)
-      closePropertyDetails();
-  };
-
-  document.body.appendChild(o);
-
-  document.addEventListener("keydown",e=>{
-
-    if(e.key=="Escape")
-      closePropertyDetails();
-
-    if(active&&e.key=="ArrowLeft")
-      changePhoto(-1);
-
-    if(active&&e.key=="ArrowRight")
-      changePhoto(1);
-
-  });
-}
-
-function card(r,i){
-
-  let p=photos(r)[0];
-
-  let b=V(
-    r.bedrooms,
-    r.bedroom,
-    "—"
-  );
-
-  let ba=V(
-    r.bathrooms,
-    r.bathroom,
-    "—"
-  );
-
-  let f=V(
-    r.furnished,
-    r.furnishing,
-    "—"
-  );
-
-  let a=V(
-    r.area,
-    r.area_sqft,
-    r.size,
-    "—"
-  );
-
-  return`
-
-<article class="srfcard">
-
-<div class="srfphoto srfimg">
-
-${
-p
-?`
-<img
-src="${E(p)}"
-alt="${E(title(r))}"
-loading="lazy">
-
-<span class="srfwm">
-${WM}
-</span>
-`
-:""
-}
-
-</div>
-
-<div class="srfbody">
-
-<h3>
-${E(title(r))}
-</h3>
-
-<div class="srfloc">
-📍 ${E(loc(r))}
-</div>
-
-<div class="srfprice">
-${E(price(r))}
-</div>
-
-<div class="srffacts">
-
-<div class="srffact">
-<b>${E(b)}</b>
-Bed
-</div>
-
-<div class="srffact">
-<b>${E(ba)}</b>
-Bath
-</div>
-
-<div class="srffact">
-<b>${E(f)}</b>
-Furnished
-</div>
-
-<div class="srffact">
-<b>${E(a)}</b>
-Area
-</div>
-
-</div>
-
-<div class="srfactions">
-
-<button
-class="srfbtn srfdark"
-data-v="${i}">
-View Full Details
-</button>
-
-<button
-class="srfbtn"
-data-q="${i}">
-✉️ Send Inquiry
-</button>
-
-<button
-class="srfbtn srfwa"
-data-w="${i}">
-🟢 Enquire on WhatsApp
-</button>
-
-</div>
-
-</div>
-
-</article>`;
-}
-
-function render(a){
-
-  let g=$("listingGrid");
-
-  if(!g)return;
-
-  shown=a;
-
-  if(!a.length){
-
-    g.innerHTML=`
-<div class="srf-empty">
-
-<b>No matching properties found.</b>
-
-<br>
-
-Try another location or property type.
-
-</div>`;
-
-    return;
-  }
-
-  g.innerHTML=a.map(card).join("");
-
-  g.querySelectorAll("[data-v]")
-    .forEach(b=>
-      b.onclick=()=>
-        openPropertyDetails(
-          shown[+b.dataset.v]
-        )
-    );
-
-  g.querySelectorAll("[data-q]")
-    .forEach(b=>
-      b.onclick=()=>
-        openInquiry(
-          shown[+b.dataset.q]
-        )
-    );
-
-  g.querySelectorAll("[data-w]")
-    .forEach(b=>
-      b.onclick=()=>
-        window.open(
-          wa(shown[+b.dataset.w]),
-          "_blank",
-          "noopener"
-        )
-    );
-}
-
-function refresh(){
-
-  if(!active)return;
-
-  let ps=photos(active);
-
-  let p=ps[pi]||"";
-
-  let f=[
-    [
-      "Bedrooms",
-      V(
-        active.bedrooms,
-        active.bedroom,
-        "—"
-      )
-    ],
-    [
-      "Bathrooms",
-      V(
-        active.bathrooms,
-        active.bathroom,
-        "—"
-      )
-    ],
-    [
-      "Furnished",
-      V(
-        active.furnished,
-        active.furnishing,
-        "—"
-      )
-    ],
-    [
-      "Area",
-      V(
-        active.area,
-        active.area_sqft,
-        active.size,
-        "—"
-      )
-    ],
-    [
-      "Property ID",
-      V(
-        active.property_id,
-        active.id,
-        active.slug,
-        "—"
-      )
-    ],
-    [
-      "Owner",
-      owner(active)
-    ],
-    [
-      "Posted",
-      V(
-        active.posted_date,
-        active.created_at,
-        "Recently posted"
-      )
-    ]
-  ];
-
-  $("srfm").innerHTML=`
-
-<div class="srfhead">
-
-<button
-class="srfclose"
-onclick="closePropertyDetails()">
-×
-</button>
-
-<small>
-${E(type(active))}
-</small>
-
-<h2>
-${E(title(active))}
-</h2>
-
-<div class="srfsub">
-
-<span>
-📍 ${E(loc(active))}
-</span>
-
-<span class="srfmprice">
-${E(price(active))}
-</span>
-
-</div>
-
-</div>
-
-<div class="srfgallery">
-
-<div class="srfphoto srfmain">
-
-${
-p
-?`
-<img
-src="${E(p)}"
-alt="${E(title(active))}">
-
-<span class="srfwm">
-${WM}
-</span>
-`
-:
-"<div style='height:100%;display:grid;place-items:center'>No photo</div>"
-}
-
-${
-ps.length>1
-?`
-
-<button
-class="srfarr srfprev"
-onclick="changePhoto(-1)">
-‹
-</button>
-
-<button
-class="srfarr srfnext"
-onclick="changePhoto(1)">
-›
-</button>
-
-<span class="srfcount">
-${pi+1} / ${ps.length}
-</span>
-
-`
-:""
-}
-
-</div>
-
-${
-ps.length>1
-?`
-
-<div class="srfthumbs">
-
-${
-ps.map((x,i)=>
-`
-<button
-class="srfthumb ${i==pi?"on":""}"
-onclick="setPhoto(${i})">
-
-<img src="${E(x)}">
-
-</button>
-`
-).join("")
-}
-
-</div>
-
-`
-:""
-}
-
-</div>
-
-<div class="srfdetails">
-
-<div class="srfspecs">
-
-${
-f.map(x=>
-`
-<div class="srfspec">
-
-<span>
-${E(x[0])}
-</span>
-
-<b>
-${E(x[1])}
-</b>
-
-</div>
-`
-).join("")
-}
-
-</div>
-
-<div class="srfdesc">
-
-<h3>
-Description
-</h3>
-
-<p>
-${E(desc(active))}
-</p>
-
-</div>
-
-</div>
-
-<div class="srfmacts">
-
-<button
-class="srfbtn srfwa"
-onclick="sendPropertyWhatsApp()">
-🟢 WhatsApp Owner
-</button>
-
-<button
-class="srfbtn srfdark"
-onclick="viewPropertyLocation()">
-📍 View Location
-</button>
-
-<button
-class="srfbtn"
-onclick="shareCurrentProperty()">
-↗ Share Property
-</button>
-
-</div>
-`;
-}
-
-window.openPropertyDetails=r=>{
-  active=r;
-  pi=0;
-  modal();
-  refresh();
-  $("srfov").classList.add("open");
-  document.body.style.overflow="hidden";
-};
-
-window.closePropertyDetails=()=>{
-  $("srfov")?.classList.remove("open");
-  document.body.style.overflow="";
-  active=null;
-};
-
-window.setPhoto=i=>{
-  pi=i;
-  refresh();
-};
-
-window.changePhoto=d=>{
-
-  let p=photos(active);
-
-  if(p.length>1){
-
-    pi=(pi+d+p.length)%p.length;
-
-    refresh();
-  }
-};
-
-window.sendPropertyWhatsApp=()=>{
-  active&&window.open(
-    wa(active),
-    "_blank",
-    "noopener"
-  );
-};
-
-window.viewPropertyLocation=()=>{
-  active&&window.open(
-    map(active),
-    "_blank",
-    "noopener"
-  );
-};
-
-window.shareCurrentProperty=async()=>{
-
-  if(!active)return;
-
-  try{
-
-    if(navigator.share)
-
-      await navigator.share({
-        title:title(active),
-        text:`${title(active)} - ${loc(active)} - ${price(active)}`,
-        url:location.href
-      });
-
-    else{
-
-      await navigator.clipboard.writeText(
-        location.href
+    const sponsors=
+      (Array.isArray(data)?data:[])
+      .filter(sponsorIsActive);
+
+    if(!sponsors.length) return;
+
+    const grid=
+      document.getElementById(
+        "listingGrid"
       );
 
-      alert("Pr
+    if(!grid || !grid.parentNode) return;
+
+    const wrap=
+      document.createElement("section");
+
+    wrap.id="srf-public-sponsors";
+
+    wrap.className="srf-sponsors";
+
+    wrap.innerHTML=
+      sponsors.map(s
