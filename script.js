@@ -1,36 +1,54 @@
-// SastoRoomFinder public script.js
-// Direct Supabase REST + professional property popup + gallery + watermark + WhatsApp + Maps + Share
+// ============================================================
+// SASTO ROOM FINDER - PUBLIC script.js
+// ============================================================
 
-const SUPABASE_URL = "https://amhrnahjshsgelacqzyl.supabase.co";
-const SUPABASE_KEY = "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+const SUPABASE_URL =
+  "https://amhrnahjshsgelacqzyl.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
+
 const ADMIN_WHATSAPP = "9779818067008";
 
 let listings = [];
 let selectedProperty = null;
 let galleryIndex = 0;
 
-const esc = v =>
-  String(v ?? "")
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function esc(value) {
+  return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
 
-function photosOf(v) {
-  if (!v) return [];
 
-  if (Array.isArray(v)) {
-    return v.filter(Boolean);
+function photosOf(value) {
+
+  if (!value) return [];
+
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
   }
 
-  if (typeof v === "string") {
+  if (typeof value === "string") {
+
     try {
-      const x = JSON.parse(v);
-      if (Array.isArray(x)) return x.filter(Boolean);
+      const parsed = JSON.parse(value);
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+
     } catch (e) {}
 
-    return v
+    return value
       .split(",")
       .map(x => x.trim())
       .filter(Boolean);
@@ -39,111 +57,174 @@ function photosOf(v) {
   return [];
 }
 
-function photosFor(r) {
-  let a = [];
 
-  for (const v of [
-    r?.photos,
-    r?.images,
-    r?.image_urls,
-    r?.photo_urls,
-    r?.image
-  ]) {
-    if (!v) continue;
+function photosFor(room) {
 
-    if (Array.isArray(v)) {
-      a.push(...v);
+  let photos = [];
+
+  const possibleFields = [
+    room?.photos,
+    room?.images,
+    room?.image_urls,
+    room?.photo_urls,
+    room?.image
+  ];
+
+  for (const value of possibleFields) {
+
+    if (!value) continue;
+
+    if (Array.isArray(value)) {
+      photos.push(...value);
       continue;
     }
 
-    if (typeof v === "string") {
-      try {
-        const x = JSON.parse(v);
+    if (typeof value === "string") {
 
-        if (Array.isArray(x)) {
-          a.push(...x);
+      try {
+
+        const parsed = JSON.parse(value);
+
+        if (Array.isArray(parsed)) {
+          photos.push(...parsed);
           continue;
         }
+
       } catch (e) {}
 
-      a.push(...v.split(",").map(x => x.trim()));
+      photos.push(
+        ...value
+          .split(",")
+          .map(x => x.trim())
+          .filter(Boolean)
+      );
     }
   }
 
-  return [...new Set(a.filter(Boolean))];
+  return [...new Set(photos.filter(Boolean))];
 }
 
-function titleOf(r) {
-  return r.title || r.name || "Room / Property";
-}
 
-function typeOf(r) {
-  return r.room_type || r.property_type || r.type || "Property";
-}
-
-function locationOf(r) {
+function titleOf(room) {
   return (
-    r.location ||
-    r.address ||
-    r.area ||
-    r.city ||
+    room.title ||
+    room.name ||
+    "Room / Property"
+  );
+}
+
+
+function typeOf(room) {
+  return (
+    room.room_type ||
+    room.property_type ||
+    room.type ||
+    "Property"
+  );
+}
+
+
+function locationOf(room) {
+  return (
+    room.location ||
+    room.address ||
+    room.area ||
+    room.city ||
     "Kathmandu Valley"
   );
 }
 
-function priceOf(r) {
-  const p = r.price ?? r.rent ?? r.monthly_rent;
 
-  if (p === null || p === undefined || p === "") {
+function priceOf(room) {
+
+  const price =
+    room.price ??
+    room.rent ??
+    room.monthly_rent;
+
+  if (
+    price === null ||
+    price === undefined ||
+    price === ""
+  ) {
     return "Contact for price";
   }
 
-  const n = Number(p);
+  const number = Number(price);
 
-  return Number.isFinite(n)
-    ? `Rs. ${n.toLocaleString("en-IN")} / month`
-    : String(p);
+  if (Number.isFinite(number)) {
+    return (
+      "Rs. " +
+      number.toLocaleString("en-IN") +
+      " / month"
+    );
+  }
+
+  return String(price);
 }
 
-function phoneOf(r) {
-  let p = String(
-    r.phone ||
-    r.whatsapp ||
+
+function phoneOf(room) {
+
+  let phone = String(
+    room.phone ||
+    room.whatsapp ||
     ADMIN_WHATSAPP
   ).replace(/[^\d]/g, "");
 
-  if (p.startsWith("0")) {
-    p = "977" + p.slice(1);
+  if (phone.startsWith("0")) {
+    phone = "977" + phone.slice(1);
   }
 
-  if (!p.startsWith("977") && p.length === 10) {
-    p = "977" + p;
+  if (
+    !phone.startsWith("977") &&
+    phone.length === 10
+  ) {
+    phone = "977" + phone;
   }
 
-  return p || ADMIN_WHATSAPP;
-}
-
-function whatsapp(r) {
-  return `https://wa.me/${phoneOf(r)}?text=${encodeURIComponent(
-    `Hello Sasto Room Finder, I am interested in ${titleOf(r)} at ${locationOf(
-      r
-    )}. Please send current details.`
-  )}`;
+  return phone || ADMIN_WHATSAPP;
 }
 
 
-/* =========================================================
-   POPUP CSS
-========================================================= */
+function whatsapp(room) {
+
+  const message =
+    `Hello Sasto Room Finder, ` +
+    `I am interested in ${titleOf(room)} ` +
+    `at ${locationOf(room)}. ` +
+    `Please send current details.`;
+
+  return (
+    "https://wa.me/" +
+    phoneOf(room) +
+    "?text=" +
+    encodeURIComponent(message)
+  );
+}
+
+
+// ============================================================
+// POPUP CSS
+// ============================================================
 
 function addPopupCSS() {
-  if (document.getElementById("srf-popup-css")) return;
 
-  const s = document.createElement("style");
+  if (
+    document.getElementById(
+      "srf-popup-css"
+    )
+  ) {
+    return;
+  }
 
-  s.id = "srf-popup-css";
+  const style =
+    document.createElement("style");
 
-  s.textContent = `
+  style.id = "srf-popup-css";
+
+  style.textContent = `
+
 .srf-modal{
   position:fixed;
   inset:0;
@@ -152,11 +233,11 @@ function addPopupCSS() {
   display:none;
   align-items:center;
   justify-content:center;
-  padding:14px
+  padding:14px;
 }
 
 .srf-modal.open{
-  display:flex
+  display:flex;
 }
 
 .srf-modal-box{
@@ -166,7 +247,7 @@ function addPopupCSS() {
   overflow:auto;
   border-radius:20px;
   position:relative;
-  box-shadow:0 22px 70px rgba(0,0,0,.35)
+  box-shadow:0 22px 70px rgba(0,0,0,.35);
 }
 
 .srf-close{
@@ -181,11 +262,11 @@ function addPopupCSS() {
   color:#fff;
   font-size:27px;
   cursor:pointer;
-  z-index:30
+  z-index:30;
 }
 
 .srf-property-head{
-  padding:23px 22px 18px
+  padding:23px 22px 18px;
 }
 
 .srf-type{
@@ -196,35 +277,35 @@ function addPopupCSS() {
   border-radius:999px;
   font-size:11px;
   font-weight:800;
-  text-transform:uppercase
+  text-transform:uppercase;
 }
 
 .srf-property-head h2{
   margin:10px 48px 7px 0;
   font-size:28px;
   line-height:1.18;
-  color:#111827
+  color:#111827;
 }
 
 .srf-location{
   color:#64748b;
   font-size:14px;
-  margin:0
+  margin:0;
 }
 
 .srf-main-price{
   margin-top:12px;
   font-size:24px;
   font-weight:850;
-  color:#0f766e
+  color:#0f766e;
 }
 
 .srf-gallery{
-  background:#0f172a
+  background:#0f172a;
 }
 
 .srf-photo-wrap{
-  position:relative
+  position:relative;
 }
 
 .srf-main-photo{
@@ -232,7 +313,7 @@ function addPopupCSS() {
   height:min(58vw,480px);
   min-height:250px;
   object-fit:cover;
-  display:block
+  display:block;
 }
 
 .srf-no-photo{
@@ -241,21 +322,23 @@ function addPopupCSS() {
   justify-content:center;
   height:360px;
   color:#cbd5e1;
-  background:#334155
+  background:#334155;
 }
 
 .srf-watermark{
   position:absolute;
   inset:0;
   pointer-events:none;
-  overflow:hidden
+  overflow:hidden;
 }
 
 .srf-watermark span{
   position:absolute;
   left:50%;
   top:50%;
-  transform:translate(-50%,-50%) rotate(-25deg);
+  transform:
+    translate(-50%,-50%)
+    rotate(-25deg);
   width:160%;
   text-align:center;
   font-size:24px;
@@ -263,21 +346,7 @@ function addPopupCSS() {
   letter-spacing:2px;
   color:rgba(255,255,255,.34);
   text-shadow:0 1px 5px rgba(0,0,0,.55);
-  white-space:nowrap
-}
-
-.srf-watermark:after{
-  content:"sastoroomfinder.pvt.ltd.";
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%) rotate(-25deg);
-  width:160%;
-  text-align:center;
-  font-size:24px;
-  font-weight:850;
-  color:rgba(255,255,255,.14);
-  white-space:nowrap
+  white-space:nowrap;
 }
 
 .srf-gallery-btn{
@@ -292,15 +361,15 @@ function addPopupCSS() {
   background:rgba(0,0,0,.58);
   color:#fff;
   font-size:29px;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .srf-gallery-prev{
-  left:12px
+  left:12px;
 }
 
 .srf-gallery-next{
-  right:12px
+  right:12px;
 }
 
 .srf-photo-count{
@@ -311,14 +380,14 @@ function addPopupCSS() {
   color:#fff;
   padding:6px 10px;
   border-radius:999px;
-  font-size:12px
+  font-size:12px;
 }
 
 .srf-thumbs{
   display:flex;
   gap:8px;
   padding:10px;
-  overflow-x:auto
+  overflow-x:auto;
 }
 
 .srf-thumb{
@@ -328,48 +397,49 @@ function addPopupCSS() {
   object-fit:cover;
   border-radius:8px;
   cursor:pointer;
-  border:2px solid transparent
+  border:2px solid transparent;
 }
 
 .srf-thumb.active{
-  border-color:#14b8a6
+  border-color:#14b8a6;
 }
 
 .srf-details{
-  padding:20px
+  padding:20px;
 }
 
 .srf-section-title{
   font-size:17px;
   font-weight:850;
   color:#111827;
-  margin:0 0 12px
+  margin:0 0 12px;
 }
 
 .srf-facts{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
   gap:10px;
-  margin-bottom:21px
+  margin-bottom:21px;
 }
 
 .srf-fact{
   border:1px solid #e5e7eb;
   border-radius:12px;
   padding:13px;
-  background:#f8fafc
+  background:#f8fafc;
 }
 
 .srf-fact-label{
   font-size:11px;
   color:#64748b;
-  margin-bottom:4px
+  margin-bottom:4px;
 }
 
 .srf-fact-value{
   font-size:14px;
   font-weight:750;
-  color:#111827
+  color:#111827;
 }
 
 .srf-property-meta{
@@ -378,24 +448,24 @@ function addPopupCSS() {
   padding:15px;
   border-radius:13px;
   background:#f8fafc;
-  margin-bottom:20px
+  margin-bottom:20px;
 }
 
 .srf-meta-row{
   display:flex;
   justify-content:space-between;
   gap:12px;
-  font-size:13px
+  font-size:13px;
 }
 
 .srf-meta-row span:first-child{
-  color:#64748b
+  color:#64748b;
 }
 
 .srf-meta-row span:last-child{
   font-weight:750;
   color:#111827;
-  text-align:right
+  text-align:right;
 }
 
 .srf-description{
@@ -403,13 +473,13 @@ function addPopupCSS() {
   font-size:14px;
   line-height:1.65;
   margin-bottom:20px;
-  white-space:pre-wrap
+  white-space:pre-wrap;
 }
 
 .srf-actions{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px
+  gap:10px;
 }
 
 .srf-action{
@@ -420,17 +490,17 @@ function addPopupCSS() {
   text-decoration:none;
   display:flex;
   align-items:center;
-  justify-content:center
+  justify-content:center;
 }
 
 .srf-whatsapp{
   background:#16a34a;
-  color:#fff!important
+  color:#fff!important;
 }
 
 .srf-map{
   background:#e2e8f0;
-  color:#0f172a
+  color:#0f172a;
 }
 
 .srf-share{
@@ -441,7 +511,7 @@ function addPopupCSS() {
   background:#fff;
   border-radius:12px;
   font-weight:750;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .srf-listing-watermark{
@@ -450,7 +520,7 @@ function addPopupCSS() {
   display:flex;
   align-items:center;
   justify-content:center;
-  pointer-events:none
+  pointer-events:none;
 }
 
 .srf-listing-watermark span{
@@ -459,61 +529,73 @@ function addPopupCSS() {
   font-weight:800;
   color:rgba(255,255,255,.3);
   text-shadow:0 1px 3px #000;
-  white-space:nowrap
+  white-space:nowrap;
 }
 
 @media(max-width:600px){
 
   .srf-modal{
     padding:0;
-    align-items:flex-end
+    align-items:flex-end;
   }
 
   .srf-modal-box{
     max-height:97vh;
-    border-radius:20px 20px 0 0
+    border-radius:
+      20px 20px 0 0;
   }
 
   .srf-property-head{
-    padding:19px 16px 16px
+    padding:19px 16px 16px;
   }
 
   .srf-property-head h2{
-    font-size:22px
+    font-size:22px;
   }
 
   .srf-main-price{
-    font-size:22px
+    font-size:22px;
   }
 
   .srf-details{
-    padding:16px
+    padding:16px;
   }
 
-  .srf-watermark span,
-  .srf-watermark:after{
-    font-size:18px
+  .srf-watermark span{
+    font-size:18px;
   }
 }
+
 `;
 
-  document.head.appendChild(s);
+  document.head.appendChild(style);
 }
 
 
-/* =========================================================
-   MODAL
-========================================================= */
+// ============================================================
+// MODAL
+// ============================================================
 
 function ensureModal() {
-  if (document.getElementById("srf-details-modal")) return;
 
-  const m = document.createElement("div");
+  if (
+    document.getElementById(
+      "srf-details-modal"
+    )
+  ) {
+    return;
+  }
 
-  m.id = "srf-details-modal";
-  m.className = "srf-modal";
+  const modal =
+    document.createElement("div");
 
-  m.innerHTML = `
+  modal.id =
+    "srf-details-modal";
+
+  modal.className =
+    "srf-modal";
+
+  modal.innerHTML = `
     <div class="srf-modal-box">
 
       <button
@@ -529,98 +611,140 @@ function ensureModal() {
     </div>
   `;
 
-  document.body.appendChild(m);
+  document.body.appendChild(modal);
 
-  m.addEventListener("click", e => {
-    if (e.target === m) {
-      closePropertyDetails();
+  modal.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target === modal
+      ) {
+        closePropertyDetails();
+      }
+
     }
-  });
+  );
 
-  m.querySelector(".srf-close").onclick =
+  modal
+    .querySelector(".srf-close")
+    .onclick =
     closePropertyDetails;
 }
 
-function openPropertyDetails(i) {
-  if (!listings[i]) return;
 
-  selectedProperty = listings[i];
+// ============================================================
+// OPEN / CLOSE PROPERTY
+// ============================================================
+
+function openPropertyDetails(index) {
+
+  if (!listings[index]) {
+    return;
+  }
+
+  selectedProperty =
+    listings[index];
+
   galleryIndex = 0;
 
   ensureModal();
+
   renderPropertyDetails();
 
   document
-    .getElementById("srf-details-modal")
+    .getElementById(
+      "srf-details-modal"
+    )
     .classList.add("open");
 
-  document.body.style.overflow = "hidden";
+  document.body.style.overflow =
+    "hidden";
 }
+
 
 function closePropertyDetails() {
+
   document
-    .getElementById("srf-details-modal")
+    .getElementById(
+      "srf-details-modal"
+    )
     ?.classList.remove("open");
 
-  document.body.style.overflow = "";
+  document.body.style.overflow =
+    "";
 }
 
 
-/* =========================================================
-   PROPERTY DETAILS
-========================================================= */
+// ============================================================
+// PROPERTY DETAILS
+// ============================================================
 
 function renderPropertyDetails() {
 
-  const r = selectedProperty;
+  const room =
+    selectedProperty;
 
-  if (!r) return;
+  if (!room) return;
 
-  const pics = photosFor(r);
+  const photos =
+    photosFor(room);
 
   const body =
-    document.getElementById("srf-details-body");
+    document.getElementById(
+      "srf-details-body"
+    );
 
   if (!body) return;
 
-  const title = titleOf(r);
-  const type = typeOf(r);
-  const location = locationOf(r);
+  const title =
+    titleOf(room);
+
+  const type =
+    typeOf(room);
+
+  const location =
+    locationOf(room);
 
   const address =
-    r.address || location;
+    room.address ||
+    location;
 
   const owner =
-    r.owner_name ||
-    r.owner ||
+    room.owner_name ||
+    room.owner ||
     "Property Owner";
 
-  const id =
-    r.id ||
-    r.property_id ||
-    "SRF-" +
-      Math.floor(
-        Math.random() * 90000 + 10000
-      );
+  const propertyId =
+    room.id ||
+    room.property_id ||
+    "SastoRoomFinder";
 
-  const posted = r.created_at
-    ? new Date(r.created_at).toLocaleDateString()
-    : "Recently";
+  const posted =
+    room.created_at
+      ? new Date(
+          room.created_at
+        ).toLocaleDateString()
+      : "Recently";
 
-  const map =
+  const mapURL =
     "https://www.google.com/maps/search/?api=1&query=" +
     encodeURIComponent(address);
 
-  let photo;
 
-  if (pics[galleryIndex]) {
+  let galleryHTML = "";
 
-    photo = `
+
+  if (photos.length) {
+
+    galleryHTML = `
       <div class="srf-photo-wrap">
 
         <img
           class="srf-main-photo"
-          src="${esc(pics[galleryIndex])}"
+          src="${esc(
+            photos[galleryIndex]
+          )}"
           alt="${esc(title)}"
         >
 
@@ -631,24 +755,34 @@ function renderPropertyDetails() {
         </div>
 
         ${
-          pics.length > 1
+          photos.length > 1
             ? `
               <button
-                class="srf-gallery-btn srf-gallery-prev"
+                class="
+                  srf-gallery-btn
+                  srf-gallery-prev
+                "
                 type="button"
               >
                 &#8249;
               </button>
 
               <button
-                class="srf-gallery-btn srf-gallery-next"
+                class="
+                  srf-gallery-btn
+                  srf-gallery-next
+                "
                 type="button"
               >
                 &#8250;
               </button>
 
-              <span class="srf-photo-count">
-                ${galleryIndex + 1} / ${pics.length}
+              <span
+                class="srf-photo-count"
+              >
+                ${galleryIndex + 1}
+                /
+                ${photos.length}
               </span>
             `
             : ""
@@ -659,7 +793,7 @@ function renderPropertyDetails() {
 
   } else {
 
-    photo = `
+    galleryHTML = `
       <div class="srf-photo-wrap">
 
         <div class="srf-no-photo">
@@ -676,35 +810,43 @@ function renderPropertyDetails() {
     `;
   }
 
-  const thumbs =
-    pics.length > 1
-      ? `
-        <div class="srf-thumbs">
 
-          ${pics
-            .map(
-              (p, i) => `
-                <img
-                  class="srf-thumb ${
-                    i === galleryIndex
+  let thumbnailsHTML = "";
+
+
+  if (photos.length > 1) {
+
+    thumbnailsHTML = `
+      <div class="srf-thumbs">
+
+        ${photos
+          .map(
+            (photo, index) => `
+              <img
+                class="
+                  srf-thumb
+                  ${
+                    index === galleryIndex
                       ? "active"
                       : ""
-                  }"
-                  src="${esc(p)}"
-                  data-gallery-index="${i}"
-                  alt="Property photo ${i + 1}"
-                >
-              `
-            )
-            .join("")}
+                  }
+                "
+                src="${esc(photo)}"
+                data-gallery-index="${index}"
+                alt="Property photo ${
+                  index + 1
+                }"
+              >
+            `
+          )
+          .join("")}
 
-        </div>
-      `
-      : "";
+      </div>
+    `;
+  }
+
 
   body.innerHTML = `
-
-    <!-- PROPERTY HEADER -->
 
     <div class="srf-property-head">
 
@@ -721,24 +863,20 @@ function renderPropertyDetails() {
       </p>
 
       <div class="srf-main-price">
-        ${esc(priceOf(r))}
+        ${esc(priceOf(room))}
       </div>
 
     </div>
 
 
-    <!-- PHOTO GALLERY -->
-
     <div class="srf-gallery">
 
-      ${photo}
+      ${galleryHTML}
 
-      ${thumbs}
+      ${thumbnailsHTML}
 
     </div>
 
-
-    <!-- PROPERTY INFORMATION -->
 
     <div class="srf-details">
 
@@ -758,9 +896,9 @@ function renderPropertyDetails() {
           <div class="srf-fact-value">
             🛏
             ${esc(
-              r.bedrooms ??
-              r.bedroom ??
-              r.beds ??
+              room.bedrooms ??
+              room.bedroom ??
+              room.beds ??
               "Not specified"
             )}
           </div>
@@ -777,9 +915,9 @@ function renderPropertyDetails() {
           <div class="srf-fact-value">
             🚿
             ${esc(
-              r.bathrooms ??
-              r.bathroom ??
-              r.baths ??
+              room.bathrooms ??
+              room.bathroom ??
+              room.baths ??
               "Not specified"
             )}
           </div>
@@ -796,8 +934,8 @@ function renderPropertyDetails() {
           <div class="srf-fact-value">
             🛋
             ${esc(
-              r.furnished ??
-              r.furnishing ??
+              room.furnished ??
+              room.furnishing ??
               "Not specified"
             )}
           </div>
@@ -814,10 +952,10 @@ function renderPropertyDetails() {
           <div class="srf-fact-value">
             📐
             ${esc(
-              r.area ||
-              r.size ||
-              r.square_feet ||
-              r.area_sqft ||
+              room.area ||
+              room.size ||
+              room.square_feet ||
+              room.area_sqft ||
               "Not specified"
             )}
           </div>
@@ -827,39 +965,45 @@ function renderPropertyDetails() {
       </div>
 
 
-      <!-- MORE INFORMATION -->
-
       <div class="srf-property-meta">
 
         <div class="srf-meta-row">
           <span>Property ID</span>
-          <span>${esc(id)}</span>
+          <span>
+            ${esc(propertyId)}
+          </span>
         </div>
 
         <div class="srf-meta-row">
           <span>Property Type</span>
-          <span>${esc(type)}</span>
+          <span>
+            ${esc(type)}
+          </span>
         </div>
 
         <div class="srf-meta-row">
           <span>Owner</span>
-          <span>${esc(owner)}</span>
+          <span>
+            ${esc(owner)}
+          </span>
         </div>
 
         <div class="srf-meta-row">
           <span>Posted</span>
-          <span>${esc(posted)}</span>
+          <span>
+            ${esc(posted)}
+          </span>
         </div>
 
         <div class="srf-meta-row">
           <span>Location</span>
-          <span>${esc(address)}</span>
+          <span>
+            ${esc(address)}
+          </span>
         </div>
 
       </div>
 
-
-      <!-- DESCRIPTION -->
 
       <h3 class="srf-section-title">
         Description
@@ -867,31 +1011,28 @@ function renderPropertyDetails() {
 
       <div class="srf-description">
         ${esc(
-          r.description ||
-          r.details ||
-          r.about ||
+          room.description ||
+          room.details ||
+          room.about ||
           "No description provided."
         )}
       </div>
 
 
-      <!-- ACTIONS -->
-
       <div class="srf-actions">
 
         <a
           class="srf-action srf-whatsapp"
-          href="${whatsapp(r)}"
+          href="${whatsapp(room)}"
           target="_blank"
           rel="noopener"
         >
           💬 WhatsApp Owner
         </a>
 
-
         <a
           class="srf-action srf-map"
-          href="${esc(map)}"
+          href="${esc(mapURL)}"
           target="_blank"
           rel="noopener"
         >
@@ -910,44 +1051,65 @@ function renderPropertyDetails() {
       </button>
 
     </div>
+
   `;
 
 
-  /* GALLERY CONTROLS */
+  const previous =
+    body.querySelector(
+      ".srf-gallery-prev"
+    );
 
-  body
-    .querySelector(".srf-gallery-prev")
-    ?.addEventListener("click", () => {
+  if (previous) {
 
-      galleryIndex =
-        (galleryIndex - 1 + pics.length) %
-        pics.length;
-
-      renderPropertyDetails();
-    });
-
-
-  body
-    .querySelector(".srf-gallery-next")
-    ?.addEventListener("click", () => {
+    previous.onclick = () => {
 
       galleryIndex =
-        (galleryIndex + 1) %
-        pics.length;
+        (
+          galleryIndex -
+          1 +
+          photos.length
+        ) %
+        photos.length;
 
       renderPropertyDetails();
-    });
+    };
+  }
+
+
+  const next =
+    body.querySelector(
+      ".srf-gallery-next"
+    );
+
+  if (next) {
+
+    next.onclick = () => {
+
+      galleryIndex =
+        (
+          galleryIndex +
+          1
+        ) %
+        photos.length;
+
+      renderPropertyDetails();
+    };
+  }
 
 
   body
-    .querySelectorAll(".srf-thumb")
-    .forEach(x => {
+    .querySelectorAll(
+      ".srf-thumb"
+    )
+    .forEach(thumbnail => {
 
-      x.onclick = () => {
+      thumbnail.onclick = () => {
 
         galleryIndex =
           Number(
-            x.dataset.galleryIndex || 0
+            thumbnail.dataset
+              .galleryIndex || 0
           );
 
         renderPropertyDetails();
@@ -957,220 +1119,152 @@ function renderPropertyDetails() {
 }
 
 
-/* =========================================================
-   SHARE PROPERTY
-========================================================= */
+// ============================================================
+// SHARE
+// ============================================================
 
 async function srfShareProperty() {
 
-  if (!selectedProperty) return;
+  if (!selectedProperty) {
+    return;
+  }
 
-  const d = {
+  const shareData = {
 
-    title: titleOf(selectedProperty),
+    title:
+      titleOf(selectedProperty),
 
     text:
-      `${titleOf(selectedProperty)} - ` +
-      `${locationOf(selectedProperty)} - ` +
-      `${priceOf(selectedProperty)}`,
+      `${titleOf(
+        selectedProperty
+      )} - ` +
+      `${locationOf(
+        selectedProperty
+      )} - ` +
+      `${priceOf(
+        selectedProperty
+      )}`,
 
-    url: location.href
+    url:
+      window.location.href
+
   };
+
 
   try {
 
-    if (navigator.share) {
+    if (
+      navigator.share
+    ) {
 
-      await navigator.share(d);
-
-    } else if (navigator.clipboard) {
-
-      await navigator.clipboard.writeText(
-        location.href
+      await navigator.share(
+        shareData
       );
 
-      alert("Property link copied.");
-
-    } else {
-
-      prompt(
-        "Copy property link:",
-        location.href
-      );
-
+      return;
     }
 
-  } catch (e) {}
+
+    if (
+      navigator.clipboard
+    ) {
+
+      await navigator.clipboard.writeText(
+        window.location.href
+      );
+
+      alert(
+        "Property link copied."
+      );
+
+      return;
+    }
+
+
+    prompt(
+      "Copy property link:",
+      window.location.href
+    );
+
+  } catch (error) {
+
+    console.log(
+      "Share cancelled."
+    );
+
+  }
 }
 
 
-/* =========================================================
-   PROPERTY LISTINGS
-========================================================= */
+// ============================================================
+// RENDER PROPERTY CARDS
+// ============================================================
 
-function renderListings(rows = listings) {
+function renderListings(
+  rows = listings
+) {
 
   const grid =
-    document.getElementById("listingGrid");
+    document.getElementById(
+      "listingGrid"
+    );
 
-  if (!grid) return;
+  if (!grid) {
 
-  if (!rows.length) {
-
-    grid.innerHTML =
-      '<div class="listing-empty">No properties found.</div>';
+    console.error(
+      "listingGrid element not found."
+    );
 
     return;
   }
 
 
-  grid.innerHTML = rows
-    .map(r => {
+  if (!rows.length) {
 
-      const p = photosFor(r);
+    grid.innerHTML = `
+      <div class="listing-empty">
+        No properties found.
+      </div>
+    `;
 
-      const img = p[0]
+    return;
+  }
 
-        ? `
-          <div style="position:relative">
-
-            <img
-              src="${esc(p[0])}"
-              alt="${esc(titleOf(r))}"
-              loading="lazy"
-            >
-
-            <div class="srf-listing-watermark">
-
-              <span>
-                sastoroomfinder.pvt.ltd.
-              </span>
-
-            </div>
-
-          </div>
-        `
-
-        : `
-          <div class="listing-no-photo">
-            No photo
-          </div>
-        `;
-
-
-      return `
-
-        <article class="listing">
-
-          <div class="listing-photo">
-            ${img}
-          </div>
-
-
-          <div class="listing-body">
-
-            <span class="eyebrow">
-              ${esc(typeOf(r))}
-            </span>
-
-
-            <h3>
-              ${esc(titleOf(r))}
-            </h3>
-
-
-            <p>
-              ${esc(locationOf(r))}
-            </p>
-
-
-            ${
-              r.description
-                ? `
-                  <p>
-                    ${esc(r.description)}
-                  </p>
-                `
-                : ""
-            }
-
-
-            <div class="listing-price">
-              ${esc(priceOf(r))}
-            </div>
-
-
-            <button
-              type="button"
-              class="btn btn-dark full srf-view-btn"
-              data-property-id="${esc(r.id)}"
-            >
-              View Full Details
-            </button>
-
-
-            <a
-              class="btn btn-dark full"
-              style="margin-top:14px"
-              href="${whatsapp(r)}"
-              target="_blank"
-              rel="noopener"
-            >
-              Enquire on WhatsApp
-            </a>
-
-          </div>
-
-        </article>
-      `;
-
-    })
-    .join("");
-
-
-  /* VIEW DETAILS BUTTON */
-
-  grid
-    .querySelectorAll(".srf-view-btn")
-    .forEach(b => {
-
-      b.onclick = () => {
-
-        const i =
-          listings.findIndex(
-            x =>
-              String(x.id) ===
-              String(b.dataset.propertyId)
-          );
-
-        if (i >= 0) {
-          openPropertyDetails(i);
-        }
-
-      };
-
-    });
-}
-
-
-/* =========================================================
-   LOAD FROM SUPABASE
-========================================================= */
-
-async function loadListings() {
-
-  const grid =
-    document.getElementById("listingGrid");
-
-  if (!grid) return;
 
   grid.innerHTML =
-    '<div class="listing-empty">Loading properties...</div>';
+    rows
+      .map(room => {
+
+        const photos =
+          photosFor(room);
+
+        let imageHTML = "";
 
 
-  const url =
-    `${SUPABASE_URL}/rest/v1/room` +
-    `?select=*` +
-    `&status=eq.available` +
-    `&approval_status=eq.approved` +
-    
+        if (photos.length) {
+
+          imageHTML = `
+            <div
+              style="
+                position:relative;
+              "
+            >
+
+              <img
+                src="${esc(
+                  photos[0]
+                )}"
+                alt="${esc(
+                  titleOf(room)
+                )}"
+                loading="lazy"
+              >
+
+              <div
+                class="
+                  srf-listing-watermark
+                "
+              >
+                <span>
+                  sastoroomfinder.pvt.ltd.
+                </span>
