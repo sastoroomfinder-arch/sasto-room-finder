@@ -1204,7 +1204,6 @@ function init(){
   );
 
  load();
- loadsponsors();
 }
 
 document.readyState=="loading"
