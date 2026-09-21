@@ -1203,7 +1203,8 @@ function init(){
    filterProperties
   );
 
- load()
+ load();
+ loadsponsors();
 }
 
 document.readyState=="loading"
