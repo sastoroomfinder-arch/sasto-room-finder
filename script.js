@@ -967,10 +967,6 @@ window.filterProperties=()=>{
 
 /* LOAD FROM SUPABASE */
 
-/* =========================
-   SPONSORS / ADVERTISEMENTS
-   ========================= */
-
 async function loadSponsors(){
 
   const grid = document.getElementById("listingGrid");
@@ -1133,75 +1129,6 @@ async function loadSponsors(){
    ========================= */
 
 async function load(){async function load(){
-
- let g=$("listingGrid");
-
- if(!g)return;
-
- g.innerHTML=
- '<div class="srf-empty">Loading properties...</div>';
-
- try{
-
-  let res=await fetch(
-
-   `${U}/rest/v1/room?select=*&order=created_at.desc`,
-
-   {
-    headers:{
-     apikey:K,
-     Accept:"application/json"
-    },
-    cache:"no-store"
-   }
-
-  );
-
-  if(!res.ok)
-   throw Error("Supabase "+res.status);
-
-  let d=await res.json();
-
-  rows=
-   Array.isArray(d)
-   ?
-   d.filter(ok)
-   :
-   [];
-
-  window.SastoRoomFinderListings=rows;
-
-  filterProperties()
-
- }catch(e){
-
-  console.error(e);
-
-  g.innerHTML=
-   '<div class="srf-empty"><b>Properties could not be loaded.</b><br>Please refresh the page.</div>'
-
- }
-}
-
-
-/* INITIALIZE */
-
-function init(){
-
- css();
- modal();
-
- $("filterSearch")
-  ?.addEventListener(
-   "input",
-   filterProperties
-  );
-
- $("filterType")
-  ?.addEventListener(
-   "change",
-   filterProperties
-  );
 
  load();
 }
