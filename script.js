@@ -967,170 +967,78 @@ window.filterProperties=()=>{
 
 /* LOAD FROM SUPABASE */
 
-async function loadSponsors(){
+async function load(){
 
-  const grid = document.getElementById("listingGrid");
-  if(!grid) return;
+ let g=$("listingGrid");
 
-  // Remove old sponsor section before reloading
-  const old = document.getElementById("srfSponsorWrap");
-  if(old) old.remove();
+ if(!g)return;
 
-  try{
+ g.innerHTML=
+ '<div class="srf-empty">Loading properties...</div>';
 
-    const res = await fetch(
-      `${U}/rest/v1/sponsors?select=*&status=eq.active&order=created_at.desc`,
-      {
-        headers:{
-          apikey: K,
-          Accept: "application/json"
-        },
-        cache: "no-store"
-      }
-    );
+ try{
 
-    if(!res.ok){
-      throw new Error("Sponsors HTTP " + res.status);
-    }
+  let res=await fetch(
 
-    let sponsors = await res.json();
+   `${U}/rest/v1/room?select=*&order=created_at.desc`,
 
-    if(!Array.isArray(sponsors)){
-      sponsors = [];
-    }
+   {
+    headers:{
+     apikey:K,
+     Accept:"application/json"
+    },
+    cache:"no-store"
+   }
 
-    // Check start/end dates
-    const today = new Date();
-    today.setHours(0,0,0,0);
+  );
 
-    sponsors = sponsors.filter(function(s){
+  if(!res.ok)
+   throw Error("Supabase "+res.status);
 
-      if(s.start_date){
-        const start = new Date(s.start_date + "T00:00:00");
-        if(today < start) return false;
-      }
+  let d=await res.json();
 
-      if(s.end_date){
-        const end = new Date(s.end_date + "T23:59:59");
-        if(today > end) return false;
-      }
+  rows=
+   Array.isArray(d)
+   ?
+   d.filter(ok)
+   :
+   [];
 
-      return true;
-    });
+  window.SastoRoomFinderListings=rows;
 
-    if(!sponsors.length) return;
+  filterProperties()
 
-    const wrap = document.createElement("section");
+ }catch(e){
 
-    wrap.id = "srfSponsorWrap";
-    wrap.className = "srf-sponsors";
+  console.error(e);
 
-    wrap.innerHTML = sponsors.map(function(s){
+  g.innerHTML=
+   '<div class="srf-empty"><b>Properties could not be loaded.</b><br>Please refresh the page.</div>'
 
-      const title =
-        s.title ||
-        s.sponsor_name ||
-        "Sponsored Advertisement";
-
-      const image = s.image_url || "";
-      const link = s.link_url || "";
-      const phone = s.phone
-        ? String(s.phone).replace(/\D/g,"")
-        : "";
-
-      return `
-        <article class="srf-sponsor">
-
-          ${
-            image
-              ? `<img
-                   src="${image}"
-                   alt="${title}"
-                   loading="lazy"
-                 >`
-              : ""
-          }
-
-          <div class="srf-sponsor-body">
-
-            <span class="srf-sponsor-badge">
-              Sponsored
-            </span>
-
-            <h3>${title}</h3>
-
-            ${
-              s.sponsor_name
-                ? `<p><strong>${s.sponsor_name}</strong></p>`
-                : ""
-            }
-
-            ${
-              s.description
-                ? `<p>${s.description}</p>`
-                : ""
-            }
-
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-
-              ${
-                link
-                  ? `<a
-                       class="srf-sponsor-link"
-                       href="${link}"
-                       target="_blank"
-                       rel="noopener"
-                     >
-                       View Sponsor
-                     </a>`
-                  : ""
-              }
-
-              ${
-                phone
-                  ? `<a
-                       class="srf-sponsor-link"
-                       style="background:#16a34a"
-                       href="https://wa.me/${phone}"
-                       target="_blank"
-                       rel="noopener"
-                     >
-                       WhatsApp
-                     </a>`
-                  : ""
-              }
-
-            </div>
-
-          </div>
-
-        </article>
-      `;
-
-    }).join("");
-
-    // Show sponsors above the property listings
-    grid.parentNode.insertBefore(wrap, grid);
-
-  }catch(error){
-
-    // Sponsor failure must NEVER stop property listings
-    console.warn(
-      "SastoRoomFinder sponsors unavailable:",
-      error
-    );
-
-  }
+ }
 }
 
 
-/* =========================
-   YOUR EXISTING PROPERTY LOAD
-   ========================= */
+/* INITIALIZE */
 
-async function load(){async function load(){
+function init(){
 
- load();
+ css();
+ modal();
+
+ $("filterSearch")
+  ?.addEventListener(
+   "input",
+   filterProperties
+  );
+
+ $("filterType")
+  ?.addEventListener(
+   "change",
+   filterProperties
+  );
+
+ load()
 }
 
 document.readyState=="loading"
