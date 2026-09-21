@@ -6,30 +6,27 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SastoRoomFinder — Admin & House Owner</title>
 <script>
-window.__srfLoadSupabase=function(){
-  if(window.supabase) return Promise.resolve();
-  return new Promise(function(resolve,reject){
-    var urls=[
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
-      "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js",
-      "https://esm.sh/@supabase/supabase-js@2?bundle"
-    ];
-    var i=0, finished=false;
-    function doneOk(){if(finished)return;finished=true;resolve()}
-    function doneErr(){if(finished)return;finished=true;reject(new Error("Supabase library could not be loaded. Your browser/network may be blocking the Supabase CDN."))}
+(function(){
+  var sources=[
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
+    "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js",
+    "https://esm.sh/@supabase/supabase-js@2?bundle"
+  ];
+  window.__supabaseReady=new Promise(function(resolve,reject){
+    var i=0, timer;
     function next(){
-      if(window.supabase) return doneOk();
-      if(i>=urls.length) return doneErr();
-      var src=urls[i++], sc=document.createElement("script"), timer;
-      sc.src=src; sc.async=true;
-      timer=setTimeout(function(){try{sc.remove()}catch(e){};next()},10000);
-      sc.onload=function(){clearTimeout(timer);window.supabase?doneOk():next()};
-      sc.onerror=function(){clearTimeout(timer);next()};
+      if(window.supabase){resolve(window.supabase);return;}
+      if(i>=sources.length){reject(new Error("Supabase library could not be loaded. Check internet/CSP and reload."));return;}
+      var sc=document.createElement("script");
+      sc.src=sources[i++]; sc.async=false;
+      sc.onload=function(){clearTimeout(timer); if(window.supabase) resolve(window.supabase); else next();};
+      sc.onerror=function(){clearTimeout(timer);next();};
       document.head.appendChild(sc);
+      timer=setTimeout(function(){try{sc.remove()}catch(e){};next()},10000);
     }
     next();
   });
-};
+})();
 </script>
 <style>
 :root{--b:#0879e8;--n:#07347c;--o:#f5a623;--g:#20b879;--r:#ef4444;--bg:#f4f9ff;--line:#dce8f7;--muted:#71839b}
@@ -49,7 +46,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 </head>
 <body>
 
-<div id="login" class="login">
+<div id="loginScreen" class="login">
   <div class="loginbox">
     <h1>Sasto<span style="color:#0879e8">Room</span>Finder</h1>
     <p id="loginSub">Admin & House Owner Portal</p>
@@ -57,7 +54,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
     <div id="loginFields">
       <label>Email</label><input id="email" type="email" placeholder="Your email">
       <label>Password</label><input id="pass" type="password" placeholder="Your password">
-      <button class="primary" style="width:100%;margin-top:17px" onclick="login()">Login</button>
+      <button class="primary" style="width:100%;margin-top:17px" onclick="doLogin()">Login</button>
     </div>
     <div id="signupFields" class="hidden">
       <label>Full Name</label><input id="signupName" placeholder="Your name">
@@ -184,7 +181,21 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <script>
 const SUPABASE_URL="https://amhrnahjshsgelacqzyl.supabase.co";
 const SUPABASE_KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
-let db=null; let booting=false; let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
+let db=null; let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
+window.__adminInitError=null;
+async function initSupabase(){
+  try{
+    const sb=await window.__supabaseReady;
+    if(!/^https:\/\/[^\s]+\.supabase\.co(?:\/.*)?$/.test(SUPABASE_URL)){throw new Error("Supabase URL is invalid: "+SUPABASE_URL)}
+    db=sb.createClient(SUPABASE_URL,SUPABASE_KEY);
+    window.db=db;
+  }catch(e){
+    window.__adminInitError=e;
+    const m=document.getElementById("lm");
+    if(m)m.textContent=e.message;
+    throw e;
+  }
+}
 
 const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const $=id=>document.getElementById(id);
@@ -192,15 +203,15 @@ const isAdmin=()=>profile?.role==="admin";
 
 function setAuthMode(m){mode=m;$("loginFields").classList.toggle("hidden",m!=="login");$("signupFields").classList.toggle("hidden",m!=="signup");$("loginTab").classList.toggle("active",m==="login");$("signupTab").classList.toggle("active",m==="signup");$("lm").textContent=""}
 
-async function login(){
+async function doLogin(){
+  if(!db) await initSupabase();
   const email=$("email").value.trim(),password=$("pass").value;
-  if(!db){$("lm").textContent=booting?"Connecting to Supabase… please wait a few seconds.":"Connection failed. Tap Login again to retry."; if(!booting)boot(); return}
   $("lm").textContent="Logging in...";
   const {error}=await db.auth.signInWithPassword({email,password});
   if(error){$("lm").textContent=error.message;return} await start();
 }
 async function signupOwner(){
-  if(!db){$("lm").textContent=booting?"Connecting to Supabase… please wait a few seconds.":"Connection failed. Tap Login again to retry."; if(!booting)boot(); return}
+  if(!db) await initSupabase();
   const name=$("signupName").value.trim(),phone=$("signupPhone").value.trim(),email=$("signupEmail").value.trim(),password=$("signupPass").value;
   if(!name||!email||password.length<6){$("lm").textContent="Enter name, email and a password of at least 6 characters.";return}
   $("lm").textContent="Creating owner account...";
@@ -209,7 +220,7 @@ async function signupOwner(){
   if(!data.session){$("lm").style.color="#16834f";$("lm").textContent="Account created. Check your email if confirmation is enabled, then log in.";return}
   await start();
 }
-async function logout(){if(db)await db.auth.signOut();location.reload()}
+async function logout(){if(db) await db.auth.signOut();location.reload()}
 
 async function start(){
   const {data:{user}}=await db.auth.getUser(); me=user;
@@ -222,7 +233,7 @@ async function start(){
   }
   profile=data||{id:me.id,role:"owner",full_name:me.user_metadata?.full_name||"House Owner",phone:me.user_metadata?.phone||""};
   if(!profile.role)profile.role="owner";
-  $("login").classList.add("hidden");$("app").classList.remove("hidden");
+  $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
   applyRoleUI();await loadRooms();loadInquiries();if(isAdmin()){loadOwners();loadSponsors();}
 }
 function applyRoleUI(){
@@ -490,25 +501,84 @@ async function delSponsor(i){
   if(error)alert(error.message);else await loadSponsors();
 }
 
-async function check(){if(!db)return;const {data:{session}}=await db.auth.getSession();if(session)await start()}
 async function boot(){
-  if(booting||db)return;
-  booting=true;
-  const status=$("lm");
-  if(status){status.style.color="#52708f";status.textContent="Connecting to secure database…";}
   try{
-    await window.__srfLoadSupabase();
-    db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    if(status){status.style.color="#16834f";status.textContent="System ready. You can log in.";}
+    await initSupabase();
     db.auth.onAuthStateChange((_event,session)=>{if(session&&!me)setTimeout(start,0)});
-    await check();
+    const {data:{session}}=await db.auth.getSession();
+    if(session) await start();
   }catch(e){
-    db=null;
-    if(status){status.style.color="#b42318";status.textContent="Connection failed: "+e.message+" Tap Login to retry.";}
     console.error(e);
-  }finally{booting=false;}
+    const m=$("lm"); if(m) m.textContent="System error: "+e.message;
+  }
 }
+window.doLogin=doLogin;
+window.signupOwner=signupOwner;
+window.setAuthMode=setAuthMode;
+window.logout=logout;
+window.go=go;
+window.openAdd=openAdd;
 boot();
 </script>
+
+<style id="final-mobile-ui">
+/* SastoRoomFinder FINAL MOBILE UI — presentation only */
+.mobile-menu-btn{display:none}
+.mobile-overlay{display:none}
+.mobile-bottom{display:none}
+@media(max-width:700px){
+  body{background:#f3f8fe;padding-bottom:72px}
+  .head{height:64px;padding:0 12px;box-shadow:0 2px 12px rgba(7,52,124,.08)}
+  .brand{font-size:17px;line-height:1.1;white-space:nowrap}.brand:first-letter{font-size:18px}
+  .user{gap:7px;font-size:12px}.user .logout{display:none}
+  .mobile-menu-btn{display:grid;place-items:center;width:42px;height:42px;border:0;border-radius:12px;background:#0879e8;color:#fff;font-size:22px;margin-right:7px;flex:0 0 auto}
+  .head{justify-content:flex-start}.head .user{margin-left:auto}
+  .layout{display:block;min-height:calc(100vh - 64px)}
+  aside{display:block;position:fixed;left:-285px;top:0;width:270px;height:100vh;z-index:60;padding:78px 14px 20px;overflow:auto;transition:left .22s ease;box-shadow:8px 0 30px rgba(2,36,83,.18)}
+  aside.mobile-open{left:0}
+  .mobile-overlay{position:fixed;inset:0;background:rgba(2,20,45,.48);z-index:55}
+  .mobile-overlay.show{display:block}
+  main{padding:10px 10px 18px;max-width:none}
+  .welcome{border-radius:18px;padding:17px;margin-bottom:10px;min-height:120px;align-items:center}
+  .welcome h1{font-size:22px}.welcome p{font-size:12px;line-height:1.5}.house{font-size:42px}
+  .stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .stat{border-radius:15px;padding:12px;min-height:112px}.circle{width:36px;height:36px;font-size:16px}.stat h3{font-size:11px}.num{font-size:24px}.muted{font-size:10px}
+  .grid{display:block}.panel{border-radius:15px;margin-bottom:10px}.ph{padding:13px 14px}.ph h2{font-size:16px}
+  .q,.activity,.help{padding:13px}.q button{padding:12px;margin:6px 0;font-size:13px}
+  .table{overflow-x:auto;-webkit-overflow-scrolling:touch}table{min-width:760px}
+  .filters{padding:11px 12px;display:grid;grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1;width:100%;padding:11px}.filters select{width:100%;padding:10px}.filters button{width:100%}
+  .form{padding:14px;gap:10px}.box{border-radius:18px;max-height:92vh}.modal{padding:9px}.mh{padding:13px 14px}.mh h2{font-size:16px}
+  .field input,.field select,.field textarea{padding:11px;border-radius:10px}
+  .primary,.secondary,.danger{padding:10px 12px;border-radius:10px}
+  .actions{flex-wrap:wrap}
+  .mobile-bottom{position:fixed;display:grid;grid-template-columns:repeat(4,1fr);left:8px;right:8px;bottom:8px;height:58px;background:rgba(255,255,255,.97);border:1px solid #dce8f7;border-radius:18px;box-shadow:0 8px 30px rgba(7,52,124,.16);z-index:50;overflow:hidden}
+  .mobile-bottom button{border:0;background:none;color:#526f91;font-size:10px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .mobile-bottom button span{font-size:19px;line-height:19px}.mobile-bottom button.active{color:#0879e8;background:#edf6ff}
+  .side{margin-top:18px}
+}
+@media(min-width:701px){.mobile-menu-btn{display:none!important}}
+</style>
+<script>
+(function(){
+  function setupMobileUI(){
+    var head=document.querySelector('.head'), aside=document.querySelector('aside'), app=document.getElementById('app');
+    if(!head||!aside||!app||document.getElementById('srfMobileMenu')) return;
+    var btn=document.createElement('button'); btn.id='srfMobileMenu'; btn.className='mobile-menu-btn'; btn.type='button'; btn.setAttribute('aria-label','Open menu'); btn.textContent='☰';
+    head.insertBefore(btn,head.firstChild);
+    var ov=document.createElement('div'); ov.className='mobile-overlay'; ov.id='srfMobileOverlay'; document.body.appendChild(ov);
+    function close(){aside.classList.remove('mobile-open');ov.classList.remove('show');btn.textContent='☰';}
+    btn.addEventListener('click',function(){var open=aside.classList.toggle('mobile-open');ov.classList.toggle('show',open);btn.textContent=open?'×':'☰';});
+    ov.addEventListener('click',close);
+    aside.addEventListener('click',function(e){if(e.target.closest('.nav'))setTimeout(close,80);});
+    var bottom=document.createElement('div'); bottom.className='mobile-bottom'; bottom.innerHTML='<button type="button" data-go="dashboard"><span>⌂</span>Dashboard</button><button type="button" data-go="rooms"><span>▣</span>Properties</button><button type="button" data-go="add"><span>＋</span>Add</button><button type="button" data-go="inquiries"><span>✉</span>Inquiries</button>';
+    app.appendChild(bottom);
+    bottom.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){var id=b.getAttribute('data-go'); if(id==='add'){if(typeof window.openAdd==='function')window.openAdd();}else if(typeof window.go==='function')window.go(id); bottom.querySelectorAll('button').forEach(function(x){x.classList.remove('active')}); b.classList.add('active');});});
+    var dash=bottom.querySelector('[data-go="dashboard"]'); if(dash)dash.classList.add('active');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupMobileUI);else setupMobileUI();
+  setTimeout(setupMobileUI,1200);
+})();
+</script>
+
 </body>
 </html>
