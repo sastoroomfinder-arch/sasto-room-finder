@@ -967,7 +967,172 @@ window.filterProperties=()=>{
 
 /* LOAD FROM SUPABASE */
 
-async function load(){
+/* =========================
+   SPONSORS / ADVERTISEMENTS
+   ========================= */
+
+async function loadSponsors(){
+
+  const grid = document.getElementById("listingGrid");
+  if(!grid) return;
+
+  // Remove old sponsor section before reloading
+  const old = document.getElementById("srfSponsorWrap");
+  if(old) old.remove();
+
+  try{
+
+    const res = await fetch(
+      `${U}/rest/v1/sponsors?select=*&status=eq.active&order=created_at.desc`,
+      {
+        headers:{
+          apikey: K,
+          Accept: "application/json"
+        },
+        cache: "no-store"
+      }
+    );
+
+    if(!res.ok){
+      throw new Error("Sponsors HTTP " + res.status);
+    }
+
+    let sponsors = await res.json();
+
+    if(!Array.isArray(sponsors)){
+      sponsors = [];
+    }
+
+    // Check start/end dates
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    sponsors = sponsors.filter(function(s){
+
+      if(s.start_date){
+        const start = new Date(s.start_date + "T00:00:00");
+        if(today < start) return false;
+      }
+
+      if(s.end_date){
+        const end = new Date(s.end_date + "T23:59:59");
+        if(today > end) return false;
+      }
+
+      return true;
+    });
+
+    if(!sponsors.length) return;
+
+    const wrap = document.createElement("section");
+
+    wrap.id = "srfSponsorWrap";
+    wrap.className = "srf-sponsors";
+
+    wrap.innerHTML = sponsors.map(function(s){
+
+      const title =
+        s.title ||
+        s.sponsor_name ||
+        "Sponsored Advertisement";
+
+      const image = s.image_url || "";
+      const link = s.link_url || "";
+      const phone = s.phone
+        ? String(s.phone).replace(/\D/g,"")
+        : "";
+
+      return `
+        <article class="srf-sponsor">
+
+          ${
+            image
+              ? `<img
+                   src="${image}"
+                   alt="${title}"
+                   loading="lazy"
+                 >`
+              : ""
+          }
+
+          <div class="srf-sponsor-body">
+
+            <span class="srf-sponsor-badge">
+              Sponsored
+            </span>
+
+            <h3>${title}</h3>
+
+            ${
+              s.sponsor_name
+                ? `<p><strong>${s.sponsor_name}</strong></p>`
+                : ""
+            }
+
+            ${
+              s.description
+                ? `<p>${s.description}</p>`
+                : ""
+            }
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+
+              ${
+                link
+                  ? `<a
+                       class="srf-sponsor-link"
+                       href="${link}"
+                       target="_blank"
+                       rel="noopener"
+                     >
+                       View Sponsor
+                     </a>`
+                  : ""
+              }
+
+              ${
+                phone
+                  ? `<a
+                       class="srf-sponsor-link"
+                       style="background:#16a34a"
+                       href="https://wa.me/${phone}"
+                       target="_blank"
+                       rel="noopener"
+                     >
+                       WhatsApp
+                     </a>`
+                  : ""
+              }
+
+            </div>
+
+          </div>
+
+        </article>
+      `;
+
+    }).join("");
+
+    // Show sponsors above the property listings
+    grid.parentNode.insertBefore(wrap, grid);
+
+  }catch(error){
+
+    // Sponsor failure must NEVER stop property listings
+    console.warn(
+      "SastoRoomFinder sponsors unavailable:",
+      error
+    );
+
+  }
+}
+
+
+/* =========================
+   YOUR EXISTING PROPERTY LOAD
+   ========================= */
+
+async function load(){async function load(){
 
  let g=$("listingGrid");
 
