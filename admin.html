@@ -113,7 +113,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 
 <section id="owners" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>👥 House Owners</h2><button class="secondary" onclick="loadOwners()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Listings</th></tr></thead><tbody id="ownersBody"></tbody></table></div></section>
 
-<section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><button class="secondary" onclick="loadInquiries()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
+<section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><div><button class="secondary" onclick="loadInquiries()">↻ Refresh</button><button class="secondary" onclick="go('inquiries')">Reload</button></div></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
 
 <section id="sponsors" class="panel hidden" style="margin-top:16px">
   <div class="ph"><h2>📢 Sponsors / Advertisements</h2><div><button class="secondary" onclick="loadSponsors()">↻ Refresh</button><button class="primary" onclick="openSponsorAdd()">＋ Add Advertisement</button></div></div>
@@ -266,7 +266,7 @@ function go(id){
   if(id==="owners")loadOwners();
   if(id==="inquiries")loadInquiries();
   if(id==="sponsors")loadSponsors();
-  if(id==="settings")loadSettings();
+  if(id==="settings")loadAdminSettings();
 }
 async function loadRooms(){
   $("body").innerHTML='<tr><td colspan="8" class="empty">Loading properties...</td></tr>';
@@ -383,44 +383,43 @@ async function loadInquiries(){
   $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td></tr>').join(""):'<tr><td colspan="6" class="empty">No inquiries yet.</td></tr>';
 }
 
-async function loadSettings(){
+function loadAdminSettings(){
   if(!isAdmin())return;
-  const msg=$("settingsMsg"); if(msg)msg.textContent="Loading...";
-  const {data,error}=await db.from("site_settings").select("*").limit(1).maybeSingle();
-  if(error){
-    if(msg){msg.style.color="#b42318";msg.textContent="Settings error: "+error.message}
-    return;
-  }
-  const s=data||{};
-  $("setSiteName").value=s.site_name||s.name||"SastoRoomFinder";
-  $("setLocation").value=s.location||"";
-  $("setAbout").value=s.about||s.description||"";
-  $("setYoutube").value=s.youtube_url||s.youtube||"";
-  $("setPhone").value=s.phone||s.contact_phone||"";
-  $("setFooter").value=s.footer_text||"";
-  if(msg){msg.style.color="#16834f";msg.textContent=data?"Settings loaded.":"No settings row found yet."}
+  const msg=$("settingsMsg");
+  if(msg){msg.style.color="#52708f";msg.textContent="Loading admin account..."}
+  $("adminSetName").value=profile?.full_name||me?.user_metadata?.full_name||"Admin";
+  $("adminSetEmail").value=me?.email||"";
+  $("adminSetRole").value=profile?.role||"admin";
+  $("adminSetPassword").value="";
+  $("adminSetPassword2").value="";
+  if(msg){msg.style.color="#16834f";msg.textContent="Admin account settings loaded."}
 }
-async function saveSettings(){
-  if(!isAdmin())return;
-  const msg=$("settingsMsg"); if(msg){msg.style.color="#52708f";msg.textContent="Saving..."}
+async function saveAdminSettings(){
+  if(!isAdmin()||!db||!me)return;
+  const msg=$("settingsMsg");
+  const name=$("adminSetName").value.trim();
+  const p1=$("adminSetPassword").value;
+  const p2=$("adminSetPassword2").value;
+  if(!name){msg.style.color="#b42318";msg.textContent="Admin name is required.";return}
+  if(p1||p2){
+    if(p1.length<6){msg.style.color="#b42318";msg.textContent="New password must be at least 6 characters.";return}
+    if(p1!==p2){msg.style.color="#b42318";msg.textContent="Passwords do not match.";return}
+  }
+  msg.style.color="#52708f";msg.textContent="Saving admin settings...";
   try{
-    const payload={
-      site_name:$("setSiteName").value.trim(),
-      location:$("setLocation").value.trim(),
-      about:$("setAbout").value.trim(),
-      youtube_url:$("setYoutube").value.trim()||null,
-      phone:$("setPhone").value.trim(),
-      footer_text:$("setFooter").value.trim()
-    };
-    const {data:existing,error:readErr}=await db.from("site_settings").select("id").limit(1).maybeSingle();
-    if(readErr)throw readErr;
-    let res;
-    if(existing?.id)res=await db.from("site_settings").update(payload).eq("id",existing.id);
-    else res=await db.from("site_settings").insert(payload);
-    if(res.error)throw res.error;
-    if(msg){msg.style.color="#16834f";msg.textContent="Settings saved successfully."}
+    const profileRes=await db.from("profiles").update({full_name:name}).eq("id",me.id);
+    if(profileRes.error)throw profileRes.error;
+    if(p1){
+      const authRes=await db.auth.updateUser({password:p1});
+      if(authRes.error)throw authRes.error;
+    }
+    profile.full_name=name;
+    $("who").textContent=name;
+    msg.style.color="#16834f";
+    msg.textContent=p1?"Admin name and password updated.":"Admin name updated.";
+    $("adminSetPassword").value="";$("adminSetPassword2").value="";
   }catch(e){
-    if(msg){msg.style.color="#b42318";msg.textContent="Settings could not be saved: "+e.message}
+    msg.style.color="#b42318";msg.textContent="Could not save admin settings: "+e.message;
   }
 }
 
