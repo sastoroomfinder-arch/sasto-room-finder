@@ -1,175 +1,113 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- SastoRoomFinder Admin: all-tools fixed build -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SastoRoomFinder — Admin & House Owner</title>
-<script>
-window.__srfLoadSupabase=function(){
-  if(window.supabase) return Promise.resolve();
-  return new Promise(function(resolve,reject){
-    var urls=[
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
-      "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js",
-      "https://esm.sh/@supabase/supabase-js@2?bundle"
-    ];
-    var i=0, finished=false;
-    function doneOk(){if(finished)return;finished=true;resolve()}
-    function doneErr(){if(finished)return;finished=true;reject(new Error("Supabase library could not be loaded. Your browser/network may be blocking the Supabase CDN."))}
-    function next(){
-      if(window.supabase) return doneOk();
-      if(i>=urls.length) return doneErr();
-      var src=urls[i++], sc=document.createElement("script"), timer;
-      sc.src=src; sc.async=true;
-      timer=setTimeout(function(){try{sc.remove()}catch(e){};next()},10000);
-      sc.onload=function(){clearTimeout(timer);window.supabase?doneOk():next()};
-      sc.onerror=function(){clearTimeout(timer);next()};
-      document.head.appendChild(sc);
-    }
-    next();
-  });
-};
-</script>
-<style>
-:root{--b:#0879e8;--n:#07347c;--o:#f5a623;--g:#20b879;--r:#ef4444;--bg:#f4f9ff;--line:#dce8f7;--muted:#71839b}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--n)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
-.head{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding:0 22px;position:sticky;top:0;z-index:5}.brand{font-weight:800;font-size:23px}.brand span{color:var(--b)}.tag{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}.user{display:flex;gap:12px;align-items:center}.logout{border:0;background:none;color:var(--b);font-weight:700}
-.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 70px)}aside{background:#fff;border-right:1px solid var(--line);padding:15px 12px}.nav{width:100%;border:0;background:none;text-align:left;padding:12px;border-radius:9px;color:#174786;font-weight:700;margin:3px 0}.nav.active,.nav:hover{background:var(--b);color:#fff}.side{margin-top:25px;background:#edf7ff;border:1px solid #cfe5ff;border-radius:12px;padding:13px;font-size:12px;color:#52708f}
-main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:linear-gradient(110deg,#eaf5ff,#dff1ff);border:1px solid #cde5ff;border-radius:15px;padding:20px;display:flex;justify-content:space-between;margin-bottom:16px}.welcome h1{margin:0 0 6px}.welcome p{margin:0;color:#58779e}.house{font-size:45px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 15px #1450960d}.stat{padding:15px}.circle{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;margin-bottom:7px}.c1{background:#e6f2ff}.c2{background:#e5f8ef}.c3{background:#fff4dc}.c4{background:#ffe9e9}.stat h3{margin:0;font-size:13px}.num{font-size:26px;font-weight:800;margin:4px 0}.muted{color:var(--muted);font-size:12px}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:16px}.panel{overflow:hidden}.ph{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.ph h2{margin:0;font-size:18px}.primary,.secondary,.danger{border:0;border-radius:8px;padding:9px 13px;font-weight:800}.primary{background:var(--b);color:#fff}.secondary{background:#edf6ff;color:var(--b);margin-right:5px}.danger{background:#ffe7e7;color:#b42318}.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th{background:#f1f8ff;text-align:left;padding:10px;font-size:12px}td{padding:9px;border-top:1px solid #edf2f8;font-size:13px}.thumb{width:58px;height:45px;object-fit:cover;border-radius:7px;background:#eef4fa}.badge{padding:5px 8px;border-radius:7px;font-size:11px;font-weight:800}.available,.approved{background:#def7e9;color:#16834f}.pending{background:#fff4d6;color:#9b6900}.rejected,.hiddenst{background:#ffe4e4;color:#b42318}.rented,.sold{background:#fff0c8;color:#9b6900}.actions{display:flex;gap:5px}.ib{width:32px;height:32px;border:1px solid #d7e6f8;border-radius:7px;background:#fff;color:var(--b)}.ib.del{color:#e11d48}
-.q,.activity,.help{padding:15px}.q h2,.activity h2,.help h2{margin:0 0 11px;font-size:16px}.q button{display:block;width:100%;background:#fff;border:1px solid #dceafb;border-radius:9px;padding:11px;text-align:left;margin:7px 0;color:var(--n)}.act{padding:10px 0;border-top:1px solid #edf2f8;font-size:13px}.help{background:#edf8ff;border:1px solid #cfe7ff;border-radius:14px;margin-top:15px}
-.modal{position:fixed;inset:0;background:#031e4670;display:grid;place-items:center;padding:15px;z-index:20}.box{background:#fff;width:min(760px,100%);max-height:94vh;overflow:auto;border-radius:15px}.mh{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.mh h2{margin:0}.close{border:0;background:#eef2f6;border-radius:7px;width:34px}.form{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}.field.full,.fa{grid-column:1/-1}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:10px;border:1px solid #cbdcf0;border-radius:8px}.field textarea{min-height:95px}.fa{text-align:right}
-.login{min-height:100vh;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#edf7ff,#fff)}.loginbox{width:min(440px,100%);background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:0 15px 45px #0a468c1f}.loginbox h1{text-align:center;margin:0}.loginbox p{text-align:center;color:var(--muted)}.loginbox label{display:block;font-weight:700;font-size:13px;margin:12px 0 5px}.loginbox input{width:100%;padding:11px;border:1px solid #cbdcf0;border-radius:8px}.msg{color:#b42318;font-size:13px;margin-top:9px}.tabs{display:flex;gap:7px;margin:12px 0}.tab{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px;font-weight:800;color:var(--n)}.tab.active{background:var(--b);color:#fff}.hint{background:#f5f9ff;border:1px solid var(--line);padding:10px;border-radius:8px;font-size:12px;color:#58779e;margin-top:10px}
-.filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 17px;border-bottom:1px solid var(--line)}.filters input,.filters select{padding:8px;border:1px solid #cbdcf0;border-radius:8px}.empty{text-align:center;padding:30px;color:var(--muted)}
-@media(max-width:950px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:block;position:static;width:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px;background:#fff}aside nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}aside .nav{margin:0;text-align:left;padding:10px 9px;font-size:12px}.layout main{min-width:0}main{padding:12px}.brand{font-size:19px}.tag{display:none}.stats{gap:8px}.stat{padding:11px}.form{grid-template-columns:1fr}.field.full,.fa{grid-column:auto}.head{padding:0 12px;flex-wrap:wrap}.head .actions{width:100%;justify-content:flex-end}.table{overflow-x:auto}.table table{min-width:650px}}
-.errorBox{color:#b42318;background:#fff1f1;border:1px solid #ffcaca;border-radius:8px;padding:18px;font-weight:700}.msg{font-size:13px;margin:8px 0}</style>
+<title>About | Sasto Room Finder Pvt. Ltd.</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<div id="login" class="login">
-  <div class="loginbox">
-    <h1>Sasto<span style="color:#0879e8">Room</span>Finder</h1>
-    <p id="loginSub">Admin & House Owner Portal</p>
-    <div class="tabs"><button id="loginTab" class="tab active" onclick="setAuthMode('login')">Login</button><button id="signupTab" class="tab" onclick="setAuthMode('signup')">Owner Sign Up</button></div>
-    <div id="loginFields">
-      <label>Email</label><input id="email" type="email" placeholder="Your email">
-      <label>Password</label><input id="pass" type="password" placeholder="Your password">
-      <button class="primary" style="width:100%;margin-top:17px" onclick="login()">Login</button>
-    </div>
-    <div id="signupFields" class="hidden">
-      <label>Full Name</label><input id="signupName" placeholder="Your name">
-      <label>Phone</label><input id="signupPhone" placeholder="98XXXXXXXX">
-      <label>Email</label><input id="signupEmail" type="email" placeholder="you@example.com">
-      <label>Password</label><input id="signupPass" type="password" placeholder="At least 6 characters">
-      <button class="primary" style="width:100%;margin-top:17px" onclick="signupOwner()">Create Owner Account</button>
-      <div class="hint">Owner listings go to <b>Pending</b> review. Only approved listings are intended to appear publicly.</div>
-    </div>
-    <div id="lm" class="msg"></div>
+<header class="topbar">
+  <div class="container nav">
+    <a class="brand" href="index.html">
+      <img class="official-logo" src="official-logo.jpg" alt="Sasto Room Finder Real Estate">
+      <span><b>Sasto Room Finder</b><small>Real Estate • Pvt. Ltd.</small></span>
+    </a>
+    <button class="menu" aria-label="Open menu" aria-expanded="false">☰</button>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="properties.html">Properties</a>
+      <a href="services.html">Services</a>
+      <a class="active" href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <a class="btn btn-primary nav-call" href="tel:+9779818067008">Call Now</a>
   </div>
-</div>
-
-<div id="app" class="hidden">
-<header class="head">
-  <div class="brand">🏠 Sasto<span>RoomFinder</span><span class="tag">Find Your Perfect Room</span></div>
-  <div class="user">👤 <b id="who">User</b><button class="logout" onclick="logout()">Logout ↗</button></div>
 </header>
-<div class="layout">
-<aside>
-  <button class="nav active" data-nav="dashboard" onclick="go('dashboard')">⌂ &nbsp; Dashboard</button>
-  <button class="nav" data-nav="rooms" onclick="go('rooms')">▣ &nbsp; My / All Properties</button>
-  <button class="nav" data-nav="add" onclick="openAdd()">＋ &nbsp; Add Property</button>
-  <button class="nav adminOnly" data-nav="pending" onclick="go('pending')">⏳ &nbsp; Owner Approvals</button>
-  <button class="nav adminOnly" data-nav="owners" onclick="go('owners')">👥 &nbsp; House Owners</button>
-  <button class="nav" data-nav="inquiries" onclick="go('inquiries')">✉ &nbsp; Inquiries</button>
-  <button class="nav adminOnly" data-nav="sponsors" onclick="go('sponsors')">📢 &nbsp; Sponsors / Ads</button>
-  <button class="nav adminOnly" data-nav="settings" onclick="go('settings')">⚙ &nbsp; Settings</button>
-  <div class="side"><b id="sideTitle">SastoRoomFinder Portal</b><br><br>Keep property information accurate, photos clear and contact details up to date.</div>
-</aside>
 
-<main id="dashboard">
-<section class="welcome"><div><h1 id="welcomeTitle">👋 Welcome!</h1><p id="welcomeText">Manage your properties from one place.</p></div><div class="house">🏠</div></section>
-<section class="stats">
-  <div class="stat"><div class="circle c1">⌂</div><h3 id="s1label">Total Properties</h3><div id="total" class="num">0</div><span class="muted">Your listings</span></div>
-  <div class="stat"><div class="circle c2">✓</div><h3 id="s2label">Available</h3><div id="avail" class="num">0</div><span class="muted">Can receive inquiries</span></div>
-  <div class="stat"><div class="circle c3">⏳</div><h3 id="s3label">Pending Review</h3><div id="pendingCount" class="num">0</div><span class="muted">Needs attention</span></div>
-  <div class="stat"><div class="circle c4">✕</div><h3 id="s4label">Rented / Sold</h3><div id="rent" class="num">0</div><span class="muted">Not available</span></div>
+<main>
+<section class="page-hero">
+  <div class="container">
+    <span class="eyebrow">About us</span>
+    <h1>Sasto Room Finder</h1>
+    <p>Making it easier to find rooms, flats, houses, land and commercial properties across Kathmandu Valley.</p>
+  </div>
 </section>
 
-<div class="grid">
-<section id="rooms" class="panel">
-  <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary" onclick="openAdd()">＋ Add Property</button></div></div>
-  <div class="filters"><input id="search" placeholder="Search title or location" oninput="renderRooms()"><select id="statusFilter" onchange="renderRooms()"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option><option value="rejected">Rejected</option></select></div>
-  <div class="table"><table><thead><tr><th>Photo</th><th>Title</th><th>Location</th><th>Type</th><th>Price</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
-  <div id="summary" class="muted" style="padding:12px 17px"></div>
-</section>
-<aside style="display:block;border:0;padding:0">
-  <div class="panel q"><h2>⚡ Quick Actions</h2><button onclick="openAdd()">🟢 &nbsp; <b>Add Property</b><br><small>Add a new room/house</small></button><button onclick="go('rooms')">🏠 &nbsp; <b>View Properties</b><br><small>Manage listings</small></button><button class="adminOnly" onclick="go('pending')">⏳ &nbsp; <b>Review Submissions</b><br><small>Approve owner listings</small></button></div>
-  <div class="panel activity"><h2>🕒 Recent Activity</h2><div id="activity"><div class="act">Portal connected</div></div></div>
-  <div class="help"><h2>💡 Best practice</h2><p class="muted">Use real photos, exact locations and a working phone/WhatsApp number. Mark a property rented as soon as it is no longer available.</p></div>
-</aside>
-</div>
+<section class="section">
+  <div class="container about-grid">
+    <div>
+      <span class="eyebrow">Who we are</span>
+      <h2>Practical local property assistance</h2>
+      <p>Sasto Room Finder Pvt. Ltd. is a Nepal-focused real estate and room-finding service. We help people discover property options based on location, budget and their individual requirements.</p>
+      <p>Our website connects customers with available property listings and provides simple ways to contact the relevant owner or our team through phone and WhatsApp.</p>
+      <p>We focus on Kathmandu, Lalitpur and Bhaktapur and aim to make property searching simpler and more convenient.</p>
+    </div>
 
-<section id="pending" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>⏳ Owner Submissions</h2><button class="secondary" onclick="loadRooms()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Property</th><th>Owner</th><th>Location</th><th>Price</th><th>Submitted</th><th>Action</th></tr></thead><tbody id="pendingBody"></tbody></table></div></section>
-
-<section id="owners" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>👥 House Owners</h2><button class="secondary" onclick="loadOwners()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Listings</th></tr></thead><tbody id="ownersBody"></tbody></table></div></section>
-
-<section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><button class="secondary" onclick="loadInquiries()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
-
-<section id="sponsors" class="panel hidden" style="margin-top:16px">
-  <div class="ph"><h2>📢 Sponsors / Advertisements</h2><div><button class="secondary" onclick="loadSponsors()">↻ Refresh</button><button class="primary" onclick="openSponsorAdd()">＋ Add Advertisement</button></div></div>
-  <div class="filters"><input id="sponsorSearch" placeholder="Search sponsor or title" oninput="renderSponsors()"><select id="sponsorStatusFilter" onchange="renderSponsors()"><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-  <div class="table"><table style="min-width:1050px"><thead><tr><th>Image</th><th>Sponsor</th><th>Ad Title</th><th>Position</th><th>Link</th><th>Status</th><th>Dates</th><th>Actions</th></tr></thead><tbody id="sponsorBody"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
-  <div class="muted" style="padding:12px 17px">Active advertisements are intended to be displayed by the public website.</div>
-</section>
-
-<section id="settings" class="panel hidden" style="margin-top:16px">
-  <div class="ph"><h2>⚙ Site Settings</h2><button class="secondary" onclick="loadSettings()">↻ Refresh</button></div>
-  <div style="padding:18px">
-    <div id="settingsMsg" class="msg"></div>
-    <div class="form">
-      <div class="field"><label>Site Name</label><input id="setSiteName" placeholder="SastoRoomFinder"></div>
-      <div class="field"><label>Location</label><input id="setLocation" placeholder="Kathmandu, Nepal"></div>
-      <div class="field full"><label>About / Description</label><textarea id="setAbout" placeholder="About SastoRoomFinder..."></textarea></div>
-      <div class="field"><label>YouTube URL</label><input id="setYoutube" type="url" placeholder="https://youtube.com/..."></div>
-      <div class="field"><label>Contact Phone</label><input id="setPhone" placeholder="98XXXXXXXX"></div>
-      <div class="field full"><label>Footer Text</label><input id="setFooter" placeholder="Better Rooms • Happier People • Nepal"></div>
-      <div class="fa"><button class="primary" onclick="saveSettings()">Save Settings</button></div>
+    <div class="about-box">
+      <b>What we help with</b>
+      <span>🏠 Room & flat finding</span>
+      <span>🏡 House rental & lease</span>
+      <span>🌳 Land & property buy/sell</span>
+      <span>🏢 Commercial properties</span>
+      <span>🤝 Property enquiry & coordination</span>
+      <a class="btn btn-primary" href="properties.html">Browse Properties</a>
     </div>
   </div>
 </section>
 
-<p class="muted" style="margin-top:20px">© 2026 SastoRoomFinder • Better Rooms • Happier People • Nepal</p>
-</main></div></div>
+<section class="section alt">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Need help?</span>
+        <h2>Tell us what property you need</h2>
+      </div>
+    </div>
+    <p style="max-width:700px;color:var(--muted)">Share your preferred location, property type and budget. You can contact us directly and we will help you explore suitable options.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="tel:+9779818067008">Call Now</a>
+      <a class="btn btn-dark" href="https://wa.me/9779818067008" target="_blank" rel="noopener">WhatsApp Us</a>
+    </div>
+  </div>
+</section>
+</main>
 
-<div id="sponsorModal" class="modal hidden"><div class="box">
-<div class="mh"><h2 id="sponsorMt">Add Advertisement</h2><button class="close" onclick="closeSponsorModal()">✕</button></div>
-<div class="form">
-<input id="sponsorId" type="hidden">
-<div class="field"><label>Sponsor / Business Name *</label><input id="sponsorName" placeholder="ABC Furniture"></div>
-<div class="field"><label>Advertisement Title *</label><input id="sponsorTitle" placeholder="Special offer for room seekers"></div>
-<div class="field"><label>Position</label><select id="sponsorPosition"><option value="homepage">Homepage</option><option value="top">Top Banner</option><option value="sidebar">Sidebar</option><option value="listing">Property Listings</option><option value="footer">Footer</option></select></div>
-<div class="field"><label>Status</label><select id="sponsorStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-<div class="field"><label>Start Date</label><input id="sponsorStart" type="date"></div>
-<div class="field"><label>End Date</label><input id="sponsorEnd" type="date"></div>
-<div class="field full"><label>Website / YouTube Link</label><input id="sponsorLink" type="url" placeholder="https://..."></div>
-<div class="field"><label>Contact Phone</label><input id="sponsorPhone" placeholder="98XXXXXXXX"></div>
-<div class="field"><label>Logo / Banner Image</label><input id="sponsorImage" type="file" accept="image/jpeg,image/png,image/webp"></div>
-<div class="field full"><label>Description</label><textarea id="sponsorDescription" placeholder="Short advertisement text..."></textarea></div>
-<div id="sponsorMsg" class="field full" style="font-weight:700"></div>
-<div class="fa"><button class="secondary" onclick="closeSponsorModal()">Cancel</button><button class="primary" onclick="saveSponsor()">Save Advertisement</button></div>
-</div></div></div>
+<footer>
+  <div class="container footer-grid">
+    <div>
+      <a class="brand light-brand" href="index.html">
+        <img class="official-logo" src="official-logo.jpg" alt="Sasto Room Finder Real Estate">
+        <span><b>Sasto Room Finder</b><small>Real Estate • Pvt. Ltd.</small></span>
+      </a>
+      <p>Real Estate • Property Management • Room Finder</p>
+    </div>
+    <div>
+      <h4>Links</h4>
+      <a href="properties.html">Properties</a>
+      <a href="services.html">Services</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="tel:+9779818067008">+977 9818067008</a>
+      <a href="https://wa.me/9779818067008" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="mailto:sastoroomfinder@gmail.com">sastoroomfinder@gmail.com</a>
+      <span>Katyani Chowk, Baneshwor, Kathmandu</span>
+    </div>
+    <div>
+      <h4>Social</h4>
+      <a href="https://www.facebook.com/100064213865360" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://www.instagram.com/sasto_room_finder_official_/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://t.me/sastoroomfinder" target="_blank" rel="noopener">Telegram</a>
+    </div>
+  </div>
+  <div class="copyright">© 2026 Sasto Room Finder Pvt. Ltd. All rights reserved.</div>
+</footer>
 
-<div id="modal" class="modal hidden"><div class="box"><div class="mh"><h2 id="mt">Add Property</h2><button class="close" onclick="closeModal()">✕</button></div>
-<div class="form">
-<input id="id" type="hidden">
-<div class="field"><label>Property Title *</label><input id="title" placeholder="2 BHK Flat for Rent"></div>
-<div class="field"><label>Location *</label><input id="location" placeholder="Kathmandu, Lalitpur"></div>
-<div class="field"><label>Price / Month (Rs.) *</label><input id="price" type="number" min="0" placeholder="15000"></div>
-<div class="field"><label>Room / Property Type</label><select id="type"><option>Single Room</option><option>1BHK</option><option>2BHK</option><option>3BHK</option><option>Flat</option><option>House</option><option>Apartment</option><option>Office</option><option>Land</option><option>Shop</option></select></div>
-<div class="field"><label>Phone / WhatsApp</label><input id="phone" placeholder="98XXXXXXXX"></div>
-<div class="field"><label>Status</label><select id="status"><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option></select></div>
-<div class="field"><label>Bedrooms</label><input id="bedrooms" type="number" min="0" placeholder="2"></div>
-<div class="field"><label>Bathrooms</label><input id="bat
+<a class="floating-wa" href="https://wa.me/9779818067008" target="_blank" aria-label="WhatsApp">☘</a>
+
+<script src="script.js"></script>
+</body>
+</html>
