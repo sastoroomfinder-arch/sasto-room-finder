@@ -829,7 +829,7 @@ function refresh(){
    </h3>
 
    <p>
-    ${E(desc(active))}
+    ${E(dE(active))}
    </p>
 
   </div>
@@ -971,7 +971,7 @@ window.filterProperties=()=>{
 
   rows.filter(r=>
    (!q||
-    `${title(r)} ${type(r)} ${loc(r)} ${desc(r)}`
+    `${title(r)} ${type(r)} ${loc(r)} ${dE(r)}`
     .toLowerCase()
     .includes(q)
    )
@@ -1013,19 +1013,19 @@ async function loadSponsors(){
     wrap.className="srf-public-sponsors";
     wrap.innerHTML='<div class="srf-sponsor-heading"><span>Sponsored</span><h2>Featured</h2></div>'+
       '<div class="srf-sponsor-grid">'+sponsors.map(s=>{
-        const title=esc(s.title||s.sponsor_name||"Sponsored");
+        const title=E(s.title||s.sponsor_name||"Sponsored");
         const image=s.image_url||"";
         const link=s.link_url||"";
         const phone=String(s.phone||"").replace(/\D/g,"");
         return `<article class="srf-sponsor-card">
-          ${image?`<img src="${esc(image)}" alt="${title}" loading="lazy">`:""}
+          ${image?`<img src="${E(image)}" alt="${title}" loading="lazy">`:""}
           <div class="srf-sponsor-body">
             <span class="srf-sponsor-badge">Sponsored</span>
             <h3>${title}</h3>
-            ${s.sponsor_name?`<p class="srf-sponsor-name">${esc(s.sponsor_name)}</p>`:""}
-            ${s.description?`<p>${esc(s.description)}</p>`:""}
+            ${s.sponsor_name?`<p class="srf-sponsor-name">${E(s.sponsor_name)}</p>`:""}
+            ${s.description?`<p>${E(s.description)}</p>`:""}
             <div class="srf-sponsor-actions">
-              ${link?`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">View Ad</a>`:""}
+              ${link?`<a href="${E(link)}" target="_blank" rel="noopener noreferrer">View Ad</a>`:""}
               ${phone?`<a class="wa" href="https://wa.me/${phone}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:""}
             </div>
           </div>
