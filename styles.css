@@ -5,3 +5,7 @@
 .light-brand .official-logo{background:#fff}
 
 .brand-details{padding-top:20px}.business-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}.business-card-grid h2{margin-bottom:18px}.business-card-grid p{color:var(--muted);margin:8px 0}.business-card-grid a{color:var(--brand);font-weight:700}.official-card,.contact-card-image{width:100%;height:auto;border-radius:18px;border:1px solid var(--line);box-shadow:0 20px 60px rgba(23,35,29,.10)}.contact-card-image{margin:20px 0 0}.rating-box strong{font-size:34px;letter-spacing:2px}.rating-box .stars{letter-spacing:0;font-size:14px;color:var(--muted);font-weight:700;margin-top:8px}@media(max-width:800px){.business-card-grid{grid-template-columns:1fr}.brand-logo{width:46px;height:46px}}
+
+/* House owner registration shortcut */
+.owner-register-icon{display:none;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:#f3f8ff;color:var(--brand2);font-size:19px;font-weight:800;flex:0 0 auto}
+@media(max-width:800px){.owner-register-icon{display:inline-flex}.nav-register{display:none!important}}
