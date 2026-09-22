@@ -1031,7 +1031,7 @@ function openInquiryModal(r){
 async function sendInquiry(e){
  e.preventDefault();if(!active)return;
  const msg=$("inqMsg");msg.style.color="#52708f";msg.textContent="Sending...";
- const payload={owner_id:active.owner_id||null,property_id:active.id||null,property_title:title(active),name:$("inqName").value.trim(),phone:$("inqPhone").value.trim(),message:$("inqMessage").value.trim(),status:"new"};
+ const payload={owner_id:active.owner_id||null,property_title:title(active),name:$("inqName").value.trim(),phone:$("inqPhone").value.trim(),message:$("inqMessage").value.trim(),status:"new"};
  if(!payload.name||!payload.phone){msg.style.color="#b42318";msg.textContent="Please enter your name and phone.";return}
  try{
   const res=await fetch(`${U}/rest/v1/inquiries`,{method:"POST",headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(payload)});
