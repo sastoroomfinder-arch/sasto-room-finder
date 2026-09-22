@@ -19,7 +19,7 @@ function photos(r){
  return[...new Set(p)]
 }
 
-const type=r=>String(V(r.property_type,r.type,r.category,"Property"));
+const type=r=>String(V(r.room_type,r.property_type,r.type,r.category,"Property"));
 const title=r=>String(V(r.title,r.property_title,r.name,`${type(r)} for Rent`));
 const loc=r=>String(V(r.location,r.address,r.area,r.city,"Kathmandu Valley"));
 
@@ -64,7 +64,7 @@ function ok(r){
  let s=String(r.status??"").trim().toLowerCase(),
      a=String(r.approval_status??"").trim().toLowerCase();
 
- return(!s||s=="available")&&(!a||a=="approved")
+ return s==="available"&&a==="approved"
 }
 
 function css(){
