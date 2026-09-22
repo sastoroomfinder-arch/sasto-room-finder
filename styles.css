@@ -9,3 +9,12 @@
 /* House owner registration shortcut */
 .owner-register-icon{display:none;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:#f3f8ff;color:var(--brand2);font-size:19px;font-weight:800;flex:0 0 auto}
 @media(max-width:800px){.owner-register-icon{display:inline-flex}.nav-register{display:none!important}}
+
+/* Reliable mobile public navigation */
+@media(max-width:800px){
+  .topbar .nav{position:relative}
+  .topbar .menu{position:relative;z-index:100001;display:block;margin-left:auto;width:44px;height:44px;padding:0;line-height:44px;text-align:center;cursor:pointer}
+  .topbar nav.srf-menu-open{display:flex!important;position:absolute!important;top:68px!important;left:10px!important;right:10px!important;width:auto!important;height:auto!important;margin:0!important;z-index:100000!important;flex-direction:column!important;align-items:stretch!important;gap:4px!important;padding:10px!important;background:#fff!important;border:1px solid var(--line)!important;border-radius:14px!important;box-shadow:0 14px 35px rgba(7,52,124,.18)!important}
+  .topbar nav.srf-menu-open a{display:block!important;padding:12px 13px!important;border-radius:9px!important;color:var(--ink)!important}
+  .topbar nav.srf-menu-open a:hover,.topbar nav.srf-menu-open a.active{background:#edf6ff!important;color:#0879e8!important}
+}
