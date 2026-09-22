@@ -132,11 +132,8 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
       <div class="field"><label>Account Role</label><input id="adminSetRole" readonly></div>
       <div class="field"><label>New Password</label><input id="adminSetPassword" type="password" minlength="6" placeholder="Leave blank to keep current password"></div>
       <div class="field"><label>Confirm New Password</label><input id="adminSetPassword2" type="password" minlength="6" placeholder="Repeat new password"></div>
-      <div class="field full"><div class="note" style="padding:12px;background:#f5f9ff;border:1px solid #dbe8f6;border-radius:10px;color:#52637a">These settings control your administrator account only. Public website content is managed from the website files, not from this admin account settings page.</div></div>
-      <div class="fa">
-        <button class="secondary" onclick="loadAdminSettings()">Reset</button>
-        <button class="primary" onclick="saveAdminSettings()">Save Admin Settings</button>
-      </div>
+      <div class="field full"><div class="note" style="padding:12px;background:#f5f9ff;border:1px solid #dbe8f6;border-radius:10px;color:#52637a">These settings control your administrator account only. Public website content is not changed here.</div></div>
+      <div class="fa"><button class="secondary" onclick="loadAdminSettings()">Reset</button><button class="primary" onclick="saveAdminSettings()">Save Admin Settings</button></div>
     </div>
   </div>
 </section>
