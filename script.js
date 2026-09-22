@@ -614,6 +614,12 @@ function card(r,i){
       🟢 Enquire on WhatsApp
     </button>
 
+    <button
+      class="srfbtn"
+      data-iq="${i}">
+      ✉️ Send Inquiry
+    </button>
+
    </div>
 
   </div>
@@ -657,6 +663,10 @@ function render(a){
     "noopener"
    )
   }
+ })
+
+ g.querySelectorAll("[data-iq]").forEach(b=>{
+  b.onclick=()=>openInquiryModal(shown[+b.dataset.iq])
  })
 }
 
@@ -848,6 +858,14 @@ function refresh(){
 
   </button>
 
+  <button
+   class="srfbtn"
+   onclick="openInquiryModal(active)">
+
+   ✉️ Send Inquiry
+
+  </button>
+
 
   <button
    class="srfbtn srfdark"
@@ -987,7 +1005,42 @@ window.filterProperties=()=>{
 
 
 
-/* PUBLIC SPONSORS / ADVERTISEMENTS */
+/* PROPERTY INQUIRY */
+function inquiryCss(){
+ if($("srfInquiryStyle"))return;
+ const st=document.createElement("style");st.id="srfInquiryStyle";
+ st.textContent=`.srf-inq-overlay{position:fixed;inset:0;background:rgba(2,20,45,.58);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px}.srf-inq-overlay.open{display:flex}.srf-inq-box{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.22)}.srf-inq-box h2{margin:0 0 5px;color:#071a33}.srf-inq-box p{color:#637187;font-size:13px}.srf-inq-form{display:grid;gap:11px}.srf-inq-form label{display:grid;gap:5px;color:#243750;font-size:12px;font-weight:800}.srf-inq-form input,.srf-inq-form textarea{width:100%;box-sizing:border-box;border:1px solid #ccd8e6;border-radius:10px;padding:11px;font:inherit}.srf-inq-actions{display:flex;gap:8px;justify-content:flex-end}.srf-inq-actions button{border:0;border-radius:9px;padding:11px 14px;font-weight:800;cursor:pointer}.srf-inq-cancel{background:#edf2f7;color:#243750}.srf-inq-send{background:#0879e8;color:#fff}.srf-inq-msg{min-height:18px;font-size:12px;font-weight:800}@media(max-width:600px){.srf-inq-box{padding:16px;border-radius:16px}}`;
+ document.head.appendChild(st);
+}
+function inquiryModal(){
+ inquiryCss();
+ if($("srfInquiryOverlay"))return;
+ const d=document.createElement("div");d.id="srfInquiryOverlay";d.className="srf-inq-overlay";
+ d.innerHTML=`<div class="srf-inq-box"><h2>Send Property Inquiry</h2><p id="srfInquiryProperty"></p><form id="srfInquiryForm" class="srf-inq-form"><label>Your Name<input id="inqName" required placeholder="Your name"></label><label>Phone / WhatsApp<input id="inqPhone" required inputmode="tel" placeholder="98XXXXXXXX"></label><label>Message<textarea id="inqMessage" rows="4" placeholder="I am interested in this property. Please contact me."></textarea></label><div id="inqMsg" class="srf-inq-msg"></div><div class="srf-inq-actions"><button type="button" class="srf-inq-cancel" id="inqCancel">Cancel</button><button class="srf-inq-send" type="submit">Send Inquiry</button></div></form></div>`;
+ document.body.appendChild(d);
+ $("inqCancel").onclick=()=>{d.classList.remove("open");document.body.style.overflow=""};
+ $("srfInquiryForm").onsubmit=sendInquiry;
+}
+function openInquiryModal(r){
+ active=r;
+ inquiryModal();
+ $("srfInquiryProperty").textContent=title(r)+" • "+loc(r);
+ $("inqMsg").textContent="";$("inqName").value="";$("inqPhone").value="";$("inqMessage").value="I am interested in this property. Please contact me.";
+ $("srfInquiryOverlay").classList.add("open");document.body.style.overflow="hidden";
+}
+async function sendInquiry(e){
+ e.preventDefault();if(!active)return;
+ const msg=$("inqMsg");msg.style.color="#52708f";msg.textContent="Sending...";
+ const payload={owner_id:active.owner_id||null,property_id:active.id||null,property_title:title(active),name:$("inqName").value.trim(),phone:$("inqPhone").value.trim(),message:$("inqMessage").value.trim(),status:"new"};
+ if(!payload.name||!payload.phone){msg.style.color="#b42318";msg.textContent="Please enter your name and phone.";return}
+ try{
+  const res=await fetch(`${U}/rest/v1/inquiries`,{method:"POST",headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(payload)});
+  if(!res.ok){const t=await res.text();throw new Error(t||"Inquiry could not be sent.")}
+  msg.style.color="#16834f";msg.textContent="Inquiry sent successfully.";
+  setTimeout(()=>{$("srfInquiryOverlay")?.classList.remove("open");document.body.style.overflow=""},900);
+ }catch(err){msg.style.color="#b42318";msg.textContent="Inquiry could not be sent. Please try WhatsApp."}
+}
+\n/* PUBLIC SPONSORS / ADVERTISEMENTS */
 function sponsorIsActive(s){
   const status=String(s.status||"").trim().toLowerCase();
   if(status!=="active")return false;
@@ -1103,6 +1156,7 @@ async function load(){
 function init(){
 
  css();
+ inquiryModal();
  modal();
 
  $("filterSearch")
