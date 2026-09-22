@@ -64,7 +64,7 @@ function ok(r){
  let s=String(r.status??"").trim().toLowerCase(),
      a=String(r.approval_status??"").trim().toLowerCase();
 
- return s==="available"&&a==="approved"
+ return s==="available"&&(a==="approved"||a==="")
 }
 
 function css(){
@@ -1182,7 +1182,8 @@ function init(){
   });
  }
 
- load().then(loadSponsors);
+ load();
+ loadSponsors();
 }
 
 document.readyState=="loading"
