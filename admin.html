@@ -123,17 +123,20 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 </section>
 
 <section id="settings" class="panel hidden" style="margin-top:16px">
-  <div class="ph"><h2>⚙ Site Settings</h2><button class="secondary" onclick="loadSettings()">↻ Refresh</button></div>
+  <div class="ph"><h2>⚙ Admin Settings</h2><button class="secondary" onclick="loadAdminSettings()">↻ Refresh</button></div>
   <div style="padding:18px">
     <div id="settingsMsg" class="msg"></div>
     <div class="form">
-      <div class="field"><label>Site Name</label><input id="setSiteName" placeholder="SastoRoomFinder"></div>
-      <div class="field"><label>Location</label><input id="setLocation" placeholder="Kathmandu, Nepal"></div>
-      <div class="field full"><label>About / Description</label><textarea id="setAbout" placeholder="About SastoRoomFinder..."></textarea></div>
-      <div class="field"><label>YouTube URL</label><input id="setYoutube" type="url" placeholder="https://youtube.com/..."></div>
-      <div class="field"><label>Contact Phone</label><input id="setPhone" placeholder="98XXXXXXXX"></div>
-      <div class="field full"><label>Footer Text</label><input id="setFooter" placeholder="Better Rooms • Happier People • Nepal"></div>
-      <div class="fa"><button class="primary" onclick="saveSettings()">Save Settings</button></div>
+      <div class="field"><label>Admin Name</label><input id="adminSetName" placeholder="Admin"></div>
+      <div class="field"><label>Admin Email</label><input id="adminSetEmail" type="email" readonly></div>
+      <div class="field"><label>Account Role</label><input id="adminSetRole" readonly></div>
+      <div class="field"><label>New Password</label><input id="adminSetPassword" type="password" minlength="6" placeholder="Leave blank to keep current password"></div>
+      <div class="field"><label>Confirm New Password</label><input id="adminSetPassword2" type="password" minlength="6" placeholder="Repeat new password"></div>
+      <div class="field full"><div class="note" style="padding:12px;background:#f5f9ff;border:1px solid #dbe8f6;border-radius:10px;color:#52637a">These settings control your administrator account only. Public website content is managed from the website files, not from this admin account settings page.</div></div>
+      <div class="fa">
+        <button class="secondary" onclick="loadAdminSettings()">Reset</button>
+        <button class="primary" onclick="saveAdminSettings()">Save Admin Settings</button>
+      </div>
     </div>
   </div>
 </section>
@@ -141,7 +144,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <p class="muted" style="margin-top:20px">© 2026 SastoRoomFinder • Better Rooms • Happier People • Nepal</p>
 </main></div></div>
 
-<div id="sponsorModal" class="modal hidden"><div class="box">
+<div id="sponsorModal" class="modal sponsor-edit-modal hidden"><div class="box">
 <div class="mh"><h2 id="sponsorMt">Add Advertisement</h2><button class="close" onclick="closeSponsorModal()">✕</button></div>
 <div class="form">
 <input id="sponsorId" type="hidden">
@@ -149,8 +152,8 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <div class="field"><label>Advertisement Title *</label><input id="sponsorTitle" placeholder="Special offer for room seekers"></div>
 <div class="field"><label>Position</label><select id="sponsorPosition"><option value="homepage">Homepage</option><option value="top">Top Banner</option><option value="sidebar">Sidebar</option><option value="listing">Property Listings</option><option value="footer">Footer</option></select></div>
 <div class="field"><label>Status</label><select id="sponsorStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-<div class="field"><label>Start Date</label><input id="sponsorStart" type="date"></div>
-<div class="field"><label>End Date</label><input id="sponsorEnd" type="date"></div>
+<div class="field"><label>Start Date</label><input id="sponsorStart" type="date"><small class="muted">Change this date when editing an existing advertisement.</small></div>
+<div class="field"><label>End Date</label><input id="sponsorEnd" type="date"><small class="muted">Leave blank for no end date.</small></div>
 <div class="field full"><label>Website / YouTube Link</label><input id="sponsorLink" type="url" placeholder="https://..."></div>
 <div class="field"><label>Contact Phone</label><input id="sponsorPhone" placeholder="98XXXXXXXX"></div>
 <div class="field"><label>Logo / Banner Image</label><input id="sponsorImage" type="file" accept="image/jpeg,image/png,image/webp"></div>
