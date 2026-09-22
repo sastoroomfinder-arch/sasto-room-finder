@@ -1007,7 +1007,10 @@ async function loadSponsors(){
     const sponsors=(Array.isArray(data)?data:[]).filter(sponsorIsActive);
     if(!sponsors.length)return;
     const grid=$( "listingGrid" );
-    if(!grid||!grid.parentNode)return;
+    const hero=document.querySelector(".hero");
+    const main=document.querySelector("main");
+    const target=grid?.parentNode||hero||main;
+    if(!target)return;
     const wrap=document.createElement("section");
     wrap.id="srf-public-sponsors";
     wrap.className="srf-public-sponsors";
@@ -1031,7 +1034,9 @@ async function loadSponsors(){
           </div>
         </article>`;
       }).join("")+'</div>';
-    grid.parentNode.insertBefore(wrap,grid);
+    if(grid&&grid.parentNode) grid.parentNode.insertBefore(wrap,grid);
+    else if(hero&&hero.parentNode) hero.parentNode.insertBefore(wrap,hero.nextSibling);
+    else if(main) main.insertBefore(wrap,main.firstChild);
   }catch(e){
     console.warn("Sponsors unavailable:",e);
   }
