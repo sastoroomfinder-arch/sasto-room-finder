@@ -1175,10 +1175,33 @@ function init(){
  const nav=document.querySelector("nav");
 
  if(menuButton&&nav){
+  menuButton.setAttribute("aria-expanded","false");
   menuButton.addEventListener("click",()=>{
    const open=!nav.classList.contains("srf-menu-open");
    nav.classList.toggle("srf-menu-open",open);
    menuButton.setAttribute("aria-expanded",String(open));
+   document.body.classList.toggle("srf-nav-open",open);
+  });
+  nav.addEventListener("click",e=>{
+   if(e.target.closest("a")){
+    nav.classList.remove("srf-menu-open");
+    menuButton.setAttribute("aria-expanded","false");
+    document.body.classList.remove("srf-nav-open");
+   }
+  });
+  document.addEventListener("click",e=>{
+   if(nav.classList.contains("srf-menu-open")&&!nav.contains(e.target)&&e.target!==menuButton){
+    nav.classList.remove("srf-menu-open");
+    menuButton.setAttribute("aria-expanded","false");
+    document.body.classList.remove("srf-nav-open");
+   }
+  });
+  document.addEventListener("keydown",e=>{
+   if(e.key==="Escape"){
+    nav.classList.remove("srf-menu-open");
+    menuButton.setAttribute("aria-expanded","false");
+    document.body.classList.remove("srf-nav-open");
+   }
   });
  }
 
