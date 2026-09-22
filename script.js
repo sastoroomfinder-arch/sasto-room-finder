@@ -186,6 +186,25 @@ function css(){
  border-color:#087d4d
 }
 
+
+.srf-public-sponsors{width:min(1180px,calc(100% - 28px));margin:18px auto 22px}
+.srf-sponsor-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 10px}
+.srf-sponsor-heading span{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#0b7a55}
+.srf-sponsor-heading h2{margin:0;color:#071a33;font-size:20px}
+.srf-sponsor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.srf-sponsor-card{background:#fff;border:1px solid #e1e8f0;border-radius:16px;overflow:hidden;box-shadow:0 7px 24px #0b27400d}
+.srf-sponsor-card img{width:100%;height:145px;object-fit:cover;display:block;background:#edf2f7}
+.srf-sponsor-body{padding:13px 14px}
+.srf-sponsor-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eefaf5;color:#087d4d;font-size:10px;font-weight:900;text-transform:uppercase}
+.srf-sponsor-body h3{margin:8px 0 4px;color:#071a33;font-size:17px}
+.srf-sponsor-body p{margin:0 0 8px;color:#637187;font-size:13px;line-height:1.45}
+.srf-sponsor-name{font-weight:800;color:#33445c!important}
+.srf-sponsor-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.srf-sponsor-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:9px;background:#071a33;color:#fff;text-decoration:none;font-size:12px;font-weight:800}
+.srf-sponsor-actions a.wa{background:#0b8f5a}
+@media(max-width:800px){.srf-sponsor-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.srf-public-sponsors{width:calc(100% - 20px);margin:14px auto 18px}.srf-sponsor-grid{grid-template-columns:1fr}.srf-sponsor-card img{height:170px}}
+
 .srf-empty{
  grid-column:1/-1;
  text-align:center;
@@ -966,6 +985,59 @@ window.filterProperties=()=>{
 };
 
 
+
+/* PUBLIC SPONSORS / ADVERTISEMENTS */
+function sponsorIsActive(s){
+  const status=String(s.status||"").trim().toLowerCase();
+  if(status!=="active")return false;
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(s.start_date){const d=new Date(s.start_date+"T00:00:00"); if(today<d)return false;}
+  if(s.end_date){const d=new Date(s.end_date+"T00:00:00"); if(today>d)return false;}
+  return true;
+}
+async function loadSponsors(){
+  const old=document.getElementById("srf-public-sponsors");
+  if(old)old.remove();
+  try{
+    const res=await fetch(`${U}/rest/v1/sponsors?select=id,sponsor_name,title,description,image_url,link_url,phone,position,status,start_date,end_date&status=eq.active&order=created_at.desc`,{
+      headers:{apikey:K,Accept:"application/json"},cache:"no-store"
+    });
+    if(!res.ok)throw new Error("Sponsors "+res.status);
+    const data=await res.json();
+    const sponsors=(Array.isArray(data)?data:[]).filter(sponsorIsActive);
+    if(!sponsors.length)return;
+    const grid=$( "listingGrid" );
+    if(!grid||!grid.parentNode)return;
+    const wrap=document.createElement("section");
+    wrap.id="srf-public-sponsors";
+    wrap.className="srf-public-sponsors";
+    wrap.innerHTML='<div class="srf-sponsor-heading"><span>Sponsored</span><h2>Featured</h2></div>'+
+      '<div class="srf-sponsor-grid">'+sponsors.map(s=>{
+        const title=esc(s.title||s.sponsor_name||"Sponsored");
+        const image=s.image_url||"";
+        const link=s.link_url||"";
+        const phone=String(s.phone||"").replace(/\D/g,"");
+        return `<article class="srf-sponsor-card">
+          ${image?`<img src="${esc(image)}" alt="${title}" loading="lazy">`:""}
+          <div class="srf-sponsor-body">
+            <span class="srf-sponsor-badge">Sponsored</span>
+            <h3>${title}</h3>
+            ${s.sponsor_name?`<p class="srf-sponsor-name">${esc(s.sponsor_name)}</p>`:""}
+            ${s.description?`<p>${esc(s.description)}</p>`:""}
+            <div class="srf-sponsor-actions">
+              ${link?`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">View Ad</a>`:""}
+              ${phone?`<a class="wa" href="https://wa.me/${phone}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:""}
+            </div>
+          </div>
+        </article>`;
+      }).join("")+'</div>';
+    grid.parentNode.insertBefore(wrap,grid);
+  }catch(e){
+    console.warn("Sponsors unavailable:",e);
+  }
+}
+
+
 /* LOAD FROM SUPABASE */
 
 async function load(){
@@ -1050,7 +1122,7 @@ function init(){
   });
  }
 
- load()
+ load().then(loadSponsors);
 }
 
 document.readyState=="loading"
