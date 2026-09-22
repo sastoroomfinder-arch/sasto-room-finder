@@ -75,6 +75,7 @@ function css(){
 
  s.textContent=`
 
+.srf-menu-open{display:flex!important;flex-direction:column!important;position:absolute!important;top:100%!important;right:4%!important;background:#fff!important;padding:18px!important;border:1px solid #dfe4df!important;border-radius:12px!important;z-index:99999!important;box-shadow:0 10px 30px rgba(15,23,42,.12)!important}
 .srfwm{
  position:absolute;
  z-index:5;
@@ -1037,6 +1038,17 @@ function init(){
    "change",
    filterProperties
   );
+
+ const menuButton=document.querySelector(".menu");
+ const nav=document.querySelector("nav");
+
+ if(menuButton&&nav){
+  menuButton.addEventListener("click",()=>{
+   const open=!nav.classList.contains("srf-menu-open");
+   nav.classList.toggle("srf-menu-open",open);
+   menuButton.setAttribute("aria-expanded",String(open));
+  });
+ }
 
  load()
 }
