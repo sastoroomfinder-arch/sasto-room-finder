@@ -333,7 +333,7 @@ function extractFacility(description,label){
   return m?m[1].trim().toLowerCase():"";
 }
 function cleanRoomDescription(description){
-  return String(description||"").replace(/\\n?\\s*\\[Sasto Facilities\\][\\s\\S]*$/i,"").trim();
+  return String(description||"").replace(/\n?\s*\[Sasto Facilities\][\s\S]*$/i,"").trim();
 }
 function editRoom(i){
   const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
