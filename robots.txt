@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.sastoroomfinder.com.np/sitemap.xml
