@@ -54,6 +54,27 @@ const areaText=r=>{
  if(/^\d+(\.\d+)?$/.test(s))return s+" sq ft";
  return s;
 };
+const markerValue=(r,label)=>{
+ const re=new RegExp("^\\s*"+label+"\\s*:\\s*(.+)$","mi");
+ const m=String(r?.description||"").match(re);
+ return m?m[1].trim():"";
+};
+const facilityText=(r,keys,label)=>{
+ const raw=V(...keys.map(k=>r?.[k]),markerValue(r,label));
+ if(!raw)return"Not specified";
+ const s=String(raw).trim().toLowerCase();
+ if(["true","yes","available","included","furnished"].includes(s))return"Yes";
+ if(["false","no","none","not available","unavailable","not included","unfurnished"].includes(s))return"No";
+ return String(raw);
+};
+const postedText=r=>{
+ const raw=V(r?.posted_date,r?.created_at);
+ if(!raw)return"Recently posted";
+ const d=new Date(raw);
+ if(Number.isNaN(d.getTime()))return String(raw);
+ return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+};
+const cleanDescription=r=>String(desc(r)).replace(/\\n?\\s*\\[Sasto Facilities\\][\\s\\S]*$/i,"").trim();
 
 const phone=r=>String(V(
  r.phone,r.owner_phone,r.contact,r.whatsapp,ADMIN
@@ -714,19 +735,21 @@ function refresh(){
 
   ["Bathrooms",V(active.bathrooms,active.bathroom,"—")],
 
-  ["Furnished",V(active.furnished,active.furnishing,"—")],
+  ["Furnished",furnishedText(active)],
 
-  ["Area",V(active.area,active.area_sqft,active.size,"—")],
+  ["Area",areaText(active)],
+
+  ["Kitchen",facilityText(active,["kitchen","kitchen_facility","has_kitchen"],"Kitchen")],
+
+  ["Water Facility",facilityText(active,["water_facility","water","water_supply","has_water"],"Water Facility")],
+
+  ["Parking Facility",facilityText(active,["parking_facility","parking","has_parking"],"Parking Facility")],
 
   ["Property ID",V(active.property_id,active.id,active.slug,"—")],
 
   ["Owner",owner(active)],
 
-  ["Posted",V(
-   active.posted_date,
-   active.created_at,
-   "Recently posted"
-  )]
+  ["Posted",postedText(active)]
 
  ];
 
@@ -868,7 +891,7 @@ function refresh(){
    </h3>
 
    <p>
-    ${E(desc(active))}
+    ${E(cleanDescription(active))}
    </p>
 
   </div>
