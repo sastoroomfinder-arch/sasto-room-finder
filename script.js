@@ -281,12 +281,13 @@ function css(){
 }
 
 .srfmodal{
- width:min(1050px,100%);
- max-height:95vh;
+ width:min(860px,100%);
+ max-height:88vh;
  overflow:auto;
  background:#fff;
  border-radius:22px;
- box-shadow:0 30px 90px #0005
+ box-shadow:0 30px 90px #0005;
+ font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
 }
 
 .srfhead{
@@ -349,8 +350,8 @@ function css(){
 }
 
 .srfmain{
- height:min(52vh,510px);
- min-height:270px;
+ height:min(38vh,360px);
+ min-height:220px;
  border-radius:16px
 }
 
@@ -421,7 +422,7 @@ function css(){
 /* PROPERTY INFORMATION */
 
 .srfdetails{
- padding:20px 24px
+ padding:16px 20px
 }
 
 .srfspecs{
@@ -472,14 +473,18 @@ function css(){
 
 .srfmacts{
  display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:10px;
- padding:0 24px 24px
+ grid-template-columns:repeat(2,1fr);
+ gap:8px;
+ padding:0 20px 18px
 }
 
 .srfmacts .srfbtn{
- min-height:50px
+ min-height:42px;
+ font-size:13px
 }
+
+
+/* MOBILE */
 
 
 /* MOBILE */
@@ -493,49 +498,50 @@ function css(){
 
  .srfmodal{
   width:100%;
-  max-height:96vh;
+  max-height:84vh;
   border-radius:22px 22px 0 0
  }
 
  .srfhead{
-  padding:16px
+  padding:14px
  }
 
  .srfgallery{
-  padding:12px
+  padding:10px
  }
 
  .srfmain{
-  height:54vw;
-  min-height:230px;
-  max-height:390px
+  height:36vw;
+  min-height:180px;
+  max-height:300px
  }
 
  .srfdetails{
-  padding:13px 12px
+  padding:12px
  }
 
- .srfspecs{
-  grid-template-columns:repeat(2,1fr)
+ .srfspec{
+  padding:10px
  }
 
- .srfspec:nth-child(3n){
-  border-right:1px solid #e0e8f1
- }
-
- .srfspec:nth-child(2n){
-  border-right:0
+ .srfspec b{
+  font-size:13px
  }
 
  .srfmacts{
-  grid-template-columns:1fr;
-  padding:0 12px 14px;
-  position:sticky;
-  bottom:0;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  padding:9px 12px 12px;
+  position:relative;
   background:#fff;
-  z-index:30;
   border-top:1px solid #e7edf4
  }
+
+ .srfmacts .srfbtn{
+  min-height:42px;
+  font-size:12px
+ }
+
 
  .srfcard .srfimg{
   height:210px
