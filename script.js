@@ -512,7 +512,7 @@ function css(){
  }
 
  .srfdetails{
-  padding:15px 12px
+  padding:13px 12px
  }
 
  .srfspecs{
