@@ -840,7 +840,7 @@ function refresh(){
    </h3>
 
    <p>
-    ${E(dE(active))}
+    ${E(desc(active))}
    </p>
 
   </div>
@@ -990,7 +990,7 @@ window.filterProperties=()=>{
 
   rows.filter(r=>
    (!q||
-    `${title(r)} ${type(r)} ${loc(r)} ${dE(r)}`
+    `${title(r)} ${type(r)} ${loc(r)} ${desc(r)}`
     .toLowerCase()
     .includes(q)
    )
@@ -1040,7 +1040,8 @@ async function sendInquiry(e){
   setTimeout(()=>{$("srfInquiryOverlay")?.classList.remove("open");document.body.style.overflow=""},900);
  }catch(err){msg.style.color="#b42318";msg.textContent="Inquiry could not be sent. Please try WhatsApp."}
 }
-\n/* PUBLIC SPONSORS / ADVERTISEMENTS */
+
+/* PUBLIC SPONSORS / ADVERTISEMENTS */
 function sponsorIsActive(s){
   const status=String(s.status||"").trim().toLowerCase();
   if(status!=="active")return false;
