@@ -34,6 +34,26 @@ const desc=r=>String(V(
  r.description,r.details,r.about,r.content,
  "Contact the owner for more information and viewing details."
 ));
+const displayValue=(v,fallback="Not specified")=>{
+ const s=String(v??"").trim();
+ return s?s:fallback;
+};
+const furnishedText=r=>{
+ const v=V(r.furnished,r.furnishing);
+ if(v===""||v==null)return"Not specified";
+ const s=String(v).trim().toLowerCase();
+ if(["true","yes","furnished","fully furnished"].includes(s))return"Furnished";
+ if(["false","no","unfurnished"].includes(s))return"Unfurnished";
+ return String(v);
+};
+const areaText=r=>{
+ const v=V(r.area,r.area_sqft,r.size);
+ if(v===""||v==null)return"Not specified";
+ const s=String(v).trim();
+ if(/\b(sq\.?\s*ft|sqft|ft²|m²|sqm)\b/i.test(s))return s;
+ if(/^\d+(\.\d+)?$/.test(s))return s+" sq ft";
+ return s;
+};
 
 const phone=r=>String(V(
  r.phone,r.owner_phone,r.contact,r.whatsapp,ADMIN
@@ -162,17 +182,20 @@ function css(){
 
 .srfactions{
  display:grid;
- gap:8px
+ grid-template-columns:1fr 1fr;
+ gap:7px
 }
 
 .srfbtn{
- min-height:45px;
- border-radius:10px;
+ min-height:40px;
+ border-radius:9px;
  border:1px solid #071a33;
  font:inherit;
  font-weight:800;
  cursor:pointer;
- padding:9px 12px
+ padding:7px 9px;
+ font-size:13px;
+ line-height:1.2
 }
 
 .srfdark{
@@ -402,13 +425,18 @@ function css(){
 .srfspec span{
  display:block;
  color:#738096;
- font-size:12px
+ font-size:11px;
+ font-weight:700;
+ text-transform:uppercase;
+ letter-spacing:.02em
 }
 
 .srfspec b{
  display:block;
  color:#12243d;
- margin-top:3px;
+ margin-top:4px;
+ font-size:14px;
+ line-height:1.3;
  overflow-wrap:anywhere
 }
 
@@ -539,10 +567,10 @@ function modal(){
 function card(r,i){
 
  let p=photos(r)[0],
- b=V(r.bedrooms,r.bedroom,"—"),
- ba=V(r.bathrooms,r.bathroom,"—"),
- f=V(r.furnished,r.furnishing,"—"),
- a=V(r.area,r.area_sqft,r.size,"—");
+ b=displayValue(V(r.bedrooms,r.bedroom)),
+ ba=displayValue(V(r.bathrooms,r.bathroom)),
+ f=furnishedText(r),
+ a=areaText(r);
 
  return`
  <article class="srfcard">
@@ -605,18 +633,18 @@ function card(r,i){
     <button
       class="srfbtn srfdark"
       data-v="${i}">
-      View Full Details
+      Details
     </button>
 
     <button
       class="srfbtn srfwa"
       data-w="${i}">
-      🟢 Enquire on WhatsApp
+      WhatsApp
     </button>
 
     <button
       class="srfbtn"
-      data-iq="${i}">
+      data-iq="${i}" style="grid-column:1/-1">
       ✉️ Send Inquiry
     </button>
 
