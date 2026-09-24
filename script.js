@@ -100,11 +100,12 @@ function wa(r){
  )}`
 }
 
+const mapQuery=r=>String(V(r.address,r.location,r.area,r.city,"Kathmandu Valley")).trim();
 const map=r=>V(
  r.google_maps_url,
  r.maps_url,
  r.map_url,
- `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc(r))}`
+ `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery(r))}`
 );
 
 function ok(r){
@@ -947,6 +948,17 @@ function refresh(){
 
   </button>
 
+  <div class="srf-mapbox" style="margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb">
+   <iframe
+    title="Property location map"
+    src="${mapEmbedUrl(active)}"
+    width="100%"
+    height="220"
+    style="border:0;display:block"
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+
 
   <button
    class="srfbtn"
@@ -1019,6 +1031,11 @@ window.viewPropertyLocation=()=>{
    "noopener"
   )
 };
+
+function mapEmbedUrl(r){
+ const q=mapQuery(r);
+ return "https://www.google.com/maps?q="+encodeURIComponent(q)+"&output=embed";
+}
 
 function propertyShareUrl(r){
  return location.origin+"/properties.html?property="+encodeURIComponent(rid(r));
