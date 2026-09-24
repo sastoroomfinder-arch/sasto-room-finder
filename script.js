@@ -1021,7 +1021,7 @@ window.viewPropertyLocation=()=>{
 };
 
 function propertyShareUrl(r){
- return location.origin+location.pathname+"?property="+encodeURIComponent(rid(r));
+ return location.origin+"/properties.html?property="+encodeURIComponent(rid(r));
 }
 window.shareCurrentProperty=async()=>{
  if(!active)return;
@@ -1212,7 +1212,8 @@ async function load(){
 
   window.SastoRoomFinderListings=rows;
 
-  filterProperties()
+  filterProperties();
+  openSharedPropertyFromUrl();
 
  }catch(e){
 
