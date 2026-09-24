@@ -365,7 +365,7 @@ async function saveRoom(){
     const kitchen=$("kitchen").value,waterFacility=$("waterFacility").value,parkingFacility=$("parkingFacility").value;
     const facilities=[kitchen?("Kitchen: "+kitchen):"",waterFacility?("Water Facility: "+waterFacility):"",parkingFacility?("Parking Facility: "+parkingFacility):""].filter(Boolean);
     const description=[baseDesc,facilities.length?"[Sasto Facilities]\n"+facilities.join("\n"):""].filter(Boolean).join("\n\n");
-    const payload={title:titleV,location:loc,price:Number(priceV),room_type:$("type").value,phone:$("phone").value.trim(),description,status:$("status").value,bedrooms:$("bedrooms").value?Number($("bedrooms").value):null,bathrooms:$("bathrooms").value?Number($("bathrooms").value):null,address:$("address").value.trim(),furnished:$("furnished").value==="true"};
+    const payload={title:titleV,location:loc,price:Number(priceV),room_type:$("type").value,phone:$("phone").value.trim(),description,status:$("status").value,is_featured:existing?.is_featured===true,bedrooms:$("bedrooms").value?Number($("bedrooms").value):null,bathrooms:$("bathrooms").value?Number($("bathrooms").value):null,address:$("address").value.trim(),furnished:$("furnished").value==="true"};
     if(urls.length)payload.photos=[...(existing?.photos||[]),...urls];
     if(isAdmin())payload.approval_status=existing?.approval_status||"approved";
     else if(!existing)payload.approval_status="pending";
@@ -377,6 +377,12 @@ async function saveRoom(){
     $("sm").style.color="#16834f";$("sm").textContent=isAdmin()?"Saved successfully!":"Saved. Your listing is pending admin review.";
     await loadRooms();setTimeout(closeModal,800);
   }catch(e){$("sm").style.color="#b42318";$("sm").textContent="Save failed: "+e.message}
+}
+async function toggleFeatured(i){
+  if(!isAdmin())return;
+  const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
+  const {error}=await db.from("room").update({is_featured:r.is_featured!==true}).eq("id",i);
+  if(error)alert("Featured update failed: "+error.message);else await loadRooms();
 }
 async function delRoom(i){
   const r=rooms.find(x=>String(x.id)===String(i));if(!r)return;
@@ -546,6 +552,7 @@ window.go=go;
 window.openAdd=openAdd;
 window.editSponsor=editSponsor;
 window.delSponsor=delSponsor;
+window.toggleFeatured=toggleFeatured;
 window.openSponsorAdd=openSponsorAdd;
 window.closeSponsorModal=closeSponsorModal;
 boot();
