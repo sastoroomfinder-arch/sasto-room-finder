@@ -99,7 +99,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <section id="rooms" class="panel">
   <div class="ph"><h2 id="roomsTitle">⌂ Properties</h2><div><button class="secondary" onclick="loadRooms()">↻ Refresh</button><button class="primary" onclick="openAdd()">＋ Add Property</button></div></div>
   <div class="filters"><input id="search" placeholder="Search title or location" oninput="renderRooms()"><select id="statusFilter" onchange="renderRooms()"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="available">Available</option><option value="rented">Rented</option><option value="sold">Sold</option><option value="hidden">Hidden</option><option value="rejected">Rejected</option></select></div>
-  <div class="table"><table><thead><tr><th>Photo</th><th>Title</th><th>Location</th><th>Type</th><th>Price</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
+  <div class="table"><table><thead><tr><th>Photo</th><th>Title</th><th>Location</th><th>Type</th><th>Price</th><th>Featured</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
   <div id="summary" class="muted" style="padding:12px 17px"></div>
 </section>
 <aside style="display:block;border:0;padding:0">
@@ -311,8 +311,8 @@ function renderRooms(){
     let acts='<button class="ib" onclick="editRoom('+JSON.stringify(r.id)+')">✎</button>';
     if(isAdmin()&&r.approval_status==="pending")acts+='<button class="ib" title="Approve" onclick="approveRoom('+JSON.stringify(r.id)+')">✓</button><button class="ib del" title="Reject" onclick="rejectRoom('+JSON.stringify(r.id)+')">✕</button>';
     acts+='<button class="ib del" onclick="delRoom('+JSON.stringify(r.id)+')">🗑</button>';
-    return '<tr><td>'+(p?'<img class="thumb" src="'+esc(p)+'">':'🏠')+'</td><td><b>'+esc(r.title)+'</b></td><td>'+esc(r.location)+'</td><td>'+esc(r.room_type)+'</td><td>Rs. '+Number(r.price||0).toLocaleString()+'</td><td><span class="badge '+esc(status)+'">'+esc(status)+'</span></td><td>'+esc(owner)+'</td><td><div class="actions">'+acts+'</div></td></tr>'
-  }).join(""):'<tr><td colspan="8" class="empty">No properties found.</td></tr>';
+    return '<tr><td>'+(p?'<img class="thumb" src="'+esc(p)+'">':'🏠')+'</td><td><b>'+esc(r.title)+'</b></td><td>'+esc(r.location)+'</td><td>'+esc(r.room_type)+'</td><td>Rs. '+Number(r.price||0).toLocaleString()+'</td><td>'+(isAdmin()?'<button class="ib" title="Feature / Unfeature" onclick="toggleFeatured('+JSON.stringify(r.id)+')">'+(r.is_featured?'⭐':'☆')+'</button>':(r.is_featured?'⭐':'—'))+'</td><td><span class="badge '+esc(status)+'">'+esc(status)+'</span></td><td>'+esc(owner)+'</td><td><div class="actions">'+acts+'</div></td></tr>'
+  }).join(""):'<tr><td colspan="9" class="empty">No properties found.</td></tr>';
   $("summary").textContent="Showing "+list.length+" of "+rooms.length+" properties";
 }
 function renderPending(){
