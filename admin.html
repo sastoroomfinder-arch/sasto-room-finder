@@ -379,6 +379,7 @@ async function saveRoom(){
     if(isAdmin())payload.approval_status=existing?.approval_status||"approved";
     else if(!existing)payload.approval_status="pending";
     else payload.approval_status="pending";
+    if(!isAdmin() && existing)payload.rejection_reason=null;
     let res;
     if($("id").value)res=await db.from("room").update(payload).eq("id",$("id").value);
     else {payload.owner_id=me.id;res=await db.from("room").insert(payload)}
@@ -442,7 +443,7 @@ function renderNotifications(){
       items.push({icon:"⏳",title:"Listing under review",text:r.title||"Your property",time:r.created_at,go:"rooms",type:"pending"});
     });
     rooms.filter(r=>r.approval_status==="rejected").slice(0,10).forEach(r=>{
-      items.push({icon:"⚠️",title:"Listing needs changes",text:r.title||"Your property",time:r.created_at,go:"rooms",type:"rejected"});
+      items.push({icon:"⚠️",title:"Listing needs changes",text:(r.title||"Your property")+(r.rejection_reason?" • "+r.rejection_reason:""),time:r.created_at,go:"rooms",type:"rejected"});
     });
   }
   inquiries.filter(x=>String(x.status||"new").toLowerCase()==="new").slice(0,20).forEach(x=>{
