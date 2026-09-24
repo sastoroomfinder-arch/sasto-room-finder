@@ -5,6 +5,12 @@ let rows=[],shown=[],active=null,pi=0,$=id=>document.getElementById(id);
 const V=(...a)=>{for(const x of a)if(x!=null&&String(x).trim())return x;return""};
 const E=x=>String(x??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 const J=x=>{try{return typeof x=="object"?x:JSON.parse(x)}catch{return null}};
+const FAVKEY="srf_favorite_properties";
+const favIds=()=>{try{return JSON.parse(localStorage.getItem(FAVKEY)||"[]")}catch{return[]}};
+const saveFavIds=a=>localStorage.setItem(FAVKEY,JSON.stringify([...new Set(a.map(String))]));
+const rid=r=>String(V(r.property_id,r.id,r.slug,r.title,r.name));
+const isFav=r=>favIds().includes(rid(r));
+const numericPrice=r=>{const m=String(V(r.price,r.rent,r.monthly_rent,r.amount)).replace(/,/g,"").match(/[0-9]+(?:\\.[0-9]+)?/);return m?Number(m[0]):null};
 
 function photos(r){
  let p=V(r.photos,r.images,r.photo_urls,r.image_urls);
@@ -720,7 +726,7 @@ function render(a){
   }
  })
 
- g.querySelectorAll("[data-iq]").forEach(b=>{
+ g.querySelectorAll("[data-fav]").forEach(b=>{b.onclick=()=>toggleFavorite(shown[+b.dataset.fav])});\n\n g.querySelectorAll("[data-iq]").forEach(b=>{
   b.onclick=()=>openInquiryModal(shown[+b.dataset.iq])
  })
 }
@@ -1012,7 +1018,7 @@ window.shareCurrentProperty=async()=>{
     text:
      `${title(active)} - ${loc(active)} - ${price(active)}`,
 
-    url:location.href
+    url:`${location.origin}${location.pathname}?property=${encodeURIComponent(rid(active))}`
 
    });
 
