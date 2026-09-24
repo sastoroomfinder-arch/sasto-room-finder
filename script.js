@@ -933,7 +933,7 @@ function refresh(){
 
   <button
    class="srfbtn"
-   onclick="openInquiryModal(active)">
+   id="srfDetailInquiry">
 
    ✉️ Send Inquiry
 
@@ -978,6 +978,13 @@ function refresh(){
 
  </div>
  `
+
+ const detailInquiry=$("srfDetailInquiry");
+ if(detailInquiry){
+  detailInquiry.onclick=()=>{
+   if(active)openInquiryModal(active);
+  };
+ }
 }
 
 
