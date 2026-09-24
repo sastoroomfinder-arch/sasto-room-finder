@@ -678,7 +678,13 @@ function card(r,i){
 
     <button
       class="srfbtn"
-      data-iq="${i}" style="grid-column:1/-1">
+      data-fav="${i}">
+      ${isFav(r)?"❤️ Saved":"♡ Save"}
+    </button>
+
+    <button
+      class="srfbtn"
+      data-iq="${i}">
       ✉️ Send Inquiry
     </button>
 
@@ -1039,31 +1045,35 @@ window.copyPropertyLink=async()=>{
 
 /* SEARCH */
 
+function toggleFavorite(r){
+ const id=rid(r), ids=favIds();
+ if(ids.includes(id)) saveFavIds(ids.filter(x=>x!==id));
+ else saveFavIds([...ids,id]);
+ filterProperties();
+}
+window.toggleFavorite=toggleFavorite;
+
+function showFavorites(){
+ const ids=favIds();
+ if(!ids.length){alert("You have no saved properties yet.");return;}
+ render(rows.filter(r=>ids.includes(rid(r))));
+}
+window.showFavorites=showFavorites;
+
 window.filterProperties=()=>{
-
- let q=String(
-  $("filterSearch")?.value||""
- ).toLowerCase().trim();
-
- let t=String(
-  $("filterType")?.value||""
- ).toLowerCase().trim();
-
- render(
-
-  rows.filter(r=>
-   (!q||
-    `${title(r)} ${type(r)} ${loc(r)} ${desc(r)}`
-    .toLowerCase()
-    .includes(q)
-   )
-   &&
-   (!t||
-    type(r).toLowerCase()==t
-   )
-  )
-
- )
+ let q=String($("filterSearch")?.value||"").toLowerCase().trim();
+ let t=String($("filterType")?.value||"").toLowerCase().trim();
+ let minRaw=String($("filterMinPrice")?.value||"").trim();
+ let maxRaw=String($("filterMaxPrice")?.value||"").trim();
+ let min=Number(minRaw.replace(/,/g,"").replace(/[^\d.]/g,""));
+ let max=Number(maxRaw.replace(/,/g,"").replace(/[^\d.]/g,""));
+ render(rows.filter(r=>{
+   const n=numericPrice(r);
+   return (!q||`${title(r)} ${type(r)} ${loc(r)} ${desc(r)}`.toLowerCase().includes(q))
+    && (!t||type(r).toLowerCase()===t)
+    && (!minRaw || (n!=null&&n>=min))
+    && (!maxRaw || (n!=null&&n<=max));
+ }));
 };
 
 
@@ -1241,6 +1251,9 @@ function init(){
    "change",
    filterProperties
   );
+
+ $("filterMinPrice")?.addEventListener("input",filterProperties);
+ $("filterMaxPrice")?.addEventListener("input",filterProperties);
 
  const menuButton=document.querySelector(".menu");
  const nav=document.querySelector("nav");
