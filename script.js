@@ -727,7 +727,9 @@ function render(a){
   }
  })
 
- g.querySelectorAll("[data-fav]").forEach(b=>{b.onclick=()=>toggleFavorite(shown[+b.dataset.fav])});\n\n g.querySelectorAll("[data-iq]").forEach(b=>{
+ g.querySelectorAll("[data-fav]").forEach(b=>{b.onclick=()=>toggleFavorite(shown[+b.dataset.fav])});
+
+ g.querySelectorAll("[data-iq]").forEach(b=>{
   b.onclick=()=>openInquiryModal(shown[+b.dataset.iq])
  })
 }
