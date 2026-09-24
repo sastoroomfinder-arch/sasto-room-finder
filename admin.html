@@ -442,7 +442,7 @@ async function loadSponsors(){
   if(!isAdmin())return;
   const {data,error}=await db.from("sponsors").select("*").order("created_at",{ascending:false});
   if(error){$("sponsorBody").innerHTML='<tr><td colspan="8" class="empty">'+esc(error.message)+'</td></tr>';return}
-  sponsors=data||[];renderSponsors();
+  sponsors=data||[];bindSponsorActions();renderSponsors();
 }
 function renderSponsors(){
   if(!isAdmin())return;
@@ -456,8 +456,18 @@ function renderSponsors(){
     const img=x.image_url?'<img class="thumb" src="'+esc(x.image_url)+'">':'📢';
     const link=x.link_url?'<a href="'+esc(x.link_url)+'" target="_blank" rel="noopener">Open ↗</a>':'—';
     const dates=(x.start_date||"—")+" → "+(x.end_date||"—");
-    return '<tr><td>'+img+'</td><td><b>'+esc(x.sponsor_name)+'</b><br><small>'+esc(x.phone||"")+'</small></td><td>'+esc(x.title)+'</td><td>'+esc(x.position||"homepage")+'</td><td>'+link+'</td><td><span class="badge '+(x.status==="active"?"approved":"hiddenst")+'">'+esc(x.status)+'</span></td><td>'+esc(dates)+'</td><td><div class="actions"><button class="secondary" onclick="editSponsor('+JSON.stringify(x.id)+')">Edit</button><button class="danger" onclick="delSponsor('+JSON.stringify(x.id)+')">Delete</button></div></td></tr>'
+    return '<tr><td>'+img+'</td><td><b>'+esc(x.sponsor_name)+'</b><br><small>'+esc(x.phone||"")+'</small></td><td>'+esc(x.title)+'</td><td>'+esc(x.position||"homepage")+'</td><td>'+link+'</td><td><span class="badge '+(x.status==="active"?"approved":"hiddenst")+'">'+esc(x.status)+'</span></td><td>'+esc(dates)+'</td><td><div class="actions"><button type="button" class="secondary" data-sponsor-edit="'+esc(x.id)+'">Edit</button><button type="button" class="danger" data-sponsor-delete="'+esc(x.id)+'">Delete</button></div></td></tr>'
   }).join(""):'<tr><td colspan="8" class="empty">No advertisements found.</td></tr>';
+}
+function bindSponsorActions(){
+  const body=$("sponsorBody"); if(!body||body.__bound)return;
+  body.__bound=true;
+  body.addEventListener("click",function(e){
+    const edit=e.target.closest("[data-sponsor-edit]");
+    const del=e.target.closest("[data-sponsor-delete]");
+    if(edit){e.preventDefault();e.stopPropagation();editSponsor(edit.getAttribute("data-sponsor-edit"));}
+    if(del){e.preventDefault();e.stopPropagation();delSponsor(del.getAttribute("data-sponsor-delete"));}
+  });
 }
 function openSponsorAdd(){
   if(!isAdmin())return;
@@ -532,6 +542,10 @@ window.setAuthMode=setAuthMode;
 window.logout=logout;
 window.go=go;
 window.openAdd=openAdd;
+window.editSponsor=editSponsor;
+window.delSponsor=delSponsor;
+window.openSponsorAdd=openSponsorAdd;
+window.closeSponsorModal=closeSponsorModal;
 boot();
 </script>
 
