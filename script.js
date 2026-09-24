@@ -10,7 +10,7 @@ const favIds=()=>{try{return JSON.parse(localStorage.getItem(FAVKEY)||"[]")}catc
 const saveFavIds=a=>localStorage.setItem(FAVKEY,JSON.stringify([...new Set(a.map(String))]));
 const rid=r=>String(V(r.property_id,r.id,r.slug,r.title,r.name));
 const isFav=r=>favIds().includes(rid(r));
-const numericPrice=r=>{const m=String(V(r.price,r.rent,r.monthly_rent,r.amount)).replace(/,/g,"").match(/[0-9]+(?:\\.[0-9]+)?/);return m?Number(m[0]):null};
+const numericPrice=r=>{const m=String(V(r.price,r.rent,r.monthly_rent,r.amount)).replace(/,/g,"").match(/[0-9]+(?:\.[0-9]+)?/);return m?Number(m[0]):null};
 
 function photos(r){
  let p=V(r.photos,r.images,r.photo_urls,r.image_urls);
