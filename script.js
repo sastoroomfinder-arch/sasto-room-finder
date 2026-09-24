@@ -1067,6 +1067,18 @@ window.copyPropertyLink=async()=>{
 };
 
 
+/* PROPERTY ALERTS */
+const ALERTKEY="srf_property_alerts";
+const ALERTSEENKEY="srf_property_alert_seen";
+function getAlerts(){try{const x=JSON.parse(localStorage.getItem(ALERTKEY)||"[]");return Array.isArray(x)?x:[]}catch{return[]}}
+function saveAlerts(x){localStorage.setItem(ALERTKEY,JSON.stringify(x))}
+function alertNum(v){const n=Number(String(v||"").replace(/,/g,"").replace(/[^\d.]/g,""));return Number.isFinite(n)&&n>0?n:null}
+function alertMatches(r,a){const q=String(a.location||"").toLowerCase().trim(),rq=String(loc(r)||"").toLowerCase(),rt=String(type(r)||"").toLowerCase(),ap=alertNum(a.minPrice),xp=alertNum(a.maxPrice),rp=numericPrice(r);return(!q||rq.includes(q))&&(!a.type||rt===String(a.type).toLowerCase())&&(!ap||(rp!=null&&rp>=ap))&&(!xp||(rp!=null&&rp<=xp))}
+function renderAlerts(){const box=$("alertList");if(!box)return;const a=getAlerts();box.innerHTML=a.length?a.map((x,i)=>'<span class="srf-alert-chip">🔔 '+E(x.location||"Any location")+' · '+E(x.type||"Any type")+' · '+E(x.minPrice||"0")+'–'+E(x.maxPrice||"Any")+' <button type="button" onclick="deletePropertyAlert('+i+')" aria-label="Delete alert">×</button></span>').join(""):""}
+function savePropertyAlert(){const location=$("alertLocation")?.value.trim()||"",type=$("alertType")?.value||"",minPrice=$("alertMinPrice")?.value.trim()||"",maxPrice=$("alertMaxPrice")?.value.trim()||"";if(!location&&!type&&!minPrice&&!maxPrice){alert("Choose at least one alert condition.");return}const a=getAlerts();a.push({location,type,minPrice,maxPrice,createdAt:Date.now()});saveAlerts(a);renderAlerts();checkPropertyAlerts(true);$("alertLocation").value="";$("alertType").value="";$("alertMinPrice").value="";$("alertMaxPrice").value="";alert("Property alert saved on this device.")}
+function deletePropertyAlert(i){const a=getAlerts();a.splice(i,1);saveAlerts(a);renderAlerts()}
+window.savePropertyAlert=savePropertyAlert;window.deletePropertyAlert=deletePropertyAlert;
+function checkPropertyAlerts(manual){if(!rows.length)return;const alerts=getAlerts();if(!alerts.length)return;let seen=[];try{seen=JSON.parse(localStorage.getItem(ALERTSEENKEY)||"[]")}catch{}const matches=[];alerts.forEach((a,ai)=>rows.forEach(r=>{const id=rid(r);if(alertMatches(r,a)&&!seen.includes(String(ai)+":"+id))matches.push({a,ai,r})}));if(!matches.length)return;const unique=matches.filter((m,i)=>matches.findIndex(x=>String(rid(x.r))===String(rid(m.r)))===i).slice(0,5);const box=$("alertMatch");if(box){box.textContent="🔔 New matching property: "+unique.map(x=>title(x.r)).join(", ");box.classList.add("show");box.onclick=()=>window.openPropertyDetails(unique[0].r);box.style.cursor="pointer"}matches.forEach(m=>seen.push(String(m.ai)+":"+rid(m.r)));localStorage.setItem(ALERTSEENKEY,JSON.stringify(seen.slice(-500)));if(!manual&&"Notification" in window&&Notification.permission==="granted"){try{new Notification("Sasto Room Finder",{body:unique.map(x=>title(x.r)).join(", ")})}catch{}}}
 /* SEARCH */
 
 function toggleFavorite(r){
@@ -1257,6 +1269,8 @@ async function load(){
   window.SastoRoomFinderListings=rows;
 
   filterProperties();
+  renderAlerts();
+  checkPropertyAlerts(false);
   openSharedPropertyFromUrl();
 
  }catch(e){
