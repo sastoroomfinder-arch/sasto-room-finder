@@ -122,7 +122,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 
 <section id="owners" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>👥 House Owners</h2><button class="secondary" onclick="loadOwners()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Listings</th></tr></thead><tbody id="ownersBody"></tbody></table></div></section>
 
-<section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><div><button class="secondary" onclick="loadInquiries()">↻ Refresh</button><button class="secondary" onclick="go('inquiries')">Reload</button></div></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
+<section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><div><button class="secondary" onclick="loadInquiries()">↻ Refresh</button><button class="secondary" onclick="go('inquiries')">Reload</button></div></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th><th>Reply</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
 
 <section id="sponsors" class="panel hidden" style="margin-top:16px">
   <div class="ph"><h2>📢 Sponsors / Advertisements</h2><div><button class="secondary" onclick="loadSponsors()">↻ Refresh</button><button class="primary" onclick="openSponsorAdd()">＋ Add Advertisement</button></div></div>
@@ -406,15 +406,27 @@ async function loadOwners(){
   owners=data||[];
   $("ownersBody").innerHTML=owners.length?owners.map(o=>'<tr><td>'+esc(o.full_name||"—")+'</td><td>'+esc(o.email||"—")+'</td><td>'+esc(o.phone||"—")+'</td><td>'+new Date(o.created_at).toLocaleDateString()+'</td><td>'+rooms.filter(r=>String(r.owner_id)===String(o.id)).length+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">No owners found.</td></tr>';
 }
+function inquiryWhatsAppUrl(x){
+  let p=String(x.phone||"").replace(/\D/g,"");
+  if(p.startsWith("0"))p="977"+p.slice(1);
+  if(!p.startsWith("977")&&p.length===10)p="977"+p;
+  const msg="Hello "+(x.name||"")+" , regarding your inquiry for "+(x.property_title||"the property")+" at Sasto Room Finder. Please let us know how we can help you.";
+  return "https://wa.me/"+p+"?text="+encodeURIComponent(msg);
+}
+async function markInquiryReplied(id){
+  const {error}=await db.from("inquiries").update({status:"replied"}).eq("id",id);
+  if(error){alert("Could not update inquiry: "+error.message);return;}
+  await loadInquiries();
+}
+window.markInquiryReplied=markInquiryReplied;
 async function loadInquiries(){
   let q=db.from("inquiries").select("*").order("created_at",{ascending:false}).limit(100);
   if(!isAdmin()&&me)q=q.eq("owner_id",me.id);
   const {data,error}=await q;
-  if(error){$("inqBody").innerHTML='<tr><td colspan="6" class="empty">'+esc(error.message)+'</td></tr>';return}
+  if(error){$("inqBody").innerHTML='<tr><td colspan="7" class="empty">'+esc(error.message)+'</td></tr>';return}
   inquiries=data||[];
-  $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td></tr>').join(""):'<tr><td colspan="6" class="empty">No inquiries yet.</td></tr>';
+  $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td><td><div class="actions"><a class="ib" target="_blank" rel="noopener" href="'+inquiryWhatsAppUrl(x)+'">💬 Reply</a> <button class="ib" onclick="markInquiryReplied('+JSON.stringify(x.id)+')">✓ Replied</button></div></td></tr>').join(""):'<tr><td colspan="7" class="empty">No inquiries yet.</td></tr>';
 }
-
 
 function renderNotifications(){
   const body=$("notificationsBody"),badge=$("notifBadge");
