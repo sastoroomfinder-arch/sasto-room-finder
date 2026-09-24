@@ -948,6 +948,14 @@ function refresh(){
 
   </button>
 
+  <button
+   class="srfbtn"
+   onclick="copyPropertyLink()">
+
+   🔗 Copy Link
+
+  </button>
+
  </div>
  `
 }
@@ -1004,37 +1012,26 @@ window.viewPropertyLocation=()=>{
   )
 };
 
+function propertyShareUrl(r){
+ return location.origin+location.pathname+"?property="+encodeURIComponent(rid(r));
+}
 window.shareCurrentProperty=async()=>{
-
  if(!active)return;
-
+ const url=propertyShareUrl(active);
  try{
-
   if(navigator.share){
-
-   await navigator.share({
-
-    title:title(active),
-
-    text:
-     `${title(active)} - ${loc(active)} - ${price(active)}`,
-
-    url:`${location.origin}${location.pathname}?property=${encodeURIComponent(rid(active))}`
-
-   });
-
+   await navigator.share({title:title(active),text:title(active)+" - "+loc(active)+" - "+price(active),url});
   }else{
-
-   await navigator.clipboard.writeText(
-    location.href
-   );
-
-   alert("Property link copied.")
-
+   await navigator.clipboard.writeText(url);
+   alert("Property link copied.");
   }
-
  }catch{}
-
+};
+window.copyPropertyLink=async()=>{
+ if(!active)return;
+ const url=propertyShareUrl(active);
+ try{await navigator.clipboard.writeText(url);alert("Property link copied.");}
+ catch{prompt("Copy this property link:",url);}
 };
 
 
@@ -1217,6 +1214,13 @@ async function load(){
 
 
 /* INITIALIZE */
+
+function openSharedPropertyFromUrl(){
+ const id=new URLSearchParams(location.search).get("property");
+ if(!id)return;
+ const found=rows.find(r=>String(rid(r))===String(id));
+ if(found)setTimeout(()=>window.openPropertyDetails(found),100);
+}
 
 function init(){
 
