@@ -607,6 +607,7 @@ function card(r,i){
 
  return`
  <article class="srfcard">
+  ${r.is_featured===true?'<div style="padding:7px 12px;background:#fff7d6;color:#8a5a00;font-weight:900;font-size:12px">⭐ Featured Property</div>':''}
 
   <div class="srfphoto srfimg">
 
@@ -1196,7 +1197,7 @@ async function load(){
   rows=
    Array.isArray(d)
    ?
-   d.filter(ok)
+   d.filter(ok).sort((a,b)=>Number(b.is_featured===true)-Number(a.is_featured===true))
    :
    [];
 
