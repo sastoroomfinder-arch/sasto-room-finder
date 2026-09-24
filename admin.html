@@ -185,7 +185,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 const SUPABASE_URL="https://amhrnahjshsgelacqzyl.supabase.co";
 const SUPABASE_KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
 const ADMIN_EMAIL="admin.sastoroomfinder@gmail.com";
-let db=null; let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login";
+let db=null; let rooms=[],owners=[],inquiries=[],sponsors=[],me=null,profile=null,mode="login",portalMode="admin";
 window.__adminInitError=null;
 async function initSupabase(){
   try{
@@ -205,14 +205,14 @@ const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&
 const $=id=>document.getElementById(id);
 const isAdmin=()=>profile?.role==="admin";
 
-function setAuthMode(m){mode=m;$("loginFields").classList.toggle("hidden",m!=="login");$("signupFields").classList.toggle("hidden",m!=="signup");$("loginTab").classList.toggle("active",m==="login");$("signupTab").classList.toggle("active",m==="signup");$("lm").textContent=""}
+function setPortalMode(m){portalMode=m; const signup=m==="ownerSignup"; $("loginFields").classList.toggle("hidden",signup); $("signupFields").classList.toggle("hidden",!signup); $("adminLoginTab").classList.toggle("active",m==="admin"); $("ownerLoginTab").classList.toggle("active",m==="owner"); $("ownerSignupLink").classList.toggle("hidden",signup); $("loginSub").textContent=m==="admin"?"Administrator access only":(signup?"Create your House Owner account":"House Owner access only"); $("lm").textContent=""; $("lm").style.color="#b42318";} function setAuthMode(m){setPortalMode(m==="signup"?"ownerSignup":"admin")}
 
 async function doLogin(){
   if(!db) await initSupabase();
   const email=$("email").value.trim(),password=$("pass").value;
   $("lm").textContent="Logging in...";
   const {error}=await db.auth.signInWithPassword({email,password});
-  if(error){$("lm").textContent=error.message;return} await start();
+  if(error){$("lm").textContent=error.message;return} const {data:{user}}=await db.auth.getUser(); const {data:p}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle(); const role=p?.role||user.user_metadata?.role||"owner"; if((portalMode==="admin"&&role!=="admin")||(portalMode==="owner"&&role==="admin")){await db.auth.signOut();$("lm").textContent=portalMode==="admin"?"This login is for the Admin account only. Please use Owner Login.":"This is an Admin account. Please use Admin Login.";return} await start();
 }
 async function signupOwner(){
   if(!db) await initSupabase();
@@ -236,6 +236,8 @@ async function start(){
     return;
   }
   profile=data||{id:me.id,role:"owner",full_name:me.user_metadata?.full_name||"House Owner",phone:me.user_metadata?.phone||""};
+  if(portalMode==="admin" && profile.role!=="admin"){await db.auth.signOut();$("lm").textContent="Admin Login requires an administrator account.";return;}
+  if(portalMode==="owner" && profile.role==="admin"){await db.auth.signOut();$("lm").textContent="Admin accounts must use Admin Login.";return;}
   if(!profile.role)profile.role="owner";
   $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
   applyRoleUI();await loadRooms();loadInquiries();if(isAdmin()){loadOwners();loadSponsors();}
