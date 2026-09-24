@@ -1108,15 +1108,28 @@ function inquiryModal(){
  const d=document.createElement("div");d.id="srfInquiryOverlay";d.className="srf-inq-overlay";
  d.innerHTML=`<div class="srf-inq-box"><h2>Send Property Inquiry</h2><p id="srfInquiryProperty"></p><form id="srfInquiryForm" class="srf-inq-form"><label>Your Name<input id="inqName" required placeholder="Your name"></label><label>Phone / WhatsApp<input id="inqPhone" required inputmode="tel" placeholder="98XXXXXXXX"></label><label>Message<textarea id="inqMessage" rows="4" placeholder="I am interested in this property. Please contact me."></textarea></label><div id="inqMsg" class="srf-inq-msg"></div><div class="srf-inq-actions"><button type="button" class="srf-inq-cancel" id="inqCancel">Cancel</button><button class="srf-inq-send" type="submit">Send Inquiry</button></div></form></div>`;
  document.body.appendChild(d);
- $("inqCancel").onclick=()=>{d.classList.remove("open");document.body.style.overflow=""};
+ $("inqCancel").onclick=()=>{
+ d.classList.remove("open");
+ if(window.__srfInquiryReturnToDetails&&active&&$("srfov")){
+  $("srfov").classList.add("open");
+  window.__srfInquiryReturnToDetails=false;
+  document.body.style.overflow="hidden";
+ }else document.body.style.overflow="";
+};
  $("srfInquiryForm").onsubmit=sendInquiry;
 }
 function openInquiryModal(r){
  active=r;
+ const wasPropertyOpen=$("srfov")?.classList.contains("open");
+ if(wasPropertyOpen){
+  $("srfov").classList.remove("open");
+  window.__srfInquiryReturnToDetails=true;
+ }
  inquiryModal();
  $("srfInquiryProperty").textContent=title(r)+" • "+loc(r);
  $("inqMsg").textContent="";$("inqName").value="";$("inqPhone").value="";$("inqMessage").value="I am interested in this property. Please contact me.";
- $("srfInquiryOverlay").classList.add("open");document.body.style.overflow="hidden";
+ $("srfInquiryOverlay").classList.add("open");
+ document.body.style.overflow="hidden";
 }
 async function sendInquiry(e){
  e.preventDefault();if(!active)return;
@@ -1127,7 +1140,14 @@ async function sendInquiry(e){
   const res=await fetch(`${U}/rest/v1/inquiries`,{method:"POST",headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(payload)});
   if(!res.ok){const t=await res.text();throw new Error(t||"Inquiry could not be sent.")}
   msg.style.color="#16834f";msg.textContent="Inquiry sent successfully.";
-  setTimeout(()=>{$("srfInquiryOverlay")?.classList.remove("open");document.body.style.overflow=""},900);
+  setTimeout(()=>{
+  $("srfInquiryOverlay")?.classList.remove("open");
+  if(window.__srfInquiryReturnToDetails&&active&&$("srfov")){
+   $("srfov").classList.add("open");
+   window.__srfInquiryReturnToDetails=false;
+   document.body.style.overflow="hidden";
+  }else document.body.style.overflow="";
+ },900);
  }catch(err){msg.style.color="#b42318";msg.textContent="Inquiry could not be sent. Please try WhatsApp."}
 }
 
