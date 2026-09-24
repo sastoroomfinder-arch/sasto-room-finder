@@ -88,6 +88,15 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 
 <main id="dashboard">
 <section class="welcome"><div><h1 id="welcomeTitle">👋 Welcome!</h1><p id="welcomeText">Manage your properties from one place.</p></div><div class="house">🏠</div></section>
+<section id="notificationsPanel" class="panel" style="margin-bottom:16px">
+  <div class="ph">
+    <h2>🔔 Notifications <span id="notifBadge" style="display:none;background:#ef4444;color:#fff;border-radius:999px;padding:3px 8px;font-size:11px;margin-left:6px">0</span></h2>
+    <button class="secondary" onclick="renderNotifications()">↻ Refresh</button>
+  </div>
+  <div id="notificationsBody" style="padding:6px 17px 12px">
+    <div class="empty">Loading notifications...</div>
+  </div>
+</section>
 <section class="stats">
   <div class="stat"><div class="circle c1">⌂</div><h3 id="s1label">Total Properties</h3><div id="total" class="num">0</div><span class="muted">Your listings</span></div>
   <div class="stat"><div class="circle c2">✓</div><h3 id="s2label">Available</h3><div id="avail" class="num">0</div><span class="muted">Can receive inquiries</span></div>
@@ -240,7 +249,7 @@ async function start(){
   if(portalMode==="owner" && profile.role==="admin"){await db.auth.signOut();$("lm").textContent="Admin accounts must use Admin Login.";return;}
   if(!profile.role)profile.role="owner";
   $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
-  applyRoleUI();await loadRooms();loadInquiries();if(isAdmin()){loadOwners();loadSponsors();}
+  applyRoleUI();await loadRooms();await loadInquiries();renderNotifications();if(isAdmin()){loadOwners();loadSponsors();}
 }
 function applyRoleUI(){
   const admin=isAdmin();$("who").textContent=admin?(profile.full_name||"Admin"):(profile.full_name||"House Owner");
@@ -406,6 +415,37 @@ async function loadInquiries(){
   $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td></tr>').join(""):'<tr><td colspan="6" class="empty">No inquiries yet.</td></tr>';
 }
 
+
+function renderNotifications(){
+  const body=$("notificationsBody"),badge=$("notifBadge");
+  if(!body)return;
+  const admin=isAdmin();
+  const items=[];
+  if(admin){
+    rooms.filter(r=>r.approval_status==="pending").slice(0,20).forEach(r=>{
+      items.push({icon:"⏳",title:"Property awaiting approval",text:(r.title||"Property")+" • "+(r.owner_name||r.owner_email||"Owner"),time:r.created_at,go:"pending",type:"pending"});
+    });
+  }else{
+    rooms.filter(r=>r.approval_status==="pending").slice(0,10).forEach(r=>{
+      items.push({icon:"⏳",title:"Listing under review",text:r.title||"Your property",time:r.created_at,go:"rooms",type:"pending"});
+    });
+    rooms.filter(r=>r.approval_status==="rejected").slice(0,10).forEach(r=>{
+      items.push({icon:"⚠️",title:"Listing needs changes",text:r.title||"Your property",time:r.created_at,go:"rooms",type:"rejected"});
+    });
+  }
+  inquiries.filter(x=>String(x.status||"new").toLowerCase()==="new").slice(0,20).forEach(x=>{
+    items.push({icon:"✉️",title:"New property inquiry",text:(x.property_title||"Property")+" • "+(x.name||"Visitor"),time:x.created_at,go:"inquiries",type:"inquiry"});
+  });
+  items.sort((a,b)=>new Date(b.time||0)-new Date(a.time||0));
+  const count=items.length;
+  badge.textContent=count>99?"99+":String(count);
+  badge.style.display=count?"inline-block":"none";
+  body.innerHTML=count?items.slice(0,12).map(n=>{
+    const date=n.time?new Date(n.time).toLocaleString():"";
+    return '<button type="button" onclick="go(\''+n.go+'\')" style="width:100%;display:flex;align-items:flex-start;gap:10px;border:0;border-top:1px solid #edf2f8;background:#fff;text-align:left;padding:12px 4px;color:#07347c">'+
+      '<span style="font-size:21px">'+n.icon+'</span><span style="flex:1"><b>'+esc(n.title)+'</b><br><small style="color:#71839b">'+esc(n.text)+' • '+esc(date)+'</small></span><span style="color:#0879e8;font-weight:800">›</span></button>';
+  }).join(""):'<div class="empty" style="padding:18px 4px">✓ No new notifications.</div>';
+}
 function loadAdminSettings(){
   if(!isAdmin())return;
   const msg=$("settingsMsg");
