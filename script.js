@@ -1086,7 +1086,7 @@ async function savePropertyAlert(){
   const a=getAlerts();a.push({location,type:typeV,minPrice,maxPrice,name,phone,email,createdAt:Date.now()});saveAlerts(a);renderAlerts();checkPropertyAlerts(true);
   ["alertName","alertPhone","alertEmail","alertLocation","alertMinPrice","alertMaxPrice"].forEach(id=>{if($(id))$(id).value=""});$("alertType").value="";
   alert("Alert saved. Sasto Room Finder can now see your request and match it with future listings.");
- }catch(e){console.error(e);alert("Could not save the alert yet. Please try again after the database alert table is created.")}
+ }catch(e){console.error("Property alert save error:",e);const detail=String(e?.message||e||"Unknown error");alert("Could not save the alert.\n\nDatabase error:\n"+detail.slice(0,700))}
 }
 function deletePropertyAlert(i){const a=getAlerts();a.splice(i,1);saveAlerts(a);renderAlerts()}
 window.savePropertyAlert=savePropertyAlert;window.deletePropertyAlert=deletePropertyAlert;
