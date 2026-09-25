@@ -59,3 +59,12 @@ CREATE POLICY "admins can delete property alerts"
 ON public.property_alerts FOR DELETE
 TO authenticated
 USING (public.is_admin_user());
+
+
+-- Ensure API roles can use the public schema
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT INSERT ON TABLE public.property_alerts TO anon, authenticated;
+GRANT SELECT, UPDATE, DELETE ON TABLE public.property_alerts TO authenticated;
+
+-- Ask PostgREST to reload the database schema cache
+NOTIFY pgrst, 'reload schema';
