@@ -82,6 +82,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
   <button class="nav adminOnly" data-nav="owners" onclick="go('owners')">👥 &nbsp; House Owners</button>
   <button class="nav" data-nav="inquiries" onclick="go('inquiries')">✉ &nbsp; Inquiries</button>
   <button class="nav adminOnly" data-nav="sponsors" onclick="go('sponsors')">📢 &nbsp; Sponsors / Ads</button>
+  <button class="nav adminOnly" data-nav="alerts" onclick="go('alerts')">🔔 &nbsp; Client Alerts</button>
   <button class="nav adminOnly" data-nav="settings" onclick="go('settings')">⚙ &nbsp; Settings</button>
   <div class="side"><b id="sideTitle">SastoRoomFinder Portal</b><br><br>Keep property information accurate, photos clear and contact details up to date.</div>
 </aside>
@@ -123,6 +124,12 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <section id="owners" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>👥 House Owners</h2><button class="secondary" onclick="loadOwners()">↻ Refresh</button></div><div class="table"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Listings</th></tr></thead><tbody id="ownersBody"></tbody></table></div></section>
 
 <section id="inquiries" class="panel hidden" style="margin-top:16px"><div class="ph"><h2>✉ Inquiries</h2><div><button class="secondary" onclick="loadInquiries()">↻ Refresh</button><button class="secondary" onclick="go('inquiries')">Reload</button></div></div><div class="table"><table><thead><tr><th>Property</th><th>Name</th><th>Phone</th><th>Message</th><th>Date</th><th>Status</th><th>Reply</th></tr></thead><tbody id="inqBody"></tbody></table></div></section>
+
+<section id="alerts" class="panel hidden" style="margin-top:16px">
+  <div class="ph"><h2>🔔 Client Property Alerts</h2><div><button class="secondary" onclick="loadPropertyAlerts()">↻ Refresh</button></div></div>
+  <div class="muted" style="padding:0 17px 12px">These are requests submitted by visitors. Matching counts are calculated from your currently published properties.</div>
+  <div class="table"><table style="min-width:1000px"><thead><tr><th>Client</th><th>Contact</th><th>Looking for</th><th>Budget</th><th>Matches</th><th>Created</th><th>Status</th><th>Action</th></tr></thead><tbody id="alertBody"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
+</section>
 
 <section id="sponsors" class="panel hidden" style="margin-top:16px">
   <div class="ph"><h2>📢 Sponsors / Advertisements</h2><div><button class="secondary" onclick="loadSponsors()">↻ Refresh</button><button class="primary" onclick="openSponsorAdd()">＋ Add Advertisement</button></div></div>
@@ -249,7 +256,7 @@ async function start(){
   if(portalMode==="owner" && profile.role==="admin"){await db.auth.signOut();$("lm").textContent="Admin accounts must use Admin Login.";return;}
   if(!profile.role)profile.role="owner";
   $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
-  applyRoleUI();await loadRooms();await loadInquiries();renderNotifications();if(isAdmin()){loadOwners();loadSponsors();}
+  applyRoleUI();await loadRooms();await loadInquiries();renderNotifications();if(isAdmin()){loadOwners();loadSponsors();loadPropertyAlerts();}
 }
 function applyRoleUI(){
   const admin=isAdmin();$("who").textContent=admin?(profile.full_name||"Admin"):(profile.full_name||"House Owner");
@@ -263,7 +270,7 @@ function applyRoleUI(){
 function go(id){
   // Dashboard contains the Properties section. Never hide dashboard when opening Properties.
   $("dashboard").classList.remove("hidden");
-  ["pending","owners","inquiries","sponsors","settings"].forEach(x=>{
+  ["pending","owners","inquiries","sponsors","alerts","settings"].forEach(x=>{
     const el=$(x); if(el) el.classList.toggle("hidden",x!==id);
   });
   document.querySelectorAll(".nav").forEach(b=>b.classList.remove("active"));
@@ -281,6 +288,7 @@ function go(id){
   if(id==="owners")loadOwners();
   if(id==="inquiries")loadInquiries();
   if(id==="sponsors")loadSponsors();
+  if(id==="alerts")loadPropertyAlerts();
   if(id==="settings")loadAdminSettings();
 }
 async function loadRooms(){
@@ -428,6 +436,51 @@ async function loadInquiries(){
   inquiries=data||[];
   $("inqBody").innerHTML=inquiries.length?inquiries.map(x=>'<tr><td>'+esc(x.property_title||"—")+'</td><td>'+esc(x.name||"—")+'</td><td>'+esc(x.phone||"—")+'</td><td>'+esc(x.message||"")+'</td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.status==="new"?"pending":"approved")+'">'+esc(x.status||"new")+'</span></td><td><div class="actions"><a class="ib" target="_blank" rel="noopener" href="'+inquiryWhatsAppUrl(x)+'">💬 Reply</a> <button class="ib" onclick="markInquiryReplied('+JSON.stringify(x.id)+')">✓ Replied</button></div></td></tr>').join(""):'<tr><td colspan="7" class="empty">No inquiries yet.</td></tr>';
 }
+
+function alertPriceValue(v){const n=Number(String(v??"").replace(/,/g,"").replace(/[^\d.]/g,""));return Number.isFinite(n)&&n>0?n:null}
+function propertyMatchesClientAlert(r,a){
+ const q=String(a.location||"").toLowerCase().trim(), rq=String(r.location||r.address||"").toLowerCase();
+ const rt=String(r.room_type||"").toLowerCase(), at=String(a.property_type||"").toLowerCase();
+ const p=alertPriceValue(r.price), min=alertPriceValue(a.min_price), max=alertPriceValue(a.max_price);
+ return (!q||rq.includes(q))&&(!at||rt===at)&&(!min||(p!=null&&p>=min))&&(!max||(p!=null&&p<=max))&&r.status==="available"&&r.approval_status==="approved";
+}
+function alertWhatsAppUrl(x){
+ let p=String(x.phone||"").replace(/\D/g,"");if(p.startsWith("0"))p="977"+p.slice(1);if(!p.startsWith("977")&&p.length===10)p="977"+p;
+ if(!p)return "#";
+ const msg="Hello "+(x.name||"")+" from Sasto Room Finder. We found property listings matching your request"+(x.location?" in "+x.location:"")+". Please let us know if you would like the details.";
+ return "https://wa.me/"+p+"?text="+encodeURIComponent(msg);
+}
+async function loadPropertyAlerts(){
+ if(!isAdmin())return;
+ const body=$("alertBody");if(body)body.innerHTML='<tr><td colspan="8" class="empty">Loading client alerts...</td></tr>';
+ const {data,error}=await db.from("property_alerts").select("*").order("created_at",{ascending:false}).limit(200);
+ if(error){if(body)body.innerHTML='<tr><td colspan="8" class="empty errorBox">Could not load alerts:<br>'+esc(error.message)+'</td></tr>';return}
+ propertyAlerts=data||[];renderPropertyAlerts();
+}
+function renderPropertyAlerts(){
+ const body=$("alertBody");if(!body)return;
+ body.innerHTML=propertyAlerts.length?propertyAlerts.map(x=>{
+   const matches=rooms.filter(r=>propertyMatchesClientAlert(r,x));
+   const budget=(x.min_price?Number(x.min_price).toLocaleString():"0")+" – "+(x.max_price?Number(x.max_price).toLocaleString():"Any");
+   const contact=(x.phone?esc(x.phone):"")+(x.phone&&x.email?"<br>":"")+(x.email?esc(x.email):"—");
+   const looking=[x.location||"Any location",x.property_type||"Any type"].map(esc).join(" · ");
+   const matchText=matches.length?matches.slice(0,2).map(r=>esc(r.title||"Property")).join(", ")+(matches.length>2?" +"+(matches.length-2)+" more":""):"No current match";
+   return '<tr><td><b>'+esc(x.name||"—")+'</b></td><td>'+contact+'</td><td>'+looking+'</td><td>Rs. '+esc(budget)+'</td><td><span class="badge '+(matches.length?"approved":"pending")+'">'+matches.length+' match'+(matches.length===1?"":"es")+'</span><br><small>'+matchText+'</small></td><td>'+new Date(x.created_at).toLocaleString()+'</td><td><span class="badge '+(x.active===false?"pending":"approved")+'">'+(x.active===false?"inactive":"active")+'</span></td><td><div class="actions">'+(x.phone?'<a class="ib" target="_blank" rel="noopener" href="'+alertWhatsAppUrl(x)+'">💬 WhatsApp</a> ':'')+'<button class="ib" onclick="togglePropertyAlertStatus('+JSON.stringify(x.id)+','+String(x.active!==false)+')">'+(x.active===false?"Activate":"Close")+'</button> <button class="ib" onclick="deletePropertyAlertAdmin('+JSON.stringify(x.id)+')">Delete</button></div></td></tr>';
+ }).join(""):'<tr><td colspan="8" class="empty">No client property alerts yet.</td></tr>';
+}
+async function togglePropertyAlertStatus(id,current){
+ if(!isAdmin())return;
+ const {error}=await db.from("property_alerts").update({active:!current}).eq("id",id);
+ if(error){alert("Could not update alert: "+error.message);return}
+ await loadPropertyAlerts();
+}
+async function deletePropertyAlertAdmin(id){
+ if(!isAdmin()||!confirm("Delete this client property alert?"))return;
+ const {error}=await db.from("property_alerts").delete().eq("id",id);
+ if(error){alert("Could not delete alert: "+error.message);return}
+ await loadPropertyAlerts();
+}
+window.loadPropertyAlerts=loadPropertyAlerts;window.togglePropertyAlertStatus=togglePropertyAlertStatus;window.deletePropertyAlertAdmin=deletePropertyAlertAdmin;
 
 function renderNotifications(){
   const body=$("notificationsBody"),badge=$("notifBadge");
