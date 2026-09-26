@@ -344,3 +344,61 @@ footer{
     padding-bottom:10px!important;
   }
 }
+
+
+/* SRF MOBILE FINAL SECTION SPACING OVERRIDE
+   Force the same compact bottom spacing on phones, overriding older rules.
+*/
+@media(max-width:800px){
+  main > .section{
+    padding-top:24px!important;
+    padding-bottom:18px!important;
+    margin:0!important;
+  }
+  main > .section + .section{
+    padding-top:18px!important;
+  }
+  main > .page-hero + .section{
+    padding-top:18px!important;
+  }
+  main > .section:last-child{
+    padding-bottom:8px!important;
+  }
+  main > .cta{
+    padding-top:18px!important;
+    padding-bottom:8px!important;
+    margin:0!important;
+  }
+  main > .cta:last-child{
+    padding-top:18px!important;
+    padding-bottom:8px!important;
+  }
+  main > .section > .container,
+  main > .cta > .container{
+    margin-top:0!important;
+    margin-bottom:0!important;
+  }
+  main > .section > .container > :last-child,
+  main > .cta > .container > :last-child{
+    margin-bottom:0!important;
+  }
+}
+@media(max-width:520px){
+  main > .section{
+    padding-top:20px!important;
+    padding-bottom:14px!important;
+  }
+  main > .section + .section,
+  main > .page-hero + .section,
+  main > .cta + .section{
+    padding-top:14px!important;
+  }
+  main > .section:last-child{
+    padding-bottom:6px!important;
+  }
+  main > .cta,
+  main > .cta:last-child{
+    padding-top:16px!important;
+    padding-bottom:6px!important;
+  }
+}
