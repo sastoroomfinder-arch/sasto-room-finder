@@ -402,3 +402,49 @@ footer{
     padding-bottom:6px!important;
   }
 }
+
+
+/* SRF PROFESSIONAL MOBILE FOOTER + BUSINESS CARD
+   Keeps the bottom of every public page aligned and easy to scan on phones.
+*/
+.srf-business-card{
+  margin:18px 0 4px;
+  padding:20px;
+  border-radius:18px;
+  border:1px solid #dfe4df;
+  background:linear-gradient(135deg,#142019 0%,#1d6b50 100%);
+  color:#fff;
+  box-shadow:0 16px 40px rgba(23,35,29,.14);
+  overflow:hidden;
+}
+.srf-business-card-top{display:flex;align-items:center;gap:13px}
+.srf-business-card-top img{width:58px;height:58px;object-fit:contain;border-radius:12px;background:#fff;padding:4px;flex:0 0 auto}
+.srf-business-card-top strong{display:block;font-size:18px;letter-spacing:.04em;line-height:1.15}
+.srf-business-card-top span{display:block;margin-top:4px;color:#dfe8e1;font-size:12px}
+.srf-business-card-line{height:1px;background:rgba(255,255,255,.22);margin:16px 0 13px}
+.srf-business-card-details{display:grid;gap:8px}
+.srf-business-card-details a{display:flex;align-items:flex-start;gap:9px;color:#fff!important;font-size:12px;line-height:1.4}
+.srf-business-card-details i{width:16px;text-align:center;color:#d9f2e5;flex:0 0 16px;margin-top:2px}
+.srf-socials{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+.srf-social{display:inline-flex!important;align-items:center;justify-content:center;width:36px;height:36px;margin:0!important;border-radius:50%;background:transparent!important;border:0!important;padding:0!important;font-size:18px!important;line-height:1}
+.srf-social .srf-icon{display:inline-flex}
+@media(max-width:520px){
+  .contact-grid{gap:16px!important}
+  .contact-info{min-width:0}
+  .contact-card{gap:11px!important}
+  .contact-card span{font-size:21px!important}
+  .srf-business-card{margin-top:14px;padding:16px;border-radius:16px}
+  .srf-business-card-top img{width:50px;height:50px}
+  .srf-business-card-top strong{font-size:16px}
+  .srf-business-card-details a{font-size:11.5px;overflow-wrap:anywhere}
+  .footer-grid{grid-template-columns:1fr 1fr!important;column-gap:18px!important;row-gap:14px!important}
+  .footer-grid>div:first-child{grid-column:1/-1}
+  .footer-grid>div:nth-child(2),.footer-grid>div:nth-child(3),.footer-grid>div:nth-child(4){min-width:0}
+  .footer-grid .srf-socials{gap:6px}
+  .footer-grid .srf-social{width:32px;height:32px;font-size:16px!important}
+  footer{padding-bottom:0!important}
+}
+@media(max-width:360px){
+  .footer-grid{grid-template-columns:1fr!important}
+  .footer-grid>div:first-child{grid-column:auto}
+}
