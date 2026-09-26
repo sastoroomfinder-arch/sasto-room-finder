@@ -1316,6 +1316,27 @@ function openSharedPropertyFromUrl(){
  if(found)setTimeout(()=>window.openPropertyDetails(found),100);
 }
 
+function applyUrlFilters(){
+ const p=new URLSearchParams(location.search);
+ const search=p.get("search")||"";
+ const typeParam=(p.get("type")||"").trim();
+ const min=p.get("minPrice")||"";
+ const max=p.get("maxPrice")||"";
+ const searchBox=$("filterSearch");
+ const typeBox=$("filterType");
+ const minBox=$("filterMinPrice");
+ const maxBox=$("filterMaxPrice");
+ if(searchBox && search) searchBox.value=search;
+ if(minBox && min) minBox.value=min;
+ if(maxBox && max) maxBox.value=max;
+ if(typeBox && typeParam){
+   const wanted=typeParam.toLowerCase();
+   const opt=[...typeBox.options].find(o=>o.value.toLowerCase()===wanted || o.text.toLowerCase()===wanted);
+   if(opt) typeBox.value=opt.value;
+   else if(searchBox && !searchBox.value) searchBox.value=typeParam;
+ }
+}
+
 function init(){
 
  css();
@@ -1371,6 +1392,7 @@ function init(){
   });
  }
 
+ applyUrlFilters();
  load();
  loadSponsors();
 }
