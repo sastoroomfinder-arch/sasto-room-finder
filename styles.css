@@ -218,3 +218,33 @@ footer{padding-top:18px!important}
   .footer-grid{gap:10px!important}
   footer{padding-top:16px!important}
 }
+
+
+/* SRF FINAL FOOTER-ADJACENT GAP FIX
+   The excessive white/section space immediately above the black footer
+   is the bottom padding of the final main section. Keep it tight on every page.
+*/
+main > section:last-child{
+  margin-bottom:0!important;
+  padding-bottom:14px!important;
+}
+main > .cta:last-child{
+  margin-bottom:0!important;
+  padding-top:22px!important;
+  padding-bottom:14px!important;
+}
+main > .cta:last-child .cta-inner{
+  margin-bottom:0!important;
+  padding-bottom:0!important;
+}
+footer{
+  margin-top:0!important;
+}
+@media(max-width:800px){
+  main > section:last-child{padding-bottom:12px!important}
+  main > .cta:last-child{padding-top:20px!important;padding-bottom:12px!important}
+}
+@media(max-width:520px){
+  main > section:last-child{padding-bottom:10px!important}
+  main > .cta:last-child{padding-top:18px!important;padding-bottom:10px!important}
+}
