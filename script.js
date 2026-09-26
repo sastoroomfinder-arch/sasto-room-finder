@@ -1091,6 +1091,17 @@ async function savePropertyAlert(){
 function deletePropertyAlert(i){const a=getAlerts();a.splice(i,1);saveAlerts(a);renderAlerts()}
 window.savePropertyAlert=savePropertyAlert;window.deletePropertyAlert=deletePropertyAlert;
 function checkPropertyAlerts(manual){if(!rows.length)return;const alerts=getAlerts();if(!alerts.length)return;let seen=[];try{seen=JSON.parse(localStorage.getItem(ALERTSEENKEY)||"[]")}catch{}const matches=[];alerts.forEach((a,ai)=>rows.forEach(r=>{const id=rid(r);if(alertMatches(r,a)&&!seen.includes(String(ai)+":"+id))matches.push({a,ai,r})}));if(!matches.length)return;const unique=matches.filter((m,i)=>matches.findIndex(x=>String(rid(x.r))===String(rid(m.r)))===i).slice(0,5);const box=$("alertMatch");if(box){box.textContent="🔔 New matching property: "+unique.map(x=>title(x.r)).join(", ");box.classList.add("show");box.onclick=()=>window.openPropertyDetails(unique[0].r);box.style.cursor="pointer"}matches.forEach(m=>seen.push(String(m.ai)+":"+rid(m.r)));localStorage.setItem(ALERTSEENKEY,JSON.stringify(seen.slice(-500)));if(!manual&&"Notification" in window&&Notification.permission==="granted"){try{new Notification("Sasto Room Finder",{body:unique.map(x=>title(x.r)).join(", ")})}catch{}}}
+/* HOME SEARCH */
+window.searchFromHome=()=>{
+ const locationValue=String(document.getElementById("homeLocation")?.value||"").trim();
+ const budgetValue=String(document.getElementById("homeBudget")?.value||"").trim();
+ const params=new URLSearchParams();
+ if(locationValue) params.set("search",locationValue);
+ const budget=budgetValue.replace(/,/g,"").replace(/[^\\d.]/g,"");
+ if(budget) params.set("maxPrice",budget);
+ window.location.href="properties.html"+(params.toString()?"?"+params.toString():"");
+};
+
 /* SEARCH */
 
 function toggleFavorite(r){
