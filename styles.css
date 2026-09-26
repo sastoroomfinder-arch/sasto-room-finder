@@ -24,3 +24,88 @@
 .footer-grid .copyright,.copyright{max-width:100%;overflow-wrap:anywhere}
 .footer-grid a[href*="google.com/maps"]{color:#dfe8e1;font-weight:700}
 @media(max-width:520px){footer{padding-top:26px}.footer-grid{gap:16px}.copyright{padding:10px 8px;font-size:10px}.footer-grid a,.footer-grid span{font-size:13px}}
+
+
+/* =========================================================
+   SRF COMPACT SPACING PASS — all public pages
+   Keeps the existing branding, but removes excessive whitespace.
+   ========================================================= */
+html{scroll-behavior:smooth}
+body{line-height:1.55}
+.container{width:min(1120px,94%);margin-inline:auto}
+.nav{height:68px;gap:20px}
+.brand{gap:8px}
+.brand b{font-size:14px}
+.brand small{font-size:11px}
+
+/* Hero / page headers */
+.hero{padding:48px 0}
+.hero-grid{gap:34px}
+.hero h1,.page-hero h1{margin:10px 0}
+.lead{font-size:16px}
+.hero-actions{margin:20px 0}
+.search-card{padding:20px;border-radius:16px}
+.search-card h2{margin:6px 0 14px}
+.search-card label,.contact-form label{margin:10px 0}
+.search-card input,.filters input,.filters select,.contact-form input,.contact-form select,.contact-form textarea{padding:11px 12px}
+.page-hero{padding:42px 0}
+.page-hero h1{font-size:46px}
+.page-hero p{font-size:15px}
+
+/* Sections */
+.section{padding:48px 0}
+.section-head{margin-bottom:20px}
+.section h2{font-size:34px}
+.cards,.listing-grid,.property-grid,.service-list{gap:14px}
+.card{padding:20px}
+.property-tile{padding:20px;min-height:130px}
+.listing-body{padding:15px}
+.listing-price{margin-top:8px}
+.service-list article{gap:14px;padding:20px}
+.about-grid{gap:36px}
+.contact-grid{gap:28px}
+.contact-card{padding:14px 0}
+.contact-form{padding:20px}
+
+/* CTA + footer */
+.cta{padding:42px 0}
+.cta h2{font-size:34px}
+.cta-inner{gap:22px}
+.footer-grid{gap:18px}
+footer{padding-top:26px}
+.footer-grid a,.footer-grid span{margin:5px 0;font-size:13px}
+.copyright{margin-top:12px;padding:9px 0}
+
+/* Common buttons */
+.btn{padding:10px 15px;border-radius:9px}
+
+/* Mobile: compact but still comfortable for touch */
+@media(max-width:800px){
+  .hero{padding:34px 0}
+  .hero-grid{gap:22px}
+  .section{padding:36px 0}
+  .section-head{margin-bottom:16px}
+  .section h2{font-size:29px}
+  .page-hero{padding:32px 0}
+  .page-hero h1{font-size:38px}
+  .cards,.listing-grid,.property-grid,.service-list,.footer-grid{gap:12px}
+  .cta{padding:34px 0}
+}
+@media(max-width:520px){
+  .container{width:min(1120px,94%)}
+  .nav{height:64px}
+  .hero{padding:28px 0}
+  .hero h1{font-size:42px}
+  .lead{font-size:15px}
+  .section{padding:30px 0}
+  .section h2{font-size:27px}
+  .card,.property-tile,.service-list article,.contact-form{padding:16px}
+  .page-hero{padding:28px 0}
+  .page-hero h1{font-size:34px}
+  .cta{padding:30px 0}
+}
+
+/* Prevent dynamically inserted public sections from becoming oversized */
+.srf-public-sponsors{margin:18px auto!important}
+.srf-sponsor-heading{margin-bottom:12px!important}
+.srf-sponsor-grid{gap:12px!important}
