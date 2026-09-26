@@ -1254,7 +1254,7 @@ async function load(){
 
   let res=await fetch(
 
-   `${U}/rest/v1/room?select=*&order=created_at.desc`,
+   `${U}/rest/v1/room?select=*&status=eq.available&approval_status=eq.approved&order=created_at.desc`,
 
    {
     headers:{
