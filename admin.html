@@ -773,23 +773,30 @@ async function boot(){
   try{
     await initSupabase();
 
+    // Recovery links must ALWAYS take precedence over the normal logged-in flow.
+    // Do not call start() from the auth listener: Supabase can emit INITIAL_SESSION
+    // with the temporary recovery session before boot() finishes checking the URL.
     db.auth.onAuthStateChange((event,session)=>{
       if(event==="PASSWORD_RECOVERY"){
+        recoveryMode=true;
         setTimeout(()=>showOwnerResetForm("Reset link verified. Enter your new password below."),0);
-        return;
       }
-      if(session&&!me)setTimeout(start,0);
     });
 
     const url=new URL(location.href);
+    const hashParams=new URLSearchParams(location.hash.replace(/^#/,""));
     const hasRecoveryParams=
       url.searchParams.has("code") ||
+      url.searchParams.has("token_hash") ||
       url.searchParams.get("type")==="recovery" ||
-      location.hash.includes("access_token=");
+      hashParams.get("type")==="recovery" ||
+      hashParams.has("access_token") ||
+      hashParams.has("refresh_token");
 
     const {data:{session}}=await db.auth.getSession();
 
     if(hasRecoveryParams){
+      recoveryMode=true;
       if(session){
         showOwnerResetForm("Reset link verified. Enter your new password below.");
       }else{
