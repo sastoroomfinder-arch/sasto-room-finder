@@ -250,30 +250,66 @@ function setPortalMode(m){
   $("lm").textContent="";$("lm").style.color="#b42318";
 }
 function setAuthMode(m){setPortalMode(m==="signup"?"ownerSignup":m==="owner"?"owner":"admin")}
+function showOwnerResetForm(message){
+  setPortalMode("owner");
+  $("loginFields").classList.add("hidden");
+  $("signupFields").classList.add("hidden");
+  $("forgotFields").classList.add("hidden");
+  $("resetFields").classList.remove("hidden");
+  $("ownerForgotWrap").classList.add("hidden");
+  $("loginSub").textContent="Create a new House Owner password";
+  $("lm").style.color="#52708f";
+  $("lm").textContent=message||"Choose a new password for your House Owner account.";
+}
 function openForgotPassword(){
-  setPortalMode("owner");$("loginFields").classList.add("hidden");$("forgotFields").classList.remove("hidden");
-  $("forgotEmail").value=$("email").value.trim();$("ownerForgotWrap").classList.add("hidden");
+  setPortalMode("owner");
+  $("loginFields").classList.add("hidden");
+  $("forgotFields").classList.remove("hidden");
+  $("forgotEmail").value=$("email").value.trim();
+  $("ownerForgotWrap").classList.add("hidden");
 }
 async function sendPasswordReset(){
   if(!db) await initSupabase();
   const email=$("forgotEmail").value.trim();
   if(!email){$("lm").textContent="Enter your owner account email.";return}
-  $("lm").style.color="#52708f";$("lm").textContent="Sending password reset email...";
-  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+"?reset=1"});
-  if(error){$("lm").style.color="#b42318";$("lm").textContent="Could not send reset email: "+error.message;return}
-  $("lm").style.color="#16834f";$("lm").textContent="Reset link sent. Check your email and open the link.";
+  $("lm").style.color="#52708f";
+  $("lm").textContent="Sending password reset email...";
+  const redirectTo=location.origin+location.pathname;
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Could not send reset email: "+error.message;
+    return;
+  }
+  $("lm").style.color="#16834f";
+  $("lm").textContent="Reset link sent. Check your email, open the link, then enter your new password here.";
 }
 async function updateOwnerPassword(){
   if(!db) await initSupabase();
-  const p=$("resetPass").value,p2=$("resetPass2").value;
-  if(p.length<6){$("lm").textContent="Password must be at least 6 characters.";return}
-  if(p!==p2){$("lm").textContent="Passwords do not match.";return}
-  $("lm").style.color="#52708f";$("lm").textContent="Saving new password...";
+  const p=$("resetPass").value.trim(),p2=$("resetPass2").value.trim();
+  if(p.length<6){$("lm").style.color="#b42318";$("lm").textContent="Password must be at least 6 characters.";return}
+  if(p!==p2){$("lm").style.color="#b42318";$("lm").textContent="Passwords do not match.";return}
+  $("lm").style.color="#52708f";$("lm").textContent="Saving your new password...";
+  const {data:{user}}=await db.auth.getUser();
+  if(!user){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="This reset link is no longer active. Please request a new reset link.";
+    return;
+  }
   const {error}=await db.auth.updateUser({password:p});
-  if(error){$("lm").style.color="#b42318";$("lm").textContent="Could not update password: "+error.message;return}
-  await db.auth.signOut();$("lm").style.color="#16834f";$("lm").textContent="Password changed successfully. You can now log in with your new password.";
-  $("resetFields").classList.add("hidden");$("loginFields").classList.remove("hidden");$("email").value="";$("pass").value="";setPortalMode("owner");
+  if(error){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Could not update password: "+error.message;
+    return;
+  }
+  await db.auth.signOut();
+  $("resetPass").value="";$("resetPass2").value="";
+  $("email").value=user.email||"";$("pass").value="";
+  setPortalMode("owner");
+  $("lm").style.color="#16834f";
+  $("lm").textContent="Password changed successfully. You can now log in with your new password.";
 }
+
 async function doLogin(){
   if(!db) await initSupabase();
   const email=$("email").value.trim(),password=$("pass").value;
@@ -693,19 +729,40 @@ async function delSponsor(i){
 async function boot(){
   try{
     await initSupabase();
-    const resetMode=new URLSearchParams(location.search).get("reset")==="1";
+
     db.auth.onAuthStateChange((event,session)=>{
-      if(event==="PASSWORD_RECOVERY" || resetMode){
-        setPortalMode("owner");$("loginFields").classList.add("hidden");$("signupFields").classList.add("hidden");$("forgotFields").classList.add("hidden");$("resetFields").classList.remove("hidden");$("ownerForgotWrap").classList.add("hidden");$("lm").textContent="Choose a new password for your House Owner account.";return;
+      if(event==="PASSWORD_RECOVERY"){
+        setTimeout(()=>showOwnerResetForm("Reset link verified. Enter your new password below."),0);
+        return;
       }
       if(session&&!me)setTimeout(start,0);
     });
+
+    const url=new URL(location.href);
+    const hasRecoveryParams=
+      url.searchParams.has("code") ||
+      url.searchParams.get("type")==="recovery" ||
+      location.hash.includes("access_token=");
+
     const {data:{session}}=await db.auth.getSession();
-    if(resetMode){
-      setPortalMode("owner");$("loginFields").classList.add("hidden");$("signupFields").classList.add("hidden");$("forgotFields").classList.add("hidden");$("resetFields").classList.remove("hidden");$("ownerForgotWrap").classList.add("hidden");
-    }else if(session) await start();
-  }catch(e){console.error(e);const m=$("lm");if(m)m.textContent="System error: "+e.message;}
+
+    if(hasRecoveryParams){
+      if(session){
+        showOwnerResetForm("Reset link verified. Enter your new password below.");
+      }else{
+        $("lm").style.color="#b42318";
+        $("lm").textContent="This reset link could not be verified. Please request a new password-reset email.";
+      }
+    }else if(session){
+      await start();
+    }
+  }catch(e){
+    console.error(e);
+    const m=$("lm");
+    if(m)m.textContent="System error: "+e.message;
+  }
 }
+
 window.doLogin=doLogin;
 window.signupOwner=signupOwner;
 window.setAuthMode=setAuthMode;
