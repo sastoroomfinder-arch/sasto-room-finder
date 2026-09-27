@@ -50,7 +50,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
   <div class="loginbox">
     <h1>Sasto<span style="color:#0879e8">Room</span>Finder</h1>
     <p id="loginSub">Admin & House Owner Portal</p>
-    <div class="tabs"><button id="adminLoginTab" class="tab active" onclick="setPortalMode('admin')">Admin Login</button><button id="ownerLoginTab" class="tab" onclick="setPortalMode('owner')">Owner Login</button><button id="signupTab" class="tab" onclick="setPortalMode('ownerSignup')">Owner Sign Up</button></div>
+    <div id="loginTabs" class="tabs"><button id="adminLoginTab" class="tab active" onclick="setPortalMode('admin')">Admin Login</button><button id="ownerLoginTab" class="tab" onclick="setPortalMode('owner')">Owner Login</button><button id="signupTab" class="tab" onclick="setPortalMode('ownerSignup')">Owner Sign Up</button></div>
     <div id="loginFields">
       <label>Email</label><input id="email" type="email" placeholder="Your email" autocomplete="email">
       <label>Password</label><input id="pass" type="password" placeholder="Your password" autocomplete="current-password">
@@ -216,7 +216,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 const SUPABASE_URL="https://amhrnahjshsgelacqzyl.supabase.co";
 const SUPABASE_KEY="sb_publishable_f2morNcNVHaA4MhsellIRA_Mbgv0yFj";
 const ADMIN_EMAIL="admin.sastoroomfinder@gmail.com";
-let db=null; let rooms=[],owners=[],inquiries=[],sponsors=[],propertyAlerts=[],me=null,profile=null,mode="login",portalMode="admin";
+let db=null; let rooms=[],owners=[],inquiries=[],sponsors=[],propertyAlerts=[],me=null,profile=null,mode="login",portalMode="admin",recoveryMode=false;
 window.__adminInitError=null;
 async function initSupabase(){
   try{
@@ -251,15 +251,19 @@ function setPortalMode(m){
 }
 function setAuthMode(m){setPortalMode(m==="signup"?"ownerSignup":m==="owner"?"owner":"admin")}
 function showOwnerResetForm(message){
+  recoveryMode=true;
   setPortalMode("owner");
   $("loginFields").classList.add("hidden");
   $("signupFields").classList.add("hidden");
   $("forgotFields").classList.add("hidden");
   $("resetFields").classList.remove("hidden");
   $("ownerForgotWrap").classList.add("hidden");
+  if($("loginTabs"))$("loginTabs").classList.add("hidden");
   $("loginSub").textContent="Create a new House Owner password";
+  $("resetPass").value="";
+  $("resetPass2").value="";
   $("lm").style.color="#52708f";
-  $("lm").textContent=message||"Choose a new password for your House Owner account.";
+  $("lm").textContent=message||"Choose a new password for your House Owner account. Both password fields are required.";
 }
 function openForgotPassword(){
   setPortalMode("owner");
@@ -286,28 +290,67 @@ async function sendPasswordReset(){
 }
 async function updateOwnerPassword(){
   if(!db) await initSupabase();
-  const p=$("resetPass").value.trim(),p2=$("resetPass2").value.trim();
-  if(p.length<6){$("lm").style.color="#b42318";$("lm").textContent="Password must be at least 6 characters.";return}
-  if(p!==p2){$("lm").style.color="#b42318";$("lm").textContent="Passwords do not match.";return}
-  $("lm").style.color="#52708f";$("lm").textContent="Saving your new password...";
-  const {data:{user}}=await db.auth.getUser();
-  if(!user){
+  const p=$("resetPass").value;
+  const p2=$("resetPass2").value;
+
+  if(!p || !p2){
     $("lm").style.color="#b42318";
-    $("lm").textContent="This reset link is no longer active. Please request a new reset link.";
+    $("lm").textContent="Both New Password and Confirm New Password are required.";
     return;
   }
-  const {error}=await db.auth.updateUser({password:p});
-  if(error){
+  if(p.length<6){
     $("lm").style.color="#b42318";
-    $("lm").textContent="Could not update password: "+error.message;
+    $("lm").textContent="Password must be at least 6 characters.";
     return;
   }
-  await db.auth.signOut();
-  $("resetPass").value="";$("resetPass2").value="";
-  $("email").value=user.email||"";$("pass").value="";
-  setPortalMode("owner");
-  $("lm").style.color="#16834f";
-  $("lm").textContent="Password changed successfully. You can now log in with your new password.";
+  if(p!==p2){
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Passwords do not match.";
+    return;
+  }
+
+  $("lm").style.color="#52708f";
+  $("lm").textContent="Saving your new password...";
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    if(!session){
+      $("lm").style.color="#b42318";
+      $("lm").textContent="This reset link is no longer active. Please request a new reset link.";
+      return;
+    }
+
+    const {data:{user},error:userError}=await db.auth.getUser();
+    if(userError||!user){
+      $("lm").style.color="#b42318";
+      $("lm").textContent="This reset link is no longer active. Please request a new reset link.";
+      return;
+    }
+
+    const {error}=await db.auth.updateUser({password:p});
+    if(error)throw error;
+
+    // The password was accepted by Supabase. End the recovery session so
+    // the owner must explicitly log in with the newly saved password.
+    const savedEmail=user.email||"";
+    await db.auth.signOut();
+
+    // Remove the one-time recovery code/token from the browser URL.
+    history.replaceState({},document.title,location.origin+location.pathname);
+
+    recoveryMode=false;
+    $("resetPass").value="";
+    $("resetPass2").value="";
+    $("email").value=savedEmail;
+    $("pass").value="";
+    if($("loginTabs"))$("loginTabs").classList.remove("hidden");
+    setPortalMode("owner");
+    $("lm").style.color="#16834f";
+    $("lm").textContent="Password saved successfully. Please log in with your new password.";
+  }catch(e){
+    console.error(e);
+    $("lm").style.color="#b42318";
+    $("lm").textContent="Could not save the new password: "+(e.message||"Please try again.");
+  }
 }
 
 async function doLogin(){
