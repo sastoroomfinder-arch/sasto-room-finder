@@ -585,3 +585,138 @@ footer .srf-social{border-radius:50%!important}
     gap:8px;
   }
 }
+
+
+/* =========================================================
+   SRF USABILITY AUDIT — FINAL 9-ISSUE CONSISTENCY PASS
+   Uses one compact visual system without changing the existing layout.
+   ========================================================= */
+:root{
+  --srf-text-main:#17231d;
+  --srf-text-muted:#66726c;
+  --srf-text-brand:#1d6b50;
+  --srf-text-on-dark:#ffffff;
+  --srf-wa:#25d366;
+  --srf-radius-card:16px;
+  --srf-radius-control:10px;
+  --srf-radius-pill:8px;
+}
+
+/* 1 — reduce visible text-colour variants to the shared palette */
+main{color:var(--srf-text-main)}
+main p,main small,main .trust-row,main .property-tile small,
+main .srf-review-card p,main .srf-review-note,
+main .lead{color:var(--srf-text-muted)}
+main a,main .text-link,main .eyebrow,main .mini-label,
+main .property-tile .tile-action{color:var(--srf-text-brand)}
+main .btn-primary,main .btn-dark{background:var(--srf-text-brand);color:var(--srf-text-on-dark)}
+main .btn-light{background:#fff;color:var(--srf-text-main)}
+main .srf-review-actions a,
+main .srf-review-actions a.light{background:var(--srf-text-brand);color:#fff}
+main .srf-review-actions a.light{border:1px solid var(--srf-text-brand)}
+main .srf-stars{color:var(--srf-text-brand)}
+main .srf-review-brand .srf-icon{
+  background:var(--srf-text-brand)!important;
+  color:#fff!important;
+}
+nav a{color:var(--srf-text-muted)}
+nav a:hover,nav a.active{color:var(--srf-text-brand)}
+footer .footer-grid a,footer .footer-grid span{color:#b8c7be}
+footer .footer-grid h3{color:#fff}
+footer .light-brand b{color:#fff}
+footer .light-brand small{color:#b8c7be}
+footer .copyright{color:#91a298}
+
+/* 2 — four intentional corner shapes: card, control, small control, circle */
+main .search-card,main .card,main .property-tile,main .srf-review-card,
+main .contact-form,main .listing{border-radius:var(--srf-radius-card)!important}
+main .btn,main .search-card input,main .filters input,main .filters select,
+main .contact-form input,main .contact-form select,main .contact-form textarea{
+  border-radius:var(--srf-radius-control)!important;
+}
+main .chips a,main .srf-review-actions a,main .text-link{border-radius:var(--srf-radius-pill)}
+main .official-logo{border-radius:var(--srf-radius-control)!important}
+.floating-wa,.srf-social,.srf-review-brand .srf-icon{border-radius:50%!important}
+
+/* 3 — sentence case must remain sentence case even if older rules exist */
+main .eyebrow{ text-transform:none!important; letter-spacing:.04em!important; }
+
+/* 4 — one primary-action treatment */
+.btn-primary,.btn-dark,.nav-call{
+  background:var(--brand)!important;
+  color:#fff!important;
+  border:0!important;
+}
+.search-card .full{min-height:46px}
+
+/* 5 — one recognizable WhatsApp treatment everywhere */
+.srf-wa-btn{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  background:var(--srf-wa)!important;
+  color:#fff!important;
+  border:0!important;
+  border-radius:var(--srf-radius-control)!important;
+  font-weight:700;
+}
+.srf-wa-btn:hover,.srf-wa-btn:focus-visible{background:#1fbd59!important;color:#fff!important}
+.srf-wa-link{
+  display:inline-flex!important;
+  align-items:center;
+  gap:7px;
+  width:max-content;
+  padding:8px 11px!important;
+  margin:5px 0!important;
+  background:var(--srf-wa)!important;
+  color:#fff!important;
+  border-radius:var(--srf-radius-control)!important;
+  font-weight:700!important;
+}
+.srf-wa-float{
+  background:var(--srf-wa)!important;
+  color:#fff!important;
+  border-radius:50%!important;
+  font-size:25px!important;
+}
+
+/* 6 — card content starts on the same grid line as the section heading */
+.cards .card{
+  padding-left:0!important;
+  padding-right:16px!important;
+}
+.cards .card .icon,
+.cards .card h3,
+.cards .card p{margin-left:0!important}
+
+/* 7 + 9 — make category tiles visibly actionable; remove decorative numbering */
+.property-tile{position:relative!important;justify-content:flex-start!important}
+.property-tile b{margin-top:0!important}
+.property-tile .tile-action{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:auto;
+  padding-top:10px;
+  font-size:12px;
+  font-weight:800;
+}
+.property-tile .tile-action span{
+  color:inherit;
+  font-size:16px;
+  line-height:1;
+  transition:transform .2s ease;
+}
+.property-tile:hover .tile-action span,
+.property-tile:focus-visible .tile-action span{transform:translateX(3px)}
+.property-tile:focus-visible{
+  outline:3px solid rgba(29,107,80,.28);
+  outline-offset:2px;
+}
+
+/* Keep all interactive focus treatment consistent */
+main a:focus-visible,main button:focus-visible,main input:focus-visible{
+  outline:3px solid rgba(29,107,80,.28);
+  outline-offset:2px;
+}
