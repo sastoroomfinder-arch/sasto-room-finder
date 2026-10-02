@@ -34,7 +34,7 @@
 .srf-review-card p{color:#607089;line-height:1.6;margin:10px 0 14px;font-size:13px}
 .srf-review-actions{display:flex;flex-wrap:wrap;gap:8px}.srf-review-actions a{display:inline-flex;align-items:center;gap:6px;padding:9px 11px;border-radius:8px;background:#071a33;color:#fff;text-decoration:none;font-weight:800;font-size:12px}.srf-review-actions a.light{background:#eef5fc;color:#0879e8}
 .srf-review-note{font-size:11px;color:#7a8799;margin-top:9px}
-@media(max-width:700px){.srf-reviews{grid-template-columns:1fr}.srf-social{width:36px;height:36px;font-size:20px}}.srf-social{font-size:12px}}
+@media(max-width:700px){.srf-reviews{grid-template-columns:1fr}.srf-social{width:36px;height:36px;font-size:20px}}
 </style></head>
 <body>
 <header class="topbar">
@@ -62,7 +62,7 @@
       <p class="lead">Rooms, flats, houses, land and commercial properties for rent, lease, buy and sell — with practical local assistance from Sasto Room Finder Pvt. Ltd.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="properties.html">Browse Properties</a>
-        <a class="btn btn-light" href="https://wa.me/9779818067008" target="_blank" rel="noopener">WhatsApp Us</a>
+        <a class="btn srf-wa-btn" href="https://wa.me/9779818067008" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp Us</a>
       </div>
       <div class="trust-row"><span>✓ Local property assistance</span><span>✓ Fast response</span><span>✓ Kathmandu • Lalitpur • Bhaktapur</span></div>
     </div>
@@ -76,7 +76,7 @@
       </div>
       <label>Location<input id="homeLocation" placeholder="e.g. Koteshwor, Baneshwor, Imadol"></label>
       <label>Budget<input id="homeBudget" placeholder="e.g. Rs. 20,000/month"></label>
-      <button class="btn btn-dark full" onclick="searchFromHome()">Search Properties</button>
+      <button class="btn btn-primary full" onclick="searchFromHome()">Search Properties</button>
     </div>
   </div>
 </section>
@@ -96,10 +96,10 @@
   <div class="container">
     <div class="section-head"><div><span class="eyebrow">Featured categories</span><h2>Popular property searches</h2></div></div>
     <div class="property-grid">
-      <a class="property-tile" href="properties.html?type=1bhk"><span>01</span><b>1BHK Flats</b><small>For students, couples & small families</small></a>
-      <a class="property-tile" href="properties.html?type=2bhk"><span>02</span><b>2BHK Flats</b><small>Comfortable family living</small></a>
-      <a class="property-tile" href="properties.html?type=3bhk"><span>03</span><b>3BHK / 3BK</b><small>More space for families</small></a>
-      <a class="property-tile" href="properties.html?type=land"><span>04</span><b>Land & Houses</b><small>Buy, sell or explore options</small></a>
+      <a class="property-tile" href="properties.html?type=1bhk" aria-label="View 1BHK flat listings"><b>1BHK Flats</b><small>For students, couples & small families</small><span class="tile-action" aria-hidden="true">View listings <span>→</span></span></a>
+      <a class="property-tile" href="properties.html?type=2bhk" aria-label="View 2BHK flat listings"><b>2BHK Flats</b><small>Comfortable family living</small><span class="tile-action" aria-hidden="true">View listings <span>→</span></span></a>
+      <a class="property-tile" href="properties.html?type=3bhk" aria-label="View 3BHK / 3BK listings"><b>3BHK / 3BK</b><small>More space for families</small><span class="tile-action" aria-hidden="true">View listings <span>→</span></span></a>
+      <a class="property-tile" href="properties.html?type=land" aria-label="View land and house listings"><b>Land & Houses</b><small>Buy, sell or explore options</small><span class="tile-action" aria-hidden="true">View listings <span>→</span></span></a>
     </div>
   </div>
 </section>
@@ -124,16 +124,16 @@
 </div></div>
 </section>
 
-<section class="cta"><div class="container cta-inner"><div><span class="eyebrow">Need a property?</span><h2>Tell us what you need.</h2><p>Call or WhatsApp and share your preferred location, property type and budget.</p></div><div><a class="btn btn-light" href="tel:+9779818067008">Call Now</a><a class="btn btn-light" href="https://wa.me/9779818067008" target="_blank" rel="noopener">WhatsApp</a></div></div></section>
+<section class="cta"><div class="container cta-inner"><div><span class="eyebrow">Need a property?</span><h2>Tell us what you need.</h2><p>Call or WhatsApp and share your preferred location, property type and budget.</p></div><div><a class="btn btn-light" href="tel:+9779818067008">Call Now</a><a class="btn srf-wa-btn" href="https://wa.me/9779818067008" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a></div></div></section>
 </main>
 
-<footer><div class="container footer-grid"><div><a class="brand light-brand" href="index.html"><img class="official-logo" src="official-logo.jpg" alt="Sasto Room Finder Real Estate"><span><b>Sasto Room Finder</b><small>Real Estate • Pvt. Ltd.</small></span></a><p>Real Estate • Property Management • Room Finder</p></div><div><h3>Quick Links</h3><a href="properties.html">Properties</a><a href="services.html">Services</a><a href="about.html">About Us</a><a href="contact.html">Contact</a></div><div><h3>Contact</h3><a href="tel:+9779818067008">+977 9818067008</a><a href="https://wa.me/9779818067008" target="_blank">WhatsApp</a><a href="mailto:sastoroomfinder@gmail.com">sastoroomfinder@gmail.com</a><a href="https://www.google.com/maps/search/?api=1&query=Sasto+Room+Finder+Pvt.+Ltd.%2C+Katyani+Chowk%2C+Baneshwor%2C+Kathmandu" target="_blank" rel="noopener">Katyani Chowk, Baneshwor, Kathmandu 📍</a><a href="https://www.sastoroomfinder.com.np" target="_blank">www.sastoroomfinder.com.np</a></div><div><h3>Follow Us</h3><div class="srf-socials" aria-label="Sasto Room Finder social media">
+<footer><div class="container footer-grid"><div><a class="brand light-brand" href="index.html"><img class="official-logo" src="official-logo.jpg" alt="Sasto Room Finder Real Estate"><span><b>Sasto Room Finder</b><small>Real Estate • Pvt. Ltd.</small></span></a><p>Real Estate • Property Management • Room Finder</p></div><div><h3>Quick Links</h3><a href="properties.html">Properties</a><a href="services.html">Services</a><a href="about.html">About Us</a><a href="contact.html">Contact</a></div><div><h3>Contact</h3><a href="tel:+9779818067008">+977 9818067008</a><a class="srf-wa-link" href="https://wa.me/9779818067008" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a><a href="mailto:sastoroomfinder@gmail.com">sastoroomfinder@gmail.com</a><a href="https://www.google.com/maps/search/?api=1&query=Sasto+Room+Finder+Pvt.+Ltd.%2C+Katyani+Chowk%2C+Baneshwor%2C+Kathmandu" target="_blank" rel="noopener">Katyani Chowk, Baneshwor, Kathmandu 📍</a><a href="https://www.sastoroomfinder.com.np" target="_blank">www.sastoroomfinder.com.np</a></div><div><h3>Follow Us</h3><div class="srf-socials" aria-label="Sasto Room Finder social media">
 <a class="srf-social srf-fb" href="https://www.facebook.com/100064213865360" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><span class="srf-icon"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></span></a>
 <a class="srf-social srf-ig" href="https://www.instagram.com/sasto_room_finder_official?stkn=MWVwaGZ1cXJmcnh5Zw==" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><span class="srf-icon"><i class="fa-brands fa-instagram" aria-hidden="true"></i></span></a>
 <a class="srf-social srf-yt" href="https://youtube.com/@sastoroomfinder?si=jG1Jx1vw2k0mih7f" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube"><span class="srf-icon"><i class="fa-brands fa-youtube" aria-hidden="true"></i></span></a>
 <a class="srf-social srf-tt" href="https://www.tiktok.com/@sastoroomfinder" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><span class="srf-icon"><i class="fa-brands fa-tiktok" aria-hidden="true"></i></span></a>
 <a class="srf-social srf-tg" href="https://t.me/sastoroomfinder" target="_blank" rel="noopener" aria-label="Telegram" title="Telegram"><span class="srf-icon"><i class="fa-brands fa-telegram" aria-hidden="true"></i></span></a>
 </div></div></div><div class="copyright">© 2026 Sasto Room Finder Pvt. Ltd. All rights reserved.</div></footer>
-<a class="floating-wa" href="https://wa.me/9779818067008" target="_blank" aria-label="WhatsApp">☘</a>
+<a class="floating-wa srf-wa-float" href="https://wa.me/9779818067008" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>
 <script src="script.js?v=20260929"></script>
 </body></html>
