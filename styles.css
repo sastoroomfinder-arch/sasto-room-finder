@@ -453,3 +453,121 @@ footer{
 .footer-grid .srf-socials{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;white-space:nowrap!important}
 .footer-grid .srf-social{display:inline-flex!important;flex:0 0 36px!important}
 @media(max-width:520px){.footer-grid .srf-socials{flex-wrap:nowrap!important;gap:5px!important}.footer-grid .srf-social{flex:0 0 31px!important;width:31px!important;height:31px!important;font-size:15px!important}}
+
+
+/* SRF USABILITY AUDIT — homepage consistency + accessible states */
+:root{
+  --srf-text:16px;
+  --srf-small:12px;
+  --srf-meta:13px;
+  --srf-nav:14px;
+  --srf-lead:16px;
+  --srf-card-title:20px;
+  --srf-h2:32px;
+  --srf-h1:52px;
+  --srf-radius-card:16px;
+  --srf-radius-control:10px;
+  --srf-radius-small:8px;
+}
+
+/* 1 — shared homepage type scale */
+body{font-size:var(--srf-text)}
+main .eyebrow,main .mini-label{font-size:var(--srf-small)}
+main .hero h1{font-size:var(--srf-h1)}
+main .lead{font-size:var(--srf-lead)}
+main .section h2,main .cta h2{font-size:var(--srf-h2)}
+main .card h3{font-size:var(--srf-card-title)}
+main .trust-row{font-size:var(--srf-meta)}
+main .chips a{font-size:var(--srf-small)}
+main .search-card label{font-size:var(--srf-meta)}
+main .btn{font-size:var(--srf-nav)}
+main .srf-review-card p{font-size:var(--srf-meta)}
+main .srf-review-actions a{font-size:var(--srf-small)}
+main .srf-review-note{font-size:var(--srf-small)}
+main .srf-stars{font-size:var(--srf-meta)}
+
+/* 2 — shared homepage corner-radius system */
+main .search-card,
+main .card,
+main .property-tile,
+main .srf-review-card{border-radius:var(--srf-radius-card)}
+main .btn,
+main .search-card input{border-radius:var(--srf-radius-control)}
+main .chips a,
+main .srf-review-actions a{border-radius:var(--srf-radius-small)}
+main .official-logo{border-radius:var(--srf-radius-control)}
+
+/* 5 — visible and keyboard-accessible property-type state */
+main .chips a{
+  transition:background-color .2s,color .2s,border-color .2s,box-shadow .2s;
+}
+main .chips a.active{
+  background:var(--brand);
+  border-color:var(--brand);
+  color:#fff;
+  font-weight:700;
+}
+main .chips a:focus-visible,
+main .btn:focus-visible,
+main a:focus-visible,
+main input:focus-visible{
+  outline:3px solid rgba(29,107,80,.28);
+  outline-offset:2px;
+}
+
+/* 8 — keep the services link visually associated with its heading */
+main > .section:nth-of-type(2) .section-head{
+  justify-content:flex-start;
+  align-items:center;
+  gap:24px;
+}
+main > .section:nth-of-type(2) .section-head .text-link{
+  margin-left:0;
+}
+
+/* 9 — consistent custom service icons */
+main .card .icon{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  color:var(--brand);
+  font-size:18px;
+}
+main .card .icon svg{
+  width:30px;
+  height:30px;
+  display:block;
+}
+main .card .icon svg path{
+  fill:currentColor;
+}
+
+/* 10 — align search CTA with the 46px search fields */
+main .search-card input{
+  min-height:46px;
+}
+main .search-card .full{
+  min-height:46px;
+}
+
+/* Footer headings changed from skipped H4 to H3 */
+footer .footer-grid h3{
+  color:#fff;
+  margin:0 0 4px;
+  font-size:var(--srf-card-title);
+}
+
+/* 7 — same solid WhatsApp treatment wherever this CTA appears */
+main .cta .btn[href^="https://wa.me"]{
+  background:#fff;
+  color:var(--ink);
+  border:0;
+}
+
+/* Mobile scale stays within the same shared system */
+@media(max-width:520px){
+  main .hero h1{font-size:40px}
+  main .section h2,main .cta h2{font-size:28px}
+  main .card h3{font-size:var(--srf-card-title)}
+}
