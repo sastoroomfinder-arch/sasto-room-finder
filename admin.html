@@ -50,7 +50,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
   <div class="loginbox">
     <h1>Sasto<span style="color:#0879e8">Room</span>Finder</h1>
     <p id="loginSub">Admin & House Owner Portal</p>
-    <div id="loginTabs" class="tabs"><button id="adminLoginTab" class="tab active" onclick="setPortalMode('admin')">Admin Login</button><button id="ownerLoginTab" class="tab" onclick="setPortalMode('owner')">Owner Login</button><button id="signupTab" class="tab" onclick="setPortalMode('ownerSignup')">Owner Sign Up</button></div>
+    <div id="loginTabs" class="tabs"><button id="adminLoginTab" class="tab active" onclick="setPortalMode('admin')">Admin Login</button><button id="ownerLoginTab" class="tab" onclick="setPortalMode('owner')">Owner Login</button></div>
     <div id="loginFields">
       <label>Email</label><input id="email" type="email" placeholder="Your email" autocomplete="email">
       <label>Password</label><input id="pass" type="password" placeholder="Your password" autocomplete="current-password">
@@ -238,23 +238,20 @@ const isAdmin=()=>profile?.role==="admin";
 
 function setPortalMode(m){
   portalMode=m;
-  const signup=m==="ownerSignup";
-  $("loginFields").classList.toggle("hidden",signup);
-  $("signupFields").classList.toggle("hidden",!signup);
+  const signup=false;
+  $("loginFields").classList.remove("hidden");
   $("forgotFields").classList.add("hidden");$("resetFields").classList.add("hidden");
   $("adminLoginTab").classList.toggle("active",m==="admin");
   $("ownerLoginTab").classList.toggle("active",m==="owner");
-  $("signupTab").classList.toggle("active",signup);
   $("ownerForgotWrap").classList.toggle("hidden",m!=="owner");
   $("loginSub").textContent=m==="admin"?"Administrator access only":(signup?"Create your House Owner account":"House Owner access only");
   $("lm").textContent="";$("lm").style.color="#b42318";
 }
-function setAuthMode(m){setPortalMode(m==="signup"?"ownerSignup":m==="owner"?"owner":"admin")}
+function setAuthMode(m){setPortalMode(m==="owner"?"owner":"admin")}
 function showOwnerResetForm(message){
   recoveryMode=true;
   setPortalMode("owner");
   $("loginFields").classList.add("hidden");
-  $("signupFields").classList.add("hidden");
   $("forgotFields").classList.add("hidden");
   $("resetFields").classList.remove("hidden");
   $("ownerForgotWrap").classList.add("hidden");
@@ -841,7 +838,7 @@ boot();
   #sponsorBody .secondary,#sponsorBody .danger{padding:7px 9px;font-size:11px}
   .head{height:64px;padding:0 12px;box-shadow:0 2px 12px rgba(7,52,124,.08)}
   .brand{font-size:17px;line-height:1.1;white-space:nowrap}.brand:first-letter{font-size:18px}
-  .user{gap:7px;font-size:12px}.user .logout{display:none}
+  .user{gap:7px;font-size:12px}.user .logout{display:inline-flex;align-items:center;justify-content:center;padding:7px 9px;border:1px solid #cfe1f6;border-radius:8px;background:#edf6ff;color:#0879e8;font-size:11px}
   .mobile-menu-btn{display:grid;place-items:center;width:42px;height:42px;border:0;border-radius:12px;background:#0879e8;color:#fff;font-size:22px;margin-right:7px;flex:0 0 auto}
   .head{justify-content:flex-start}.head .user{margin-left:auto}
   .layout{display:block;min-height:calc(100vh - 64px)}
