@@ -571,3 +571,17 @@ main .cta .btn[href^="https://wa.me"]{
   main .section h2,main .cta h2{font-size:28px}
   main .card h3{font-size:var(--srf-card-title)}
 }
+
+
+/* Final homepage radius normalization: five intentional shapes */
+.topbar .owner-register-icon{border-radius:10px}
+main .srf-review-brand .srf-icon{border-radius:50%!important}
+footer .srf-social{border-radius:50%!important}
+.floating-wa{border-radius:50%!important}
+@media(max-width:520px){
+  main > .section:nth-of-type(2) .section-head{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
+}
