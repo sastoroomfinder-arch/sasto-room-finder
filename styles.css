@@ -720,3 +720,179 @@ main a:focus-visible,main button:focus-visible,main input:focus-visible{
   outline:3px solid rgba(29,107,80,.28);
   outline-offset:2px;
 }
+
+/* =========================================================
+   SRF — FINAL HOMEPAGE USABILITY PASS (15-ISSUE AUDIT)
+   Normalize only the homepage presentation; preserve markup/behavior.
+   ========================================================= */
+
+/* 1 — one deliberate radius system on the homepage */
+main *{border-radius:0!important}
+main .search-card,main .card,main .property-tile,main .srf-review-card{border-radius:16px!important}
+main .btn,main .search-card input{border-radius:10px!important}
+main .chips a,main .srf-review-actions a,main .text-link{border-radius:8px!important}
+main .srf-review-brand .srf-icon{border-radius:50%!important}
+.topbar .owner-register-icon,header .official-logo{border-radius:10px!important}
+footer .srf-social{border-radius:50%!important}
+.floating-wa{border-radius:50%!important}
+
+/* 2 + 3 — identical grid gutters for service and property cards */
+main .cards,main .property-grid{column-gap:18px!important;row-gap:18px!important}
+main .property-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:800px){
+  main .cards,main .property-grid{column-gap:14px!important;row-gap:14px!important}
+}
+@media(max-width:520px){
+  main .cards,main .property-grid{column-gap:12px!important;row-gap:12px!important}
+}
+
+/* 4 — all footer columns start on the same top axis */
+.footer-grid{align-items:start!important}
+.footer-grid>div{align-self:start!important}
+.footer-grid .light-brand{align-items:flex-start!important}
+.footer-grid .light-brand .official-logo{margin-top:0!important}
+.footer-grid .light-brand>span{align-self:flex-start!important}
+
+/* 5 — safe viewport offset for the floating WhatsApp control */
+.floating-wa{right:max(20px,env(safe-area-inset-right))!important;bottom:max(20px,env(safe-area-inset-bottom))!important}
+@media(max-width:520px){
+  .floating-wa{right:max(18px,env(safe-area-inset-right))!important;bottom:max(18px,env(safe-area-inset-bottom))!important}
+}
+
+/* 6 — one gap value for every property-type tab */
+main .chips{display:flex!important;gap:8px!important}
+main .chips a{margin:0!important;flex:0 0 auto}
+main .chips a:not(.active){
+  border:1px solid #b7c3bc!important;
+  color:#33413a!important;
+  background:#fff!important;
+  font-weight:700!important;
+}
+
+/* 7 — restore the same vertical rhythm before the primary search action */
+main .search-card .full{display:flex!important;margin-top:12px!important}
+
+/* 8 — stronger inactive-tab affordance without competing with active state */
+main .chips a:not(.active):hover,
+main .chips a:not(.active):focus-visible{
+  border-color:var(--brand)!important;
+  color:var(--brand)!important;
+  background:#f2f7f4!important;
+}
+
+/* 9 — keep services link attached to the heading row */
+main > .section:nth-of-type(2) .section-head{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:18px!important;
+}
+main > .section:nth-of-type(2) .section-head .text-link{
+  margin:0 0 2px auto!important;
+  white-space:nowrap!important;
+}
+@media(max-width:520px){
+  main > .section:nth-of-type(2) .section-head{
+    align-items:flex-start!important;
+    gap:8px!important;
+  }
+  main > .section:nth-of-type(2) .section-head .text-link{
+    margin:0!important;
+  }
+}
+
+/* 10 — balanced service-card content */
+main .cards .card{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:100%!important;
+  padding:20px!important;
+}
+main .cards .card .icon{margin-bottom:12px!important}
+main .cards .card h3{margin:0 0 8px!important}
+main .cards .card p{margin:0!important;line-height:1.55!important}
+
+/* 11 — one icon treatment: same size, fill, alignment */
+main .cards .card .icon{
+  width:38px!important;
+  height:38px!important;
+  display:grid!important;
+  place-items:center!important;
+  color:var(--brand)!important;
+  flex:0 0 38px!important;
+}
+main .cards .card .icon svg{
+  width:30px!important;
+  height:30px!important;
+  display:block!important;
+}
+main .cards .card .icon svg path{
+  fill:currentColor!important;
+}
+
+/* 12 — consistent apartment naming */
+main .property-tile b{font-size:20px!important;line-height:1.25!important}
+
+/* 13 — equal social hit areas with optical centering */
+.footer-grid .srf-socials{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.footer-grid .srf-social{
+  width:36px!important;
+  height:36px!important;
+  flex:0 0 36px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.footer-grid .srf-social .srf-icon{
+  width:20px!important;
+  height:20px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+}
+.footer-grid .srf-social i{font-size:18px!important;line-height:1!important}
+@media(max-width:520px){
+  .footer-grid .srf-socials{gap:6px!important}
+  .footer-grid .srf-social{width:32px!important;height:32px!important;flex-basis:32px!important}
+  .footer-grid .srf-social .srf-icon{width:18px!important;height:18px!important}
+  .footer-grid .srf-social i{font-size:16px!important}
+}
+
+/* 14 — identical vertical rhythm for footer links */
+.footer-grid>div>a{
+  margin:0 0 8px!important;
+  line-height:1.45!important;
+}
+.footer-grid>div>h3{margin:0 0 8px!important}
+.footer-grid .srf-socials{margin-top:0!important}
+.footer-grid>div:first-child>p{margin:8px 0 0!important}
+
+/* 15 — integrate WhatsApp into the dark footer without losing recognition */
+.footer-grid .srf-wa-link{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  margin:0 0 8px!important;
+  padding:7px 10px!important;
+  background:transparent!important;
+  color:#d7f5e2!important;
+  border:1px solid rgba(37,211,102,.65)!important;
+  border-radius:8px!important;
+  font-weight:700!important;
+}
+.footer-grid .srf-wa-link:hover,
+.footer-grid .srf-wa-link:focus-visible{
+  background:rgba(37,211,102,.12)!important;
+  color:#fff!important;
+  border-color:#25d366!important;
+}
+
+/* Floating WhatsApp remains the dedicated high-visibility contact action. */
+.srf-wa-float{box-shadow:0 10px 30px rgba(0,0,0,.20)!important}
