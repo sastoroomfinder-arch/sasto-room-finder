@@ -1045,7 +1045,7 @@ function mapEmbedUrl(r){
 }
 
 function propertyShareUrl(r){
- return location.origin+"/properties.html?property="+encodeURIComponent(rid(r));
+ return location.origin+"/properties?property="+encodeURIComponent(rid(r));
 }
 window.shareCurrentProperty=async()=>{
  if(!active)return;
