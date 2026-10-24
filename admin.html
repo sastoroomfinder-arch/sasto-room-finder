@@ -731,7 +731,7 @@ function editSponsor(i){
   $("sponsorMsg").textContent="";$("sponsorMt").textContent="Edit Advertisement";$("sponsorModal").classList.remove("hidden");
 }
 async function prepareSponsorImage(file){
-  if(!file||!/^image\\/(jpeg|png|webp)$/i.test(file.type))throw new Error("Please choose a JPG, PNG, or WebP image.");
+  if(!file||!/^image\/(jpeg|png|webp)$/i.test(file.type))throw new Error("Please choose a JPG, PNG, or WebP image.");
   if(file.size>8*1024*1024)throw new Error("Image must be 8MB or smaller before optimization.");
   const bitmap=await createImageBitmap(file);
   try{
@@ -744,7 +744,7 @@ async function prepareSponsorImage(file){
     ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",0.80));
     if(!blob)throw new Error("Could not optimize this image. Please try a JPG or PNG.");
-    const safeName=(file.name.replace(/\\.[^.]+$/,"").replace(/[^a-z0-9_-]+/gi,"-").slice(0,50)||"sponsor");
+    const safeName=(file.name.replace(/\.[^.]+$/,"").replace(/[^a-z0-9_-]+/gi,"-").slice(0,50)||"sponsor");
     return new File([blob],safeName+".webp",{type:"image/webp",lastModified:Date.now()});
   }finally{bitmap.close?.();}
 }
