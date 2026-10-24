@@ -244,9 +244,9 @@ function css(){
 .srf-sponsor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 13px;padding-left:6px}
 .srf-sponsor-heading span{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#0879e8;background:#fff;border:1px solid #cfe0f3;border-radius:999px;padding:6px 9px}
 .srf-sponsor-heading h2{margin:0;color:#071a33;font-size:19px}
-.srf-sponsor-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
-.srf-sponsor-card{display:grid;grid-template-columns:105px minmax(0,1fr);background:#fff;border:1px solid #dbe6f2;border-radius:14px;overflow:hidden;box-shadow:0 5px 16px rgba(11,39,64,.06);transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease}.srf-sponsor-card:hover{border-color:#b9d2ed;box-shadow:0 9px 24px rgba(11,39,64,.10);transform:translateY(-1px)}@media(prefers-reduced-motion:reduce){.srf-sponsor-card{transition:none}.srf-sponsor-card:hover{transform:none}}
-.srf-sponsor-card img{width:105px;height:100%;min-height:125px;object-fit:cover;display:block;background:#edf2f7}
+.srf-sponsor-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.srf-sponsor-card{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:stretch;background:#fff;border:1px solid #dbe6f2;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(11,39,64,.05)}
+.srf-sponsor-card img{width:150px;height:100%;min-height:130px;max-height:190px;object-fit:contain;object-position:center;display:block;background:#f8fafc;padding:8px;box-sizing:border-box}
 .srf-sponsor-body{padding:12px 13px}
 .srf-sponsor-badge{display:inline-block;padding:4px 7px;border-radius:5px;background:#071a33;color:#fff;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
 .srf-sponsor-body h3{margin:7px 0 3px;color:#071a33;font-size:15px;line-height:1.25}
@@ -256,7 +256,7 @@ function css(){
 .srf-sponsor-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 10px;border-radius:8px;background:#0879e8;color:#fff;text-decoration:none;font-size:11px;font-weight:800}
 .srf-sponsor-actions a.wa{background:#0b8f5a}
 @media(max-width:900px){.srf-sponsor-grid{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:600px){.srf-public-sponsors{width:calc(100% - 20px);margin:14px auto 20px;padding:14px}.srf-sponsor-grid{grid-template-columns:1fr}.srf-sponsor-card{grid-template-columns:92px minmax(0,1fr)}.srf-sponsor-card img{width:92px;min-height:115px}}
+@media(max-width:600px){.srf-public-sponsors{width:calc(100% - 20px);margin:20px auto;padding:14px}.srf-sponsor-grid{grid-template-columns:minmax(0,1fr);gap:12px}.srf-sponsor-card{grid-template-columns:104px minmax(0,1fr)}.srf-sponsor-card img{width:104px;min-height:108px;max-height:145px;padding:6px}.srf-sponsor-body{padding:11px}.srf-sponsor-body h3{font-size:14px}}
 
 .srf-empty{
  grid-column:1/-1;
@@ -1243,7 +1243,7 @@ async function loadSponsors(){
           </div>
         </article>`;
       }).join("")+'</div>';
-    if(grid&&grid.parentNode) grid.parentNode.insertBefore(wrap,grid);
+    if(grid&&grid.parentNode) grid.insertAdjacentElement("afterend",wrap);
     else if(hero&&hero.parentNode) hero.parentNode.insertBefore(wrap,hero.nextSibling);
     else if(main) main.insertBefore(wrap,main.firstChild);
   }catch(e){
