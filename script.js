@@ -4,6 +4,7 @@ const U="https://amhrnahjshsgelacqzyl.supabase.co",K="sb_publishable_f2morNcNVHa
 let rows=[],shown=[],active=null,pi=0,$=id=>document.getElementById(id);
 const V=(...a)=>{for(const x of a)if(x!=null&&String(x).trim())return x;return""};
 const E=x=>String(x??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+function optimizedSponsorImage(url){try{const u=new URL(url);if(u.hostname==="amhrnahjshsgelacqzyl.supabase.co"&&u.pathname.includes("/storage/v1/object/public/")){u.pathname=u.pathname.replace("/storage/v1/object/public/","/storage/v1/render/image/public/");u.searchParams.set("width","320");u.searchParams.set("height","320");u.searchParams.set("resize","cover");u.searchParams.set("quality","72");u.searchParams.set("format","webp");return u.toString();}}catch{}return url;}
 const J=x=>{try{return typeof x=="object"?x:JSON.parse(x)}catch{return null}};
 const FAVKEY="srf_favorite_properties";
 const favIds=()=>{try{return JSON.parse(localStorage.getItem(FAVKEY)||"[]")}catch{return[]}};
@@ -1225,10 +1226,11 @@ async function loadSponsors(){
       '<div class="srf-sponsor-grid">'+sponsors.map(s=>{
         const title=E(s.title||s.sponsor_name||"Sponsored");
         const image=s.image_url||"";
+        const optimizedImage=optimizedSponsorImage(image);
         const link=s.link_url||"";
         const phone=String(s.phone||"").replace(/\D/g,"");
         return `<article class="srf-sponsor-card">
-          ${image?`<img src="${E(image)}" alt="${title}" loading="lazy">`:""}
+          ${image?`<img src="${E(optimizedImage)}" data-original="${E(image)}" alt="${title}" width="105" height="125" loading="lazy" decoding="async" onerror="if(this.dataset.original&&this.src!==this.dataset.original){this.onerror=null;this.src=this.dataset.original}">`:""}
           <div class="srf-sponsor-body">
             <span class="srf-sponsor-badge">Sponsored</span>
             <h3>${title}</h3>
