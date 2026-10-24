@@ -244,8 +244,8 @@ function css(){
 .srf-sponsor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 13px;padding-left:6px}
 .srf-sponsor-heading span{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#0879e8;background:#fff;border:1px solid #cfe0f3;border-radius:999px;padding:6px 9px}
 .srf-sponsor-heading h2{margin:0;color:#071a33;font-size:19px}
-.srf-sponsor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.srf-sponsor-card{display:grid;grid-template-columns:105px minmax(0,1fr);background:#fff;border:1px solid #dbe6f2;border-radius:14px;overflow:hidden;box-shadow:0 5px 16px rgba(11,39,64,.06)}
+.srf-sponsor-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.srf-sponsor-card{display:grid;grid-template-columns:105px minmax(0,1fr);background:#fff;border:1px solid #dbe6f2;border-radius:14px;overflow:hidden;box-shadow:0 5px 16px rgba(11,39,64,.06);transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease}.srf-sponsor-card:hover{border-color:#b9d2ed;box-shadow:0 9px 24px rgba(11,39,64,.10);transform:translateY(-1px)}@media(prefers-reduced-motion:reduce){.srf-sponsor-card{transition:none}.srf-sponsor-card:hover{transform:none}}
 .srf-sponsor-card img{width:105px;height:100%;min-height:125px;object-fit:cover;display:block;background:#edf2f7}
 .srf-sponsor-body{padding:12px 13px}
 .srf-sponsor-badge{display:inline-block;padding:4px 7px;border-radius:5px;background:#071a33;color:#fff;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
@@ -255,7 +255,7 @@ function css(){
 .srf-sponsor-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .srf-sponsor-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 10px;border-radius:8px;background:#0879e8;color:#fff;text-decoration:none;font-size:11px;font-weight:800}
 .srf-sponsor-actions a.wa{background:#0b8f5a}
-@media(max-width:900px){.srf-sponsor-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.srf-sponsor-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.srf-public-sponsors{width:calc(100% - 20px);margin:14px auto 20px;padding:14px}.srf-sponsor-grid{grid-template-columns:1fr}.srf-sponsor-card{grid-template-columns:92px minmax(0,1fr)}.srf-sponsor-card img{width:92px;min-height:115px}}
 
 .srf-empty{
