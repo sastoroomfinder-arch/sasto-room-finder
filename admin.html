@@ -184,7 +184,7 @@ main{padding:22px;max-width:1500px;width:100%;margin:auto}.welcome{background:li
 <div class="field"><label>End Date</label><input id="sponsorEnd" type="date"><small class="muted">Leave blank for no end date.</small></div>
 <div class="field full"><label>Website / YouTube Link</label><input id="sponsorLink" type="url" placeholder="https://..."></div>
 <div class="field"><label>Contact Phone</label><input id="sponsorPhone" placeholder="98XXXXXXXX"></div>
-<div class="field"><label>Logo / Banner Image</label><input id="sponsorImage" type="file" accept="image/jpeg,image/png,image/webp"></div>
+<div class="field"><label>Logo / Banner Image</label><input id="sponsorImage" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">Images are automatically resized to max 1000px and compressed to WebP when you save.</small></div>
 <div class="field full"><label>Description</label><textarea id="sponsorDescription" placeholder="Short advertisement text..."></textarea></div>
 <div id="sponsorMsg" class="field full" style="font-weight:700"></div>
 <div class="fa"><button class="secondary" onclick="closeSponsorModal()">Cancel</button><button class="primary" onclick="saveSponsor()">Save Advertisement</button></div>
@@ -730,11 +730,29 @@ function editSponsor(i){
   $("sponsorPhone").value=x.phone||"";$("sponsorDescription").value=x.description||"";$("sponsorImage").value="";
   $("sponsorMsg").textContent="";$("sponsorMt").textContent="Edit Advertisement";$("sponsorModal").classList.remove("hidden");
 }
+async function prepareSponsorImage(file){
+  if(!file||!/^image\\/(jpeg|png|webp)$/i.test(file.type))throw new Error("Please choose a JPG, PNG, or WebP image.");
+  if(file.size>8*1024*1024)throw new Error("Image must be 8MB or smaller before optimization.");
+  const bitmap=await createImageBitmap(file);
+  try{
+    const maxSide=1000,scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    const ctx=canvas.getContext("2d");
+    if(!ctx)throw new Error("Image optimization is not supported by this browser.");
+    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",0.80));
+    if(!blob)throw new Error("Could not optimize this image. Please try a JPG or PNG.");
+    const safeName=(file.name.replace(/\\.[^.]+$/,"").replace(/[^a-z0-9_-]+/gi,"-").slice(0,50)||"sponsor");
+    return new File([blob],safeName+".webp",{type:"image/webp",lastModified:Date.now()});
+  }finally{bitmap.close?.();}
+}
 async function uploadSponsorImage(f){
   if(!f)return null;
-  if(f.size>8*1024*1024)throw new Error("Banner/logo must be 8MB or smaller.");
-  const ext=(f.name.split(".").pop()||"jpg").toLowerCase(),name="sponsors/"+me.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
-  const {error}=await db.storage.from("room-images").upload(name,f,{upsert:false,contentType:f.type});
+  const optimized=await prepareSponsorImage(f);
+  const name="sponsors/"+me.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+".webp";
+  const {error}=await db.storage.from("room-images").upload(name,optimized,{upsert:false,contentType:"image/webp"});
   if(error)throw error;
   return db.storage.from("room-images").getPublicUrl(name).data.publicUrl;
 }
